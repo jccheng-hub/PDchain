@@ -1,0 +1,86 @@
+[workspace]
+channels = ["conda-forge", "https://conda.rosettacommons.org"]
+name = "PDchain"
+platforms = ["osx-arm64", "linux-aarch64", "linux-64"]
+version = "0.1.0"
+description = "Cross-platform multi-environment workspace for chaining protein design tools (RFdiffusion, LigandMPNN, Rosetta, PyMOL)"
+authors = ["John C. Cheng <cy.john.cheng@gmail.com>"]
+
+[dependencies]
+pymol-open-source = ">=3.1.0,<4"
+bash = ">=5.2.37,<6"
+coreutils = ">=9.5,<10"
+gawk = ">=5.4.0,<6"
+sed = ">=4.10,<5"
+grep = ">=3.12,<4"
+findutils = ">=4.10.0,<5"
+jq = ">=1.8.1,<2"
+bc = ">=1.7.1,<2"
+wget = ">=1.25.0,<2"
+rsync = ">=3.4.1,<4"
+
+[feature.pyrosetta.dependencies]
+python = "<3.11"
+pyrosetta = "<2024"
+
+[feature.ligandmpnn.dependencies]
+python = "3.10.*"
+pytorch = "2.3.*"
+biopython = ">=1.87,<2"
+prody = ">=2.5.0,<3"
+scipy = ">=1.15.2,<2"
+numpy = "1.23.*"
+ml-collections = ">=1.0.0,<2"
+dm-tree = ">=0.1.8,<0.2"
+
+[feature.rfdiffusion]
+channels = ["dglteam/label/cu118", "pytorch", "nvidia", "conda-forge"]
+
+[feature.rfdiffusion.dependencies]
+python = "3.9.*"
+numpy = "1.*"
+pandas = ">=2.3.1,<3"
+pydantic = ">=2.11.7,<3"
+hydra-core = ">=1.3.2,<2"
+pyrsistent = ">=0.20.0,<0.21"
+
+[feature.rfdiffusion.pypi-dependencies]
+nvtx = "*"
+e3nn = "*"
+wandb = "*"
+pynvml = "*"
+decorator = "*"
+dllogger = { git = "https://github.com/NVIDIA/dllogger" }
+torch = "==2.2.1"
+torchdata = "==0.7.1"
+dgl = "==2.1.0"
+nvtx-mock = { git = "https://github.com/YaoYinYing/nvtx-mock" }
+rfdiffusion = { git = "https://github.com/YaoYinYing/RFdiffusion", rev = "cpu-only-rfpeptide" }
+se3-transformer = { git = "https://github.com/YaoYinYing/SE3Transformer" }
+
+[feature.rdkit.dependencies]
+rdkit = ">=2026.3.2,<2027"
+
+[feature.rdkit.pypi-dependencies]
+rdkit_to_params = "*"
+
+[feature.omegafold]
+channels = ["conda-forge"]
+# channels = ["pytorch", "nvidia", "conda-forge"]
+
+[feature.omegafold.dependencies]
+python = ">=3.8,<3.11"
+biopython = "*"
+git = "*"
+pip = "*"
+pytorch = ">=1.12.0,<3"
+
+[environments]
+pyrosetta = { features = ["pyrosetta"], no-default-feature = true }
+ligandmpnn = { features = ["ligandmpnn"], no-default-feature = true }
+rfdiffusion = { features = ["rfdiffusion"], no-default-feature = true }
+rdkit = { features = ["rdkit"], no-default-feature = true }
+omegafold = { features = ["omegafold"], no-default-feature = true }
+
+[tasks]
+install = "pixi install --all; bash install.sh cpu"

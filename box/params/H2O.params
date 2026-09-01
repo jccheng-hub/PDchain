@@ -1,0 +1,32 @@
+# This used to be a direct copy of TP3.params but is now modified
+# for use with Frank and Ryan's solvation methods, giving the
+# water its own atom types for parameterization with the beta-nov16 ff
+# Did not want to use the TP3 residue type, since TP3 implies a particular
+# set of parameters and liquid behavior that is not matched here
+
+NAME H2O
+IO_STRING H2O w
+TYPE LIGAND
+AA H2O
+
+ATOM  O   Owat  OH1  -0.834
+ATOM  H1  Hwat  H    0.417
+ATOM  H2  Hwat  H    0.417
+
+BOND O H1
+BOND O H2
+
+# This residue type can be converted to a virtual residue by the packer (effectively "packing" for water occupancy or lack of occupancy).
+PROPERTIES SOLVENT WATER VIRTUALIZABLE_BY_PACKER
+
+NBR_ATOM O
+
+## hack -- max distance from hbond anchor atom to farthest O position, since packing assumes that NBR_ATOM doesnt move during packing which is not true with repackable position waters...
+## need a better solution for this
+NBR_RADIUS 3.2
+
+FIRST_SIDECHAIN_ATOM ALL
+
+ICOOR_INTERNAL    O      0.000000    0.000000    0.000000   O H1 H2
+ICOOR_INTERNAL    H1     0.000000  180.000000    0.957200   O H1 H2
+ICOOR_INTERNAL    H2     0.000000   75.480000    0.957200   O H1 H2

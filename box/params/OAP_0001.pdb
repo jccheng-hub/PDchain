@@ -1,0 +1,25 @@
+COMPND    OAP
+HETATM    1  C1  OAP     0      -1.464  -1.219   0.150  1.00  0.00           C  
+HETATM    2  C2  OAP     0      -1.946   0.066  -0.105  1.00  0.00           C  
+HETATM    3  C3  OAP     0      -1.057   1.141  -0.196  1.00  0.00           C  
+HETATM    4  C4  OAP     0       0.321   0.935  -0.032  1.00  0.00           C  
+HETATM    5  C5  OAP     0       0.808  -0.361   0.225  1.00  0.00           C  
+HETATM    6  C6  OAP     0      -0.093  -1.434   0.315  1.00  0.00           C  
+HETATM    7  N1  OAP     0       2.210  -0.595   0.395  1.00  0.00           N  
+HETATM    8  O1  OAP     0       1.204   2.010  -0.124  1.00  0.00           O  
+HETATM    9  H1  OAP     0      -2.153  -2.051   0.221  1.00  0.00           H  
+HETATM   10  H2  OAP     0      -3.008   0.231  -0.232  1.00  0.00           H  
+HETATM   11  H3  OAP     0      -1.440   2.134  -0.394  1.00  0.00           H  
+HETATM   12  H4  OAP     0       0.269  -2.435   0.512  1.00  0.00           H  
+HETATM   13  H5  OAP     0       2.570  -1.557   0.586  1.00  0.00           H  
+HETATM   14  H6  OAP     0       2.902   0.184   0.333  1.00  0.00           H  
+HETATM   15  H7  OAP     0       0.877   2.951  -0.308  1.00  0.00           H  
+CONECT    1    2    2    6    9
+CONECT    2    3   10
+CONECT    3    4    4   11
+CONECT    4    5    8
+CONECT    5    6    6    7
+CONECT    6   12
+CONECT    7   13   14
+CONECT    8   15
+END

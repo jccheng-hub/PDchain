@@ -1,0 +1,27 @@
+HETATM    1  N   HQA X   1       0.322   0.196  -0.276  1.00 20.00           N  
+HETATM    2  CA  HQA X   1       1.688   0.675  -0.476  1.00 20.00           C  
+HETATM    3  C   HQA X   1       2.431   0.621   0.845  1.00 20.00           C  
+HETATM    4  O   HQA X   1       2.019   1.287   1.787  1.00 20.00           O  
+HETATM    5  CB  HQA X   1       1.691   2.113  -1.066  1.00 20.00           C  
+HETATM    6  HA  HQA X   1       2.189  -0.007  -1.200  1.00 20.00           H  
+HETATM    7  CG  HQA X   1       3.072   2.615  -1.450  1.00 20.00           C  
+HETATM    8  CD1 HQA X   1       3.391   2.824  -2.803  1.00 20.00           C  
+HETATM    9  CD2 HQA X   1       4.051   2.904  -0.484  1.00 20.00           C  
+HETATM   10  CE1 HQA X   1       4.659   3.293  -3.169  1.00 20.00           C  
+HETATM   11  NE2 HQA X   1       5.276   3.359  -0.856  1.00 20.00           N  
+HETATM   12  CZ1 HQA X   1       4.994   3.499  -4.515  1.00 20.00           C  
+HETATM   13  CZ2 HQA X   1       5.610   3.559  -2.159  1.00 20.00           C  
+HETATM   14  CT1 HQA X   1       6.265   3.966  -4.855  1.00 20.00           C  
+HETATM   15  CT2 HQA X   1       6.891   4.030  -2.509  1.00 20.00           C  
+HETATM   16  CI1 HQA X   1       7.208   4.230  -3.858  1.00 20.00           C  
+HETATM   17  OI2 HQA X   1       7.827   4.297  -1.573  1.00 20.00           O  
+HETATM   18  H   HQA X   1       0.002  -0.005   0.685  1.00 20.00           H  
+HETATM   19 1HB  HQA X   1       1.214   2.829  -0.363  1.00 20.00           H  
+HETATM   20 2HB  HQA X   1       1.068   2.110  -1.982  1.00 20.00           H  
+HETATM   21  HD1 HQA X   1       2.655   2.617  -3.571  1.00 20.00           H  
+HETATM   22  HD2 HQA X   1       3.848   2.784   0.569  1.00 20.00           H  
+HETATM   23  HZ1 HQA X   1       4.275   3.299  -5.301  1.00 20.00           H  
+HETATM   24  HT1 HQA X   1       6.521   4.125  -5.895  1.00 20.00           H  
+HETATM   25  HI1 HQA X   1       8.191   4.593  -4.135  1.00 20.00           H  
+HETATM   26  HI2 HQA X   1       7.672   4.180  -0.625  1.00 20.00           H  
+TER                                                                             
