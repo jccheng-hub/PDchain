@@ -3,7 +3,7 @@ channels = ["conda-forge", "https://conda.rosettacommons.org"]
 name = "PDchain"
 platforms = ["osx-arm64", "linux-aarch64", "linux-64"]
 version = "0.1.0"
-description = "Cross-platform multi-environment workspace for chaining protein design tools (RFdiffusion, LigandMPNN, Rosetta, PyMOL)"
+description = "Cross-platform pixi workspace (CPU-only) for chaining protein design tools (RFdiffusion, LigandMPNN, Rosetta, PyMOL)"
 authors = ["John C. Cheng <cy.john.cheng@gmail.com>"]
 
 [dependencies]
