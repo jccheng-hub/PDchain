@@ -21,30 +21,29 @@ Options:
                             E.g. --chri X1
   --resn [str]              Focus residues using residue name.
                             E.g. --resn IGP
-  --nbr_cut [float]         Distance cutoff for counting neighbors. Used for
-                            calculating certain metrics.
+  --nbr_count [float]       Number of residues closest to focus residues to
+                            include as a neighbor set. Used for calculating
+                            certain metrics involving focus residues.
   --help                    Display this help and exit
 
 Metrics:
     mp_dst                  Average distance between the midpoint of non-focus
-                            atoms and all non-focus atoms. A proxy metric for
-                            protein size.
-    mp_dev                  Standard deviation of atomic distances calculated in
-                            mp_dst. A proxy metric for a hollow cavity.
-    fc_dst                  Average distance between focus atoms and all
-                            non-focus atoms within [nbr_cut] angstroms.
-    fc_dev                  Standard deviation of atomic distances calculated in
-                            fc_dst.
+                            atoms and all non-focus atoms.
+    mp_dev                  Standard deviation of atomic distances from midpoint
+                            of scaffold. Proxy for hollow cavity.
+    fc_dev                  Standard deviation of atomic distances from midpoint
+                            of focus residues. Only includes closest [nbr_count]
+                            residues from focus during calculation.
     clash                   Number of atomic clashes between focus atoms and
                             the poly-Ala backbone. Clash defined as <3 angstrom
                             distance. Does not count same-chain clashes.
     rog_ala                 Approximate radius of gyration. Treats all poly-Ala
                             heavy atoms as equal mass.
     fc_compact              Applies ROG equation to each focus atom, then
-                            average those values. Only non-focus atoms within
-                            [nbr_cut] angstroms are included. Lower values mean
-                            that the non-focus atoms are more compact around
-                            focus atoms.
+                            average those values. Only closest [nbr_count]
+                            non-focus atoms are included. Lower values mean that
+                            the non-focus atoms are more compact around focus
+                            atoms.
     mp_fc_dst               Average distance between the midpoint of non-focus
                             atoms and all focus atoms. A proxy metric for
                             the positioning of focus residues.
@@ -62,12 +61,12 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(chri resn nbr_cut)
+val_opts=(chri resn nbr_count)
 bool_opts=(help)
 
 chri=""
 resn=""
-nbr_cut="100"
+nbr_count="50"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -100,14 +99,14 @@ done
 
 # Initialize
 inpdbs=(${args[@]:1})
-mets="mp_dst mp_dev rog_ala fc_dst fc_dev clash fc_compact mp_fc_dst"
+mets="mp_dst mp_dev rog_ala fc_dst fc_dev clash fc_compact mp_fc_dst nbr_count_used"
 
 # >>> gawk_script >>> {{{
 gawk_script='
     BEGIN {
         if (!chri)    chri = "'"$chri"'"
         if (!resn)    resn = "'"$resn"'"
-        if (!nbr_cut) nbr_cut = '"$nbr_cut"'
+        if (!nbr_count) nbr_count = '"$nbr_count"'
     
         if (chri != "" || resn != "") {
             chri = expand_range(chri)
@@ -133,7 +132,7 @@ gawk_script='
         nfc[$5][$6][$3][2] = $8
         nfc[$5][$6][$3][3] = $9
     }
-    
+
     ENDFILE {
         # Add CB coordinates
         for (ch in nfc) for (ri in nfc[ch]) {
@@ -142,29 +141,46 @@ gawk_script='
             }
         }
     
-        midpoint(nfc, mp)         # Midpoint of non-focus residues
-        mp_dst = pdst(mp, nfc)    # Mean midpoint distance
-        mp_dev = pdev(mp, nfc)    # Mean midpoint deviation
-        rog_ala = calc_arog(nfc)  # Output ROG for poly-alanine
+        # Base metrics
+        midpoint(nfc, mp)  # Midpoint of non-focus residues
+        mp_dst = pdst(mp, nfc)  # Mean midpoint distance
         print "mp_dst " mp_dst
+    
+        mp_dev = pdev(mp, nfc)  # Mean midpoint deviation
         print "mp_dev " mp_dev
+    
+        rog_ala = calc_arog(nfc)  # Output ROG for poly-alanine
         print "rog_ala " rog_ala
     
-        # Exit if no focus residues were provided
-        if (!(chri != "" || resn != "")) exit
-        
-        fc_dst = rdst(foc, nfc)           # Mean distance from focus residues
-        fc_dev = rdev(foc, nfc, nbr_cut)  # Deviation for focus residues
-        clash = clash_count(foc, nfc)     # Number of clashes
-        fc_compact = calc_local_arog(foc, nfc, nbr_cut)  # Compactness around focus atoms
-        mp_fc_dst = pdst(mp, foc)         # Mean distance between midpoint and focus atoms
-        print "fc_dst " fc_dst
+        # Additional metrics with focus residues
+        if (!(chri != "" || resn != "")) exit  # Exit if no focus residues were provided
+    
+        midpoint(foc, mp_foc)  # Midpoint of focus residues
+        fc_dev = pdev(mp_foc, nfc, nbr_count)  # Mean midpoint deviation from focus midpoint
         print "fc_dev " fc_dev
+    
+        clash = clash_count(foc, nfc)  # Number of clashes
         print "clash " clash
+    
+        fc_compact = calc_local_arog(foc, nfc, nbr_count)  # Compactness around focus atoms
         print "fc_compact " fc_compact
+    
+        mp_fc_dst = pdst(mp, foc)  # Mean distance between midpoint and focus atoms
         print "mp_fc_dst " mp_fc_dst
     
+        print "nbr_count_used " nbr_count  # Report nbr_count used for calculations
         delete foc ; delete nfc
+    }
+    
+    function copy_array(orig, copy,    k) {
+        delete copy
+        for (k in orig) {
+            if (typeof(orig[k]) == "array") {
+                copy_array(orig[k], copy[k])
+            } else {
+                copy[k] = orig[k]
+            }
+        }
     }
     
     function find_nbr(obj1, obj2, dcut, nbr,
@@ -188,6 +204,43 @@ gawk_script='
                     nbr[ch2][ri2][at2][3] = obj2[ch2][ri2][at2][3]
                 }
             }
+        }
+    }
+    
+    function find_closest(obj1, obj2, nbr, count,
+                          ch1, ri1, at1, ch2, ri2, at2, dx, dy, dz, d_sq, dst, chri, i, j)
+    {
+        # Find residues in obj2 closest to obj1 and store into nbr
+        # obj1: object 1 | obj[chain][resi][atom][1/2/3] = x/y/z
+        # obj2: object 2 | obj[chain][resi][atom][1/2/3] = x/y/z
+        # count: max residue count | int
+        # nbr: nbr array | nbr[chain][resi][atom][1/2/3] = x/y/z
+    
+        # Get closest distance per residue and store in dst array
+        delete dst
+        for (ch1 in obj1) for (ri1 in obj1[ch1]) for (at1 in obj1[ch1][ri1]) {
+            for (ch2 in obj2) for (ri2 in obj2[ch2]) for (at2 in obj2[ch2][ri2]) {
+                dx = obj1[ch1][ri1][at1][1] - obj2[ch2][ri2][at2][1]
+                dy = obj1[ch1][ri1][at1][2] - obj2[ch2][ri2][at2][2]
+                dz = obj1[ch1][ri1][at1][3] - obj2[ch2][ri2][at2][3]
+                d_sq = dx*dx + dy*dy + dz*dz
+    
+                if (!dst[ch2":"ri2]) { dst[ch2":"ri2] = d_sq ; continue }
+                dst[ch2":"ri2] = dst[ch2":"ri2] < d_sq ? dst[ch2":"ri2] : d_sq
+            }
+        }
+    
+        # Traverse list in ascending order to get closest residues
+        PROCINFO["sorted_in"] = "@val_num_asc"
+        delete nbr
+        i = 1
+        for (chri in dst) {
+            split(chri, a, ":") ; ch2 = a[1] ; ri2 = a[2]
+            for (at2 in obj2[ch2][ri2]) for (j=1; j<=3; j++) {
+                nbr[ch2][ri2][at2][j] = obj2[ch2][ri2][at2][j]
+            }
+            i++
+            if (count!="" && i > count) break
         }
     }
     
@@ -215,34 +268,30 @@ gawk_script='
         return clashes
     }
     
-    function pdev(p, obj,    d, ch, ri, at, d_tmp, dist, n, sum, mean, i, dev, sum_sq_dev) {
+    function pdev(p, obj,    count, p_obj, nbr, ch, ri, at, d, dist, n, sum, mean, i, dev, sum_sq_dev) {
         # Return standard deviation of atomic distances from specified point
         # p: point | p[1/2/3] = x/y/z
         # obj: object | obj[chain][resi][atom][1/2/3] = x/y/z
-        # d: distance | float
-        for (ch in obj) for (ri in obj[ch]) for (at in obj[ch][ri]) {
-            d_tmp = calc_dist(p, obj[ch][ri][at])
-            if (d && d_tmp > d) continue
-            dist[++n] = d_tmp ; sum += d_tmp
+        # count: number of closest neighbors to include | int
+    
+        # If count is specified, create nbr object with closest residues
+        if (count != "") {
+            for (i=1; i<=3; i++) { p_obj["Z"][1]["CA"][i] = p[i] }
+            find_closest(p_obj, obj, nbr, count)
+        } else {
+            copy_array(obj, nbr)
         }
+    
+        # Fill array of distances, and sum
+        for (ch in nbr) for (ri in nbr[ch]) for (at in nbr[ch][ri]) {
+            d = calc_dist(p, obj[ch][ri][at])
+            dist[++n] = d ; sum += d
+        }
+    
+        # Calculate deviation
         mean = sum / n
         for (i in dist) { dev = dist[i] - mean ; sum_sq_dev += dev * dev }
         if (n > 0) { return sqrt(sum_sq_dev / n) } else { return 9999 }
-    }
-    
-    function rdev(obj1, obj2,    d, ch, ri, at, sum, n) {
-        # Return the average standard deviation of atomic distances
-        # Basically, loop pdev for every atom found in obj1, then average
-        # Excludes same-chain comparisons
-        # obj1: object 1 | obj1[chain][resi][atom][1/2/3] = x/y/z
-        # obj2: object 2 | obj2[chain][resi][atom][1/2/3] = x/y/z
-        for (ch in obj1) {
-            if (ch in obj2) continue
-            for (ri in obj1[ch]) for (at in obj1[ch][ri]) {
-                sum += pdev(obj1[ch][ri][at], obj2,    d) ; n++
-            }
-        }
-        if (n > 0) { return sum / n } else { return 9999 }
     }
     
     function check_object(obj,    ch, ri, at, x, y, z) {
@@ -267,14 +316,16 @@ gawk_script='
         if (n > 0) { return sqrt(sum / n) } else { return 9999 }
     }
     
-    function calc_local_arog(obj1, obj2, dcut,    ch, ri, at, i, dot, nbr, sum, n) {
+    function calc_local_arog(obj1, obj2, count,    ch, ri, at, i, dot, nbr, sum, n) {
         # Calculate arog values for obj2 using every obj1 atom as midpoint, then average
+        # For obj2, only closest [count] residues to obj1 are included in the calculation
         # obj1: object 1 | obj[chain][resi][atom][1/2/3] = x/y/z
         # obj2: object 2 | obj[chain][resi][atom][1/2/3] = x/y/z
-        # dcut: distance cutoff | float
+        # count: number of residues in obj2 closest to obj1 | int
+        count = (count == "") ? 50 : count
         for (ch in obj1) for (ri in obj1[ch]) for (at in obj1[ch][ri]) {
             for (i=1; i<=3; i++) dot[ch][ri][at][i] = obj1[ch][ri][at][i]
-            find_nbr(dot, obj2, dcut, nbr)
+            find_closest(dot, obj2, nbr, count)
             sum += calc_arog(nbr, dot[ch][ri][at]) ; n++
             delete dot; delete nbr
         }
