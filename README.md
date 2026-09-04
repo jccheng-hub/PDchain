@@ -1,4 +1,8 @@
 # PDchain
+
+> [!NOTE]
+> This README is still a work in progress!
+
 Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN, and PyRosetta) using a pixi workspace. Can iteratively optimize designs based on desired metrics with an *in silico* continuous evolution system.
 
 Supported platforms: osx-arm64, linux-64, linux-aarch64.
