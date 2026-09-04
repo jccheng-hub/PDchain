@@ -639,8 +639,7 @@ EOF
     local scafscore_opts=()
     if [[ -n $ligname ]] ; then
         local scafscore_opts+=("--resn ${ligname[@]}")
-    fi
-    if [[ -n $ppi_hotspots ]] ; then
+    elif [[ -n $ppi_hotspots ]] ; then
         local hspots=$(get_newres "$contigs" | cut -d: -f2 | paste -sd ' ')
         local scafscore_opts+=("--chri $hspots")
     elif [[ -n $fixedres ]] ; then
