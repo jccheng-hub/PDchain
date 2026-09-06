@@ -20,10 +20,10 @@ Follow the instructions provided in the terminal upon installation. You may need
 Once you have pixi installed, run the following commands.
 
 ```
-git clone https://github.com/jccheng-hub/PDchain.git   # Download repository
-cd PDchain                                             # Navigate into root directory
-pixi run install                                       # Install all environments
-pixi workspace register --name PDchain                 # Name workspace for convenience
+git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git    # Download repository
+cd PDchain                                # Navigate into root directory
+pixi run install                          # Install all environments
+pixi workspace register --name PDchain    # Name workspace for convenience
 ```
 
 Linux-aarch64 will be cpu-only. Osx-arm64 and linux-64 will make use of mps/cuda. If you want the entire environment to be cpu-only regardless of system, replace `pixi.toml` with `box/tomls/cpu.toml` before running `pixi run install`, like so:
