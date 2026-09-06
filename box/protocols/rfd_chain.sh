@@ -127,8 +127,8 @@ LigandMPNN + PyRosetta options:
                             Need both --ligname and --fixedres
   --threads [int]           Number of threads to use for PyRosetta
   --nbr_dist [float]        Neighbor distance for LigandMPNN redesign around
-                            ligands.
-  --allow_cys               Allow cysteines to be introduced during design
+                            ligands
+  --disallow_cys            Disallow cysteines during design
   --sc_context              Use side chain atoms as ligands during LigandMPNN
   --idealize                Idealize bond lengths and bond angles
   --relax                   Use relax as a refinement
@@ -165,7 +165,7 @@ val_opts=(
 )
 
 bool_opts=(
-    allow_cys           dec_only            ss_to_contigs     
+    disallow_cys        dec_only            ss_to_contigs     
     fix_bb              fix_chi             idealize            inc_only            
     monomer_ROG         partial             ppi_mode            random_order        
     randsuffix          regap               relax               inpaint_seq
@@ -368,7 +368,15 @@ rfd_chain () {
     local redesres=$redesres
     local fixedres=$fixedres
     local fixbbres=$fixbbres
-    
+
+    # Generate fixbbres if not provided
+    [[ -z $fixbbres && -z $contigs ]] && {
+        local fixbbres=$(
+            sed 's|/|\n|g' <<< $contigs | grep '^[A-Z]' | paste -sd ' '
+        )
+    }
+    [[ -z $fixbbres && -n $fixedres ]] && local fixbbres="$fixedres"
+
     # If ppi_target was provided with contigs, then generate contigs
     [[ -z $contigs && -n $ppi_target ]] && {
         echo "PPI target provided without contigs. Generating contigs..."
@@ -403,6 +411,9 @@ rfd_chain () {
         local oldfixed=$(sed -n "s/^fixedres //p" $inpdb)
         local oldlig=$(sed -n "s/^ligname //p" $inpdb)
         local oldcsts=$(awk '/>>> constraints >>>/ {f=1;next} /<<< constraints <<</ {f=0} f' $inpdb)
+        [[ $ss_to_contigs == 1 && -z $oldcontigs ]] && {
+            local oldcontigs=$(gen_contigs $fixbbres --inpdb $inpdb --ss_to_contigs --ss_trim 100)
+        }
         [[ -z $fixedres && -n $oldfixed ]] && {
             echo "Using old fixedres residues found in input PDB: $oldfixed"
             local fixedres="$oldfixed"
@@ -419,7 +430,6 @@ rfd_chain () {
     [[ -z $contigs ]] && {
         echo "No contigs were provided. Generating contigs..."
         local contigs_opts=()
-        [[ -z $fixbbres && -n $fixedres ]] && local fixbbres=$fixedres
         [[ -n $oldcontigs && $oldcontigs != NONE ]] && {
             echo "Using old contigs found in input PDB for fixing backbone: $oldcontigs"
             local oldfixbb=$(echo $oldcontigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')

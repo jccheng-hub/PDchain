@@ -1,0 +1,6 @@
+[submodule "box/programs/LigandMPNN"]
+	path = box/programs/LigandMPNN
+	url = https://github.com/jccheng-hub/LigandMPNN.git
+[submodule "box/programs/RFdiffusion"]
+	path = box/programs/RFdiffusion
+	url = https://github.com/jccheng-hub/RFdiffusion.git

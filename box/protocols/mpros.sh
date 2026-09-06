@@ -40,7 +40,7 @@ LigandMPNN options:
                             distance of the ligand will be redesigned with
                             --model_type ligand_mpnn.
   --repack                  Have MPNN repack every rotamer, including fixed ones
-  --allow_cys               Allow cysteines during design
+  --disallow_cys            Disallow cysteines during design
   --sc_context              Use side chain atoms as context
   --skip_mpnn               Skip MPNN design
   --skip_mpnn_score         Skip MPNN scoring step
@@ -89,7 +89,7 @@ val_opts=(
 )
 
 bool_opts=(
-    allow_cys           design              fix_bb              fix_chi             
+    disallow_cys        design              fix_bb              fix_chi             
     idealize            ignore_metals       keep_script         ncaa_pal
     relax               renumber_chain      repack              sc_context
     skip_mpnn           skip_refine         minimize            inplace
@@ -246,7 +246,7 @@ mpnn_opts=(
     echo "Using json for biasing residues $biasjson"
     mpnn_opts+=("--bias_AA_per_residue \"$biasjson\"")
 }
-[[ $allow_cys == 0 ]] && {
+[[ $disallow_cys == 1 ]] && {
     echo "Excluding cysteines from sequence design"
     mpnn_opts+=("--omit_AA \"C\"")
 }

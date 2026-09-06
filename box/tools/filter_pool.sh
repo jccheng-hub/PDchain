@@ -173,11 +173,12 @@ topnum=$(awk 'BEGIN{printf "%.0f", ('"$perc * $totnum * 0.01"')}')
 echo "Threshold: $topnum / $totnum"
 
 gawk -v topnum=$topnum -v ranked="$tmpdir/ranked.txt" '
-{ dt[FILENAME][FNR]["pdb"] = $1 ; dt[FILENAME][FNR]["val"] = $2 } END {
+{ dt[FILENAME][FNR]["pdb"] = $1 ; dt[FILENAME][FNR]["val"] = $3 } END {
     lim = FNR ; metcount = length(dt)
     while (lim > 0) {
         for (txt in dt) {
-            pdb = dt[txt][lim]["pdb"] ; if ( !(pdb in elimkey) ) {
+            pdb = dt[txt][lim]["pdb"]
+            if ( !(pdb in elimkey) ) {
                 elimkey[pdb] = 1 ; elim[++f] = pdb
             }
         }
