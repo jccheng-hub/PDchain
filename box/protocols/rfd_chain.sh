@@ -905,12 +905,13 @@ else
 fi
 
 # Loop through main function
-for i in $(seq 1 $numdes) ; do
+i=1
+while [[ $i -le $numdes ]] ; do
 
     # If output file already exists, skip to next round
     [[ -s ${outprefix}_${id[i]}.pdb ]] && {
         echo "${outprefix}_${id[i]}.pdb already exists, skipping..."
-        continue
+        ((i++)) ; continue
     }
 
     # Check for input directory
@@ -930,6 +931,7 @@ for i in $(seq 1 $numdes) ; do
     # Check outputs
     if [[ -s ${outprefix}_${id[i]}.pdb ]] ; then
         echo "${outprefix}_${id[i]}.pdb was generated successfully."
+        ((i++))
     else
         echo "${outprefix}_${id[i]}.pdb failed to generate."
     fi

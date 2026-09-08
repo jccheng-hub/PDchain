@@ -4,3 +4,4 @@
 [submodule "box/programs/RFdiffusion"]
 	path = box/programs/RFdiffusion
 	url = https://github.com/jccheng-hub/RFdiffusion.git
+	branch = mps-test-rfpeptide
