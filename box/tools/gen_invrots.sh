@@ -33,11 +33,9 @@ Options:
                             ...where ABC is your three-letter-code, C1..C4 are
                             the four atoms that make up the dihedral, and a list
                             of comma-delimited angles.
-                            Keywords can be used to replace the list of angles
-                            E.g. tors["ABC"]["C1-C2-C3-C4"]=sp33
-                            Angles for sp33: 60,180,300
-                            Angles for sp23: 0,60,90,120,180,240,270,300
-                            Angles for free: 0,5,10,15,...,355
+                            During sampling, it is the final atom that will
+                            change positions. So "C1-C2-C3-C4" will have C4
+                            rotate while C1, C2, and C3 remain in place.
   --keep_hydrogens          Keep hydrogens
   --outdir [str]            Path to output directory
   --help                    Display this help and exit
@@ -117,31 +115,32 @@ gawk_torslib="$tmpdir/torslib.awk"
 cat << EOF > $gawk_torslib
 BEGIN {
     # Predfined angle sets
-    sp33 = "60,180,300"
-    sp23 = "0,60,90,120,180,240,270,300"
-    free = "$freerot"
+    sp33    = "60,180,300"
+    sp23    = "0,60,90,120,180,240,270,300"
+    sp23aro = "60,75,90,105,120,240,255,270,285,300"
+    free    = "$freerot"
 
     # Allowed torsions for canonical amino acids (inverted rotamers)
-    tors["ALA"]["1HB-CB-CA-N"]  = sp33  ; tors["ASN"]["OD1-CG-CB-CA"]  = sp23       
-    tors["CYS"]["HG-SG-CB-CA"]  = free  ; tors["ASN"]["CG-CB-CA-N"]    = sp33       
-    tors["CYS"]["SG-CB-CA-N"]   = sp33  ; tors["PRO"]                               
-    tors["ASP"]["OD1-CG-CB-CA"] = sp23  ; tors["GLN"]["OE1-CD-CG-CB"]  = sp23       
-    tors["ASP"]["CG-CB-CA-N"]   = sp33  ; tors["GLN"]["CD-CG-CB-CA"]   = sp33       
-    tors["GLU"]["OE1-CD-CG-CB"] = sp23  ; tors["GLN"]["CG-CB-CA-N"]    = sp33       
-    tors["GLU"]["CD-CG-CB-CA"]  = sp33  ; tors["ARG"]["NH1-CZ-NE-CD"]  = "0,180"    
-    tors["GLU"]["CG-CB-CA-N"]   = sp33  ; tors["ARG"]["CZ-NE-CD-CG"]   = "180"      
-    tors["PHE"]["CD1-CG-CB-CA"] = sp23  ; tors["ARG"]["NE-CD-CG-CB"]   = "180"      
-    tors["PHE"]["CG-CB-CA-N"]   = sp33  ; tors["ARG"]["CD-CG-CB-N"]    = sp33       
-    tors["GLY"]                         ; tors["SER"]["HG-OG-CB-CA"]   = free       
-    tors["HIS"]["ND1-CG-CB-CA"] = sp23  ; tors["SER"]["OG-CB-CA-N"]    = sp33       
-    tors["HIS"]["CG-CB-CA-N"]   = sp33  ; tors["THR"]["1HG-OG1-CB-CA"] = free       
-    tors["ILE"]["CG1-CB-CA-N"]  = sp33  ; tors["THR"]["OG1-CB-CA-N"]   = sp33       
-    tors["LYS"]["1HZ-NZ-CE-CD"] = free  ; tors["VAL"]["CG1-CB-CA-N"]   = sp33       
-    tors["LYS"]["NZ-CE-CD-CG"]  = "180" ; tors["TRP"]["CD1-CG-CB-CA"]  = sp23       
-    tors["LYS"]["CE-CD-CG-CB"]  = "180" ; tors["TRP"]["CD1-CG-CB-CA"]  = sp23       
-    tors["LYS"]["CD-CG-CB-N"]   = "180" ; tors["TYR"]["HH-OH-CZ-CE1"]  = free       
-    tors["LEU"]["CD1-CG-CB-CA"] = sp33  ; tors["TYR"]["CD1-CG-CB-CA"]  = sp23       
-    tors["LEU"]["CG-CB-CA-N"]   = sp33  ; tors["TYR"]["CG-CB-CA-N"]    = sp33       
+    tors["ALA"]["1HB-CB-CA-N"]  = sp33     ; tors["ASN"]["OD1-CG-CB-CA"]  = sp23       
+    tors["CYS"]["HG-SG-CB-CA"]  = free     ; tors["ASN"]["CG-CB-CA-N"]    = sp33       
+    tors["CYS"]["SG-CB-CA-N"]   = sp33     ; tors["PRO"]                               
+    tors["ASP"]["OD1-CG-CB-CA"] = sp23     ; tors["GLN"]["OE1-CD-CG-CB"]  = sp23       
+    tors["ASP"]["CG-CB-CA-N"]   = sp33     ; tors["GLN"]["CD-CG-CB-CA"]   = sp33       
+    tors["GLU"]["OE1-CD-CG-CB"] = sp23     ; tors["GLN"]["CG-CB-CA-N"]    = sp33       
+    tors["GLU"]["CD-CG-CB-CA"]  = sp33     ; tors["ARG"]["NH1-CZ-NE-CD"]  = "0,180"    
+    tors["GLU"]["CG-CB-CA-N"]   = sp33     ; tors["ARG"]["CZ-NE-CD-CG"]   = "180"      
+    tors["PHE"]["CD1-CG-CB-CA"] = sp23aro  ; tors["ARG"]["NE-CD-CG-CB"]   = "180"      
+    tors["PHE"]["CG-CB-CA-N"]   = sp33     ; tors["ARG"]["CD-CG-CB-N"]    = sp33       
+    tors["GLY"]                            ; tors["SER"]["HG-OG-CB-CA"]   = free       
+    tors["HIS"]["ND1-CG-CB-CA"] = sp23aro  ; tors["SER"]["OG-CB-CA-N"]    = sp33       
+    tors["HIS"]["CG-CB-CA-N"]   = sp33     ; tors["THR"]["1HG-OG1-CB-CA"] = free       
+    tors["ILE"]["CG1-CB-CA-N"]  = sp33     ; tors["THR"]["OG1-CB-CA-N"]   = sp33       
+    tors["LYS"]["1HZ-NZ-CE-CD"] = free     ; tors["VAL"]["CG1-CB-CA-N"]   = sp33       
+    tors["LYS"]["NZ-CE-CD-CG"]  = "180"    ; tors["TRP"]["CD1-CG-CB-CA"]  = sp23aro
+    tors["LYS"]["CE-CD-CG-CB"]  = "180"    ; tors["TRP"]["CG-CB-CA-N"]    = sp33       
+    tors["LYS"]["CD-CG-CB-N"]   = "180"    ; tors["TYR"]["HH-OH-CZ-CE1"]  = free       
+    tors["LEU"]["CD1-CG-CB-CA"] = sp33     ; tors["TYR"]["CD1-CG-CB-CA"]  = sp23aro
+    tors["LEU"]["CG-CB-CA-N"]   = sp33     ; tors["TYR"]["CG-CB-CA-N"]    = sp33       
     tors["MET"]["1HE-CE-SD-CG"] = free
     tors["MET"]["CE-SD-CG-CB"]  = "180"
 
@@ -412,7 +411,7 @@ EOF
     
     # Remove clashes
     echo "[$bnsub] Number of intermolecular clashes allowed: $inter_ctol (--inter_ctol $inter_ctol)"
-    echo "[$bnsub] Number of intramolecular clashes allowed: $min_intra + $intra_ctol (--inter_ctol $intra_ctol)"
+    echo "[$bnsub] Number of intramolecular clashes allowed: $min_intra + $intra_ctol (--intra_ctol $intra_ctol)"
     echo "[$bnsub] Pruning inverse rotamers..."
     local inter=($(grep -H "^inter_clashes " ${outpdbs[@]} | sed 's/ /:/g'))
     local intra=($(grep -H "^intra_clashes " ${outpdbs[@]} | sed 's/ /:/g'))
