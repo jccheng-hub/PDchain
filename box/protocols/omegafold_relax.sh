@@ -378,3 +378,9 @@ for infile in ${infiles[@]} ; do
     outpdb="$outdir/${bn}_omegafold.pdb"
     [[ $(grep "^ATOM" $tmppdb | wc -l) -gt 0 ]] && mv $tmppdb $outpdb
 done
+
+# Clean foldrepo
+[[ $(echo $foldrepo/*pdb | wc -w) -gt 1000 ]] && {
+    echo "Cleaning $foldrepo..."
+    rm -v $(ls -lt $foldrepo/*.pdb | tail -n +1001)
+}
