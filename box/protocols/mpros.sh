@@ -479,10 +479,11 @@ EOF
     
     # Packer palette
     [[ $ncaa_pal == 1 && -n $ncaas ]] && {
-        echo 's|<(DefaultPackerPalette name="pakpal")| \1|'
-        echo 's| (CustomBaseTypePackerPalette name="pakpal")|<\1|'
-        echo "s|COMMA_LIST_NCAAS|${ncaas// /,}|"
-    } >> $sed_script
+        echo "Including ncaa packer palette."
+        echo 's|<(DefaultPackerPalette name="pakpal")| \1|'         >> $sed_script
+        echo 's| (CustomBaseTypePackerPalette name="pakpal")|<\1|'  >> $sed_script
+        echo "s|COMMA_LIST_NCAAS|${ncaas// /,}|"                    >> $sed_script
+    }
     
     # Add constraints
     local tmpcst=$(mktemp $tmpdir/tmp_XXXXXX.cst)
@@ -507,26 +508,34 @@ EOF
     done
     
     [[ -n $cstfile || -n $ca_stdev || ( -n $ligname && -n $lig_stdev ) || -n $fix_stdev ]] && {
+        echo "Including constraints in pyrosetta script."
         echo 's| (AddConstraints name="add_csts")|<\1|'         >> $sed_script
         echo 's| (FileConstraintGenerator name="filecst")|<\1|' >> $sed_script
         echo 's| (/AddConstraints)|<\1|'                        >> $sed_script
         echo 's| (Add mover_name="add_csts")|<\1|'              >> $sed_script
     }
-    
+
     # Additional metrics for ligands
     [[ -n $ligname ]] && {
+        echo "Including additional metrics for ligands."
         echo 's| (ResidueName name="Ligs")|<\1|'            >> $sed_script
         echo 's| (HbondMetric name="hbond_metric")|<\1|'    >> $sed_script
         echo 's| (Add metrics="hbond_metric")|<\1|'         >> $sed_script
         echo 's| (DSasa name="dsasa")|<\1|'                 >> $sed_script
         echo 's| (Add filter_name="dsasa")|<\1|'            >> $sed_script
-        echo 's| (Ddg name="ddg")|<\1|'                     >> $sed_script
-        echo 's| (Add filter_name="ddg")|<\1|'              >> $sed_script
         echo "s|COMMA_LIST_LIGANDS|${ligname// /,}|"        >> $sed_script
     }
-    
+
+    # Addition metric for ppi
+    [[ $(awk '$1~/^ATOM|HETATM$/ && !ch[$5] {ch[$5]++; n++} END {print n}' $inpdb) -gt 1 ]] && {
+        echo "Including metrics for multiple chains."
+        echo 's| (Ddg name="ddg")|<\1|'                     >> $sed_script
+        echo 's| (Add filter_name="ddg")|<\1|'              >> $sed_script
+    }    
+
     # Additional metrics for fixed residues
     [[ -n $fixedres ]] && {
+        echo "Including metrics for fixed residues."
         local invfixed=$(
             echo $fixedres | sed 's/ /\n/g' | awk '{
                 ch=$0 ; sub(/[^A-Z]+$/, "", ch) ; sub(/^[A-Z]+/, "", $0) ; print $0 ch
@@ -542,22 +551,26 @@ EOF
 
     # Idealize
     [[ $idealize == 1 ]] && {
-        echo 's| (Idealize name="idealize")|<\1|' 
-        echo 's| (Add mover_name="idealize")|<\1|' 
-    } >> $sed_script
+        echo "Including idealize mover."
+        echo 's| (Idealize name="idealize")|<\1|'  >> $sed_script
+        echo 's| (Add mover_name="idealize")|<\1|' >> $sed_script
+    }
     
     # Refinement
     if [[ -n $resfile ]] ; then 
+        echo "Including design mover with resfile."
         echo 's| (ReadResfile name="maintask")|<\1|' >> $sed_script
         echo 's| (FastDesign name="fastdes")|<\1|'   >> $sed_script
         echo 's| (Add mover_name="fastdes")|<\1|'    >> $sed_script
         echo "s|PATH_TO_RESFILE|$resfile|"           >> $sed_script
     elif [[ $design == 1 ]] ; then
+        echo "Including design mover."
         echo 's| (ResfileCommandOperation name="maintask")|<\1|' >> $sed_script
         echo 's| (FastDesign name="fastdes")|<\1|'               >> $sed_script
         echo 's| (Add mover_name="fastdes")|<\1|'                >> $sed_script
         echo "s|RESFILE_CMD|ALLAA|"                              >> $sed_script
     elif [[ $relax == 1 ]] ; then
+        echo "Including relax mover."
         echo 's| (ResfileCommandOperation name="maintask")|<\1|' >> $sed_script
         echo 's| (FastDesign name="fastdes")|<\1|'               >> $sed_script
         echo 's| (Add mover_name="fastdes")|<\1|'                >> $sed_script
@@ -566,9 +579,10 @@ EOF
     
     # Minimize
     [[ $minimize == 1 ]] && {
+        echo "Including minimize mover."
         echo 's| (Add mover_name="minimize")|<\1|' >> $sed_script
     }
-    
+
     # Make substitutions, then run pyrosetta script
     sed -i -E -f $sed_script $pyrosetta_script
     $pixirun pyrosetta python $pyrosetta_script

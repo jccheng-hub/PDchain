@@ -583,7 +583,7 @@ rfd_chain () {
     
     # If --idealize is used, then idealize diffused backbone, then take out idealize flag
     [[ $idealize == 1 ]] && {
-        mpros $diffused --idealize --skip_mpnn --inplace
+        mpros $diffused --idealize --inplace --skip_mpnn --skip_mpnn_score
         mpnn_opts=($(
             sed 's/--/\n--/g' <<< "${mpnn_opts[@]}" | awk 'NF && $1!="--idealize"'
         ))
@@ -617,7 +617,7 @@ rfd_chain () {
                 }
             }
         ' | sed "s/!/'/g" | paste -sd ',')
-
+        
         # Add ligand
         local ligstr=${ligname[*]}
         [[ -n $ligname ]] && local add_ligand="or (inpdb and resn ${ligstr// /+})"
