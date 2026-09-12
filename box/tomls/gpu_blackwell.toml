@@ -6,7 +6,6 @@ version = "0.1.0"
 description = "Cross-platform pixi workspace for chaining protein design tools (RFdiffusion, LigandMPNN, Rosetta, PyMOL)"
 authors = ["John C. Cheng <cy.john.cheng@gmail.com>"]
 
-# --- Base environment dependencies --- #
 [dependencies]
 pymol-open-source = ">=3.1.0,<4"
 bash = ">=5.2.37,<6"
@@ -20,12 +19,10 @@ bc = ">=1.7.1,<2"
 wget = ">=1.25.0,<2"
 rsync = ">=3.4.1,<4"
 
-# --- PyRosetta dependencies --- #
 [feature.pyrosetta.dependencies]
 python = "<3.11"
 pyrosetta = "<2024"
 
-# --- LigandMPNN dependencies --- #
 [feature.ligandmpnn.dependencies]
 python = "3.10.*"
 pytorch = "2.3.*"
@@ -36,7 +33,6 @@ numpy = "1.23.*"
 ml-collections = ">=1.0.0,<2"
 dm-tree = ">=0.1.8,<0.2"
 
-# --- RFdiffusion dependencies --- #
 [feature.rfdiffusion]
 channels = ["pytorch", "nvidia", "conda-forge"]
 # channels = ["dglteam/label/cu118", "pytorch", "nvidia", "conda-forge"]
@@ -101,17 +97,12 @@ nvtx-mock = { git = "https://github.com/YaoYinYing/nvtx-mock" }
 rfdiffusion = { git = "https://github.com/YaoYinYing/RFdiffusion", rev = "cpu-only-rfpeptide" }
 se3-transformer = { git = "https://github.com/YaoYinYing/SE3Transformer" }
 
-[feature.rfdiffusion.activation.env]
-DGL_DISABLE_GRAPHBOLT = "1"
-
-# --- RDkit_to_params dependencies --- #
 [feature.rdkit.dependencies]
 rdkit = ">=2026.3.2,<2027"
 
 [feature.rdkit.pypi-dependencies]
 rdkit_to_params = "*"
 
-# --- OmegaFold dependencies --- #
 [feature.omegafold]
 channels = ["pytorch", "nvidia", "conda-forge"]
 
@@ -131,7 +122,6 @@ cudatoolkit = "11.3.*"
 [feature.omegafold.target.linux-aarch64.dependencies]
 pytorch = ">=1.12.0,<3"
 
-# --- Misc --- #
 [environments]
 pyrosetta = { features = ["pyrosetta"], no-default-feature = true }
 ligandmpnn = { features = ["ligandmpnn"], no-default-feature = true }
