@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 usage () { cat << EOF
-Usage: update_contigs OLDCONTIGS NEWCONTIGS
+Usage: update_contigs --oldcontigs OLDCONTIGS --newcontigs NEWCONTIGS
 Update contigs string
 
-Parameters:
-    OLDCONTIGS              Original contigs
-    NEWCONTIGS              New contigs
-
 Options:
+  --oldcontigs [str]        Old contigs string
+  --newcontigs [str]        New contigs string
   --help                    Display this help and exit
 EOF
 }
@@ -21,8 +19,10 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=()
+val_opts=(oldcontigs newcontigs)
 bool_opts=(help)
+oldcontigs="REQUIRED"
+newcontigs="REQUIRED"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -49,44 +49,79 @@ for opt in ${val_opts[@]} ; do
     [[ ${!opt} == REQUIRED ]] && help="1"
     [[ -n ${!opt} ]] && all_opts+=(--$opt ${!opt})
 done
-[[ $((${#args[@]}-1)) -lt 2 ]] && help="1"
+[[ $((${#args[@]}-1)) -lt 0 ]] && help="1"
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # <<< Defaults <<< }}}
 
 get_newres () {
-    local contigs=$1
-    local oldres=$(echo $@ | awk '{for(i=2;i<=NF;i++)print$i}' | paste -sd ' ')
-    [[ -z $oldres ]] && oldres=$(echo $contigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')
-    oldres=$(echo $oldres | awk '{
-        for (i=1; i<=NF; i++) {
-            ch = substr($i, 1, 1); sub(/^[A-Z]/, "", $i)
-            delete a; split($i, a, "-") ; if (!(a[2])) a[2]=a[1]
-            for (j=a[1]; j<=a[2]; j++) print ch j
-        }
-    }' | paste -sd ' ')
-    echo $contigs | sed 's|/|\n|g' | awk '
-    !/^[A-Z]/ {
-        delete a ; split($0, a, "-")
-        for (i=1; i<=a[1]; i++) { tot++ }
+    # Take input contigs and oldres list and return new resi
+    # Output format: oldres:newres
+
+    # If contigs is NONE, then execute this block (requires inpdb defined)
+    [[ $1 == NONE ]] && {
+        awk -v oldres="${*:2}" '
+            BEGIN {
+                n = split(oldres, a, " ")
+                for (i=1; i<=n; i++) {
+                    split(a[i], b, "-")     ; ch_o = substr(b[1], 1, 1)
+                    sub(/^[A-Z]/, "", b[1]) ; if (b[2]=="") b[2]=b[1]
+                    for (j=b[1]+0; j<=b[2]+0; j++) res_o[ch_o j] = 1
+                }
+            }
+
+            $1~/^(ATOM|HETATM)$/ && $3=="CA" && $NF!~/CA/ {
+                if (oldres && !($5 $6 in res_o)) next
+                print $5 $6 ":" $5 $6
+            }
+        ' $inpdb
+        return
     }
-    /^[A-Z]/ {
-        ch = substr($0, 1, 1) ; sub(/^[A-Z]/, "", $0)
-        delete a ; split($0, a, "-")
-        for (i=a[1]; i<=a[2]; i++) {
-            tot++
-            if (match(" '"$oldres"' ", " "ch i" ") != 0) {
-                print ch i ":A" tot
+
+    # For all other contigs, run the following
+    local contigs=$(
+        sed 's|/0 | |' <<< $1 | sed 's/ /\n/g' |
+        sort | awk '$0!~/^[ ]*$/ {a[++n]=$0} END {
+            for (i=1; i<n; i++) {
+                print a[i]"/0 "
+            }
+            print a[n]
+        }' | paste -sd ' '
+    )
+
+    sed -e 's|/|\n|g' -e 's/ /\n/g' <<< "$contigs" |
+    awk -v oldres="${*:2}" -F '-' '
+        BEGIN {
+            n = split(oldres, a, " ")
+            for (i=1; i<=n; i++) {
+                split(a[i], b, "-")     ; ch_o = substr(b[1], 1, 1)
+                sub(/^[A-Z]/, "", b[1]) ; if (b[2]=="") b[2]=b[1]
+                for (j=b[1]+0; j<=b[2]+0; j++) res_o[ch_o j] = 1
+            }
+            s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            split(s, ch, "") ; ch_i = 1 ; resi = 1
+        }
+        $1 == 0       { ch_i++ ; next }
+        $1 ~ /^[0-9]/ { resi += $1 ; next }
+        $1 ~ /^[A-Z]/ {
+            ch_o = substr($1, 1, 1)  ;  sub(/^[A-Z]/, "", $1)
+            for (i=$1+0; i<=$2+0; i++) {
+                if ( oldres && !(ch_o i in res_o) ) { resi++ ; continue }
+                print ch_o i ":" ch[ch_i] resi++
             }
         }
-    }'
+    '
 }
 
 update_contigs () {
-    local oldcontigs=$1 newcontigs=$2 oldtab newtab fixbbres num
-    oldtab=$(get_newres $oldcontigs | sed 's/:/ /')
-    newtab=$(get_newres $newcontigs | sed 's/:/ /')
-    fixbbres=$(echo $oldcontigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')
-    num=$(awk -F '/' '{
+    local oldcontigs="$1" newcontigs="$2" oldtab newtab fixbbres num
+    oldtab=$(get_newres "$oldcontigs" | sed 's/:/ /')
+    newtab=$(get_newres "$newcontigs" | sed 's/:/ /')
+    fixbbres=$(
+        echo $oldcontigs | sed -e 's|/|\n|g' -e 's| |\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' '
+    )
+
+    # Count total number of residues in newcontigs
+    num=$(sed 's|/| |g' <<< "$newcontigs" | awk '{
         for (i=1; i<=NF; i++) {
             if ($i ~ /^[A-Z]/) {
                 ori=$i; sub(/-.*$/,"",ori); sub(/^[A-Z]/,"",ori)
@@ -97,7 +132,8 @@ update_contigs () {
                 num += ori
             }
         }
-    } END { print num }' <<< "$newcontigs")
+    } END { print num }')
+
     awk -v fix="$fixbbres" -v num="$num" '
         NR == FNR { a[$1]=$2; next }
         NR > FNR { for (i in a) if (a[i]==$1) b[i]=$2 }
@@ -105,22 +141,31 @@ update_contigs () {
             n = split(fix, afix)
             idx = 0
             for (i=1; i<=n; i++) {
-                ch=substr(afix[i],1,1); pair=afix[i]; sub(/-/," "ch,pair); split(pair, apair)
-                ori=b[apair[1]] ; sub(/[A-Z]/,"",ori)
-                fin=b[apair[2]] ; sub(/[A-Z]/,"",fin)
+                ch = substr(afix[i], 1, 1)
+                pair = afix[i] ; sub(/-/, " " ch, pair) ; split(pair, apair)
+                ori = substr(b[apair[1]], 2)
+                fin = substr(b[apair[2]], 2)
+
+                ch2_f = substr(b[apair[1]], 1, 1)
+                ch2_i = (ch2_i == "") ? ch2_f : ch2_i
+
                 printf "/%s-%s", ori-idx-1, ori-idx-1
-                printf "/%s", afix[i]
+                if (ch2_f == ch2_i) {
+                    printf "/%s", afix[i]
+                } else {
+                    printf "/0 %s", afix[i]
+                }
+
                 idx=fin
             }
             printf "/%s-%s\n", num-idx, num-idx
         }
-    ' <(echo "$oldtab") <(echo "$newtab") | sed 's|^/||'
+    ' <(echo "$oldtab") <(echo "$newtab") |
+    sed -e 's|^/||' -e 's|^0-0/||' -e 's|/0-0$||'
 }
 
-oldcontigs="${args[1]}"
-newcontigs="${args[2]}"
 if [[ $newcontigs == NONE ]] ; then
     echo $oldcontigs
 else
-    update_contigs $oldcontigs $newcontigs
+    update_contigs "$oldcontigs" "$newcontigs"
 fi

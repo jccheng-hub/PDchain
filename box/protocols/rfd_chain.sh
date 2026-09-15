@@ -370,9 +370,9 @@ rfd_chain () {
     local fixbbres=$fixbbres
 
     # Generate fixbbres if not provided
-    [[ -z $fixbbres && -z $contigs ]] && {
+    [[ -z $fixbbres && -n $contigs ]] && {
         local fixbbres=$(
-            sed 's|/|\n|g' <<< $contigs | grep '^[A-Z]' | paste -sd ' '
+            sed -e 's|/| |g' -e 's| |\n|g' <<< $contigs | grep '^[A-Z]' | paste -sd ' '
         )
     }
     [[ -z $fixbbres && -n $fixedres ]] && local fixbbres="$fixedres"
@@ -877,7 +877,9 @@ EOF
     [[ -s $tmpcst ]] && calc_cst_rmsd $design --append
    
     # Output
-    [[ -n $oldcontigs ]] && local contigs=$(update_contigs $oldcontigs $contigs)
+    [[ -n $oldcontigs ]] && {
+        local contigs=$(update_contigs --oldcontigs $oldcontigs --newcontigs $contigs)
+    }
     local bn=$(basename ${design%.*})
     calc_perc_loop $design $fixednew
     calc_scafscore $design ${scafscore_opts[@]}
