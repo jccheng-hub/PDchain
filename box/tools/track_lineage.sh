@@ -2,11 +2,13 @@
 usage () { cat << EOF
 Usage: track_lineage DESIGN
 Track the lineage for the specified design (from evo_rfd_chain)
+Will output pymol script to view lineage
 
 Parameters:
     DESIGN                  Path to design
 
 Options:
+  --outpml [str]            Output pymol script
   --help                    Display this help and exit
 EOF
 }
@@ -22,8 +24,9 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=()
+val_opts=(outpml)
 bool_opts=(help)
+outpml="lineage.pml"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -80,12 +83,12 @@ lineage=($(
 ))
 
 loadcmd=$(echo "${lineage[@]}" | sed 's/ /\n/g' | sed 's/^/load /')
-first=$(basename $lineage | cut -d. -f1)
-pymol -d "
+cat << EOF > $outpml
 $loadcmd
 join_states lineage, all, -2
 disable not lineage
 spectrum count, rainbow, lineage and name CA
 set movie_fps, 5
 set movie_loop, 0
-"
+EOF
+echo "${lineage[@]}" | sed 's/ /\n/g'

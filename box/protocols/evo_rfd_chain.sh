@@ -266,7 +266,13 @@ while [[ $SECONDS -lt $time_f ]] ; do
             }
         '
     ))
-    echo "Picked $inpdb (rank ${inpdb[1]}) for evolution"
+
+    # Check if inpdb exists
+    if ls $inpdb &>/dev/null ; then
+        echo "Picked $inpdb (rank ${inpdb[1]}) for evolution"
+    else
+        echo "$inpdb does not exist." && continue
+    fi
 
     # Prepare values for rog_cut and loop_cut (tolerate small increase in base value)
     unset extra_opts
