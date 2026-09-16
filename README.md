@@ -17,6 +17,9 @@ curl -fsSL https://pixi.sh/install.sh | sh
 
 Follow the instructions provided in the terminal upon installation. You may need to restart your terminal and/or add ~/.pixi/bin to your PATH. See https://pixi.prefix.dev/latest/installation/ for more information.
 
+> [!IMPORTANT]
+> This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
+
 Once you have pixi installed, run the following commands.
 
 ```
@@ -82,9 +85,6 @@ Using `pdchain activate` will allow the command line tools in the PDchain enviro
 Pixi currently doesn't have a way to "deactivate" the environment in your current shell, so you'll have to close the terminal to escape the environment provided by `pdchain activate`. If you want a reversible interactive shell, then use `pdchain shell` instead. This pushes you into a subshell that you can `exit` out of. Only use `pdchain shell` interactively (not within a bash script like `~/.bashrc`, as it seems to cause pixi to be trapped in some infinite loop from my experience).
 
 For those who are familiar with pixi, `pdchain shell` is just a shortcut for `pixi shell -m /path/to/PDchain/pixi.toml`, and `pdchain activate` is just a shortcut for `eval "$(pixi shell-hook -m /path/to/PDchain/pixi.toml)"`.
-
-> [!IMPORTANT]
-> This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
 
 ## Acknowledgements
 
