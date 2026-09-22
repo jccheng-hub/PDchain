@@ -4,7 +4,8 @@ pixi run -e ligandmpnn ligandmpnn \
     --pdb_path "inputs/1a53_clean.pdb" \
     --out_folder "ex0b_ligandmpnn" \
     --model_type protein_mpnn \
-    --batch_size 10 \ 
+    --batch_size 10 \
+    --pack_side_chains 1 \
     --number_of_packs_per_design 1 \
     --pack_with_ligand_context 1 \
     --temperature 0.1 \

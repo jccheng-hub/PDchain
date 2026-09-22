@@ -3,7 +3,8 @@
 pixi run -e rfdiffusion rfdiffusion \
     'contigmap.contigs=[150-150]' \
     inference.output_prefix=outputs_ex0a/uncond \
-    inference.num_designs=3
+    inference.num_designs=3 \
+    diffuser.T=15
 
 # --- Description --- #
 cat << 'EOF' > /dev/null
