@@ -238,6 +238,7 @@ if [[ -n $outfile ]] ; then
     mkdir -p $(dirname $outfile)
     cp $tmpdir/ranked.txt $outfile
     echo "Ranked list (best to worst) saved to $outfile"
+    echo "${mets[@]}" | sed 's/ /\n/g' > $(dirname $outfile)/ranked_metrics.txt
 elif [[ $inplace == 1 ]] ; then
     tormv=($(gawk -v topnum=$topnum 'FNR > topnum' $tmpdir/ranked.txt))
     if [[ -n $tormv ]] ; then
@@ -254,7 +255,6 @@ elif [[ $inplace == 1 ]] ; then
     fi
     cp $tmpdir/ranked.txt $indir
     echo "Ranked list (best to worst) saved to $indir/ranked.txt"
-    
     echo "${mets[@]}" | sed 's/ /\n/g' > $indir/ranked_metrics.txt
 else
     mkdir -p $outdir
@@ -262,6 +262,5 @@ else
     cp $(head -n $topnum $tmpdir/ranked.txt) $outdir
     echo "Transferred top $topnum designs to $outdir"
     echo "Ranked list (best to worst) saved to $outdir/ranked.txt"
-
     echo "${mets[@]}" | sed 's/ /\n/g' > $outdir/ranked_metrics.txt
 fi
