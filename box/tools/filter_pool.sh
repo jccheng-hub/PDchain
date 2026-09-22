@@ -14,7 +14,10 @@ Parameters:
     INDIR                   Input directory
     METRIC                  Metric string
                             Needs to have the format of min:metric, max:metric,
-                            or val:metric=ideal_val
+                            val:metric=ideal_val, abv:metric=cutoff,
+                            blw:metric=cutoff.
+                            abv and blw are used for direct filtering.
+                            min, max, and val are used for ranking.
                             E.g. min:fin_total_energy_per_res
                             E.g. max:protein_mpnn_confidence
                             E.g. val:dsasa=0.75
@@ -112,7 +115,7 @@ mets=(${args[@]:2})
 
 # Check for metrics formatting
 fmt_check=$(sed 's/ /\n/g' <<< "${mets[*]}" | gawk -F ':' '
-    $1~/^(min|max|val)$/{i++} END {if (i==NR) {print 1} else {print 0}}'
+    $1~/^(min|max|val|abv|blw)$/{i++} END {if (i==NR) {print 1} else {print 0}}'
 )
 
 # Report inputs
@@ -127,28 +130,57 @@ fi
 # Initialize
 tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EXIT
 
+# Filter input PDBs with cuts
+for met in ${mets[@]} ; do
+    met=($(echo $met | sed 's/[:|=]/ /g'))
+    if [[ ${met[0]} =~ ^abv$ && -n ${met[2]} ]] ; then
+        echo "Eliminating designs with ${met[1]} score below ${met[2]}"
+        filt+=($(
+            grep -H "^${met[1]}" $indir/*.pdb 2>/dev/null |
+            awk -v i=${met[2]} '$2<=i{print$1}' | cut -d: -f1
+        ))
+    elif [[ ${met[0]} =~ ^blw$ ]] ; then
+        echo "Eliminating designs with ${met[1]} score above ${met[2]}"
+        filt+=($(
+            grep -H "^${met[1]}" $indir/*.pdb 2>/dev/null |
+            awk -v i=${met[2]} '$2>=i{print$1}' | cut -d: -f1
+        ))
+    fi
+    unset met
+done
+
+# If input PDBs were filtered out, then remove the filtered PDBs from rankings
+pass=($indir/*.pdb)
+[[ -n $filt ]] && {
+    filt=($(echo ${filt[@]} | sed 's| |\n|g' | sort -u))
+    echo "The following designs were filtered out: ${filt[@]}"
+    pass=($(
+        echo ${pass[@]} ${filt[@]} | sed 's| |\n|g' | sort | uniq -u
+    ))
+}
+
 # Get metrics
 for met in ${mets[@]} ; do
     met=($(echo $met | sed 's/[:|=]/ /g'))
     if [[ ${met[0]} =~ ^min$ ]] ; then
         echo "Generating ascending sorted list for ${met[1]}..."
-        grep -H "^${met[1]} " $indir/*.pdb 2>/dev/null | sort -k2,2n -k1R |
+        grep -H "^${met[1]} " ${pass[@]} 2>/dev/null | sort -k2,2n -k1R |
         sed 's/:/ /' > $tmpdir/${met[1]}.txt
     elif [[ ${met[0]} =~ ^max$ ]] ; then
         echo "Generating descending sorted list for ${met[1]}..."
-        grep -H "^${met[1]} " $indir/*.pdb 2>/dev/null | sort -k2,2rn -k1R |
+        grep -H "^${met[1]} " ${pass[@]} 2>/dev/null | sort -k2,2rn -k1R |
         sed 's/:/ /' > $tmpdir/${met[1]}.txt
     elif [[ ${met[0]} =~ ^val$ ]] ; then
         [[ -z ${met[2]} ]] && {
             echo "Ideal value for ${met[1]} not provided. Omitting this metric!" ; continue
         }
         echo "Generating ascending sorted list for abs(${met[1]} - ${met[2]}) ..."
-        grep -H "^${met[1]} " $indir/*.pdb 2>/dev/null | awk -v idval=${met[2]} '
+        grep -H "^${met[1]} " ${pass[@]} 2>/dev/null | awk -v idval=${met[2]} '
             function abs(x) { return x < 0 ? -x : x }
             { print $1 "_dev_from_" idval, abs(idval-$2) }
         ' | sort -k2,2n -k1R | sed 's/:/ /' > ${tmpdir}/${met[1]}.txt
-    else
-        echo "Error when parsing val: ${met[1]}."
+    elif [[ ${met[0]} =~ ^abv|blw$ ]] ; then
+        continue
     fi
 
     # Trim out files
@@ -167,7 +199,7 @@ for met in ${mets[@]} ; do
 done
 
 # Get threshold
-totnum=$(echo $indir/*.pdb | wc -w)
+totnum=${#pass[@]}
 topnum=$(awk 'BEGIN{printf "%.0f", ('"$perc * $totnum * 0.01"')}')
 [[ -n $num ]] && topnum=$num
 echo "Threshold: $topnum / $totnum"
@@ -195,6 +227,11 @@ gawk -v topnum=$topnum -v ranked="$tmpdir/ranked.txt" '
     for (i=f; i>=1; i--) print elim[i] >> ranked
 }
 ' $tmpdir/*.txt
+
+# Append the filtered to ranked list
+[[ -n $filt ]] && {
+    echo ${filt[@]} | sed 's| |\n|g' >> $tmpdir/ranked.txt
+}
 
 # Output
 if [[ -n $outfile ]] ; then

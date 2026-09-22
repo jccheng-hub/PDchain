@@ -353,7 +353,7 @@ for infile in ${infiles[@]} ; do
 done
 
 # Clean foldrepo
-[[ $(echo $foldrepo/*pdb | wc -w) -gt 1000 ]] && {
+[[ $(echo $foldrepo/*.pdb | wc -w) -gt 1000 ]] && {
     echo "Cleaning $foldrepo..."
-    rm -v $(ls -lt $foldrepo/*.pdb | tail -n +1001)
+    rm -v $(ls -t $foldrepo/*.pdb | tail -n +1001)
 }

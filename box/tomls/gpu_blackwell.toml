@@ -130,4 +130,5 @@ rdkit = { features = ["rdkit"], no-default-feature = true }
 omegafold = { features = ["omegafold"], no-default-feature = true }
 
 [tasks]
-install = "pixi install --all; bash install.sh gpu"
+patch_dgl = "pixi run -e rfdiffusion python -c \"import pathlib; p=pathlib.Path('.pixi/envs/rfdiffusion/lib/python3.10/site-packages/dgl/graphbolt/__init__.py'); p.write_text(p.read_text().replace('def load_graphbolt():', 'def load_graphbolt():\\n    return')) if p.exists() else None\""
+install = "pixi install --all ; pixi run patch_dgl ; bash install.sh gpu"

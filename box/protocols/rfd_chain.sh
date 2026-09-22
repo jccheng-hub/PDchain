@@ -118,7 +118,6 @@ LigandMPNN + PyRosetta options:
   --relax_repeats [int]     Number of relax repeats to use
   --cstfile [str]           Path to cst file
   --fix_stdev [float]       Strength of constraints for fixed residues
-  --bb_stdev [float]        Strength of constraints for backbone atoms
   --ca_stdev [float]        Strength of constraints for CA atoms
   --lig_stdev [float]       Strength of constraints for ligand atoms
                             Need to invoke --ligname
@@ -151,7 +150,7 @@ optarg () {
 }
 
 val_opts=(
-    addgap              addtot              bb_stdev            ca_stdev            
+    addgap              addtot              ca_stdev            
     clash_cut           cstfile             design_cycles       fix_stdev
     fixbbres            fixedres            indir               inpdb
     lig_stdev           ligname             loop_cut            mingap
@@ -177,7 +176,6 @@ addgap="100"
 addtot="80"
 ap_stdev=""
 backrub=""
-bb_stdev=""
 ca_stdev=""
 clash_cut=""
 cstfile=""
@@ -201,7 +199,7 @@ ppi_target=""
 redesres=""
 relax_repeats="1"
 rog_cut="9999"
-ss_trim="1"
+ss_trim=""
 nterm_trim="1"
 cterm_trim="1"
 nterm_add="0"
@@ -411,9 +409,6 @@ rfd_chain () {
         local oldfixed=$(sed -n "s/^fixedres //p" $inpdb)
         local oldlig=$(sed -n "s/^ligname //p" $inpdb)
         local oldcsts=$(awk '/>>> constraints >>>/ {f=1;next} /<<< constraints <<</ {f=0} f' $inpdb)
-        [[ $ss_to_contigs == 1 && -z $oldcontigs ]] && {
-            local oldcontigs=$(gen_contigs $fixbbres --inpdb $inpdb --ss_to_contigs --ss_trim 100)
-        }
         [[ -z $fixedres && -n $oldfixed ]] && {
             echo "Using old fixedres residues found in input PDB: $oldfixed"
             local fixedres="$oldfixed"
@@ -472,7 +467,7 @@ rfd_chain () {
     fi
     
     local ligname=(${ligname[@]})
-    local contigs_fixbb=$(sed 's|/|\n|g' <<< "$contigs" | grep '^[A-Z]' | paste -sd ' ')
+    local contigs_fixbb=$(sed -e 's|/| |g' -e 's| |\n|g' <<< "$contigs" | grep '^[A-Z]' | paste -sd ' ')
 
     [[ -n $ligname && $partial == 0 ]] && {
         local rfd_opts+=("potentials.guide_scale=1 potentials.substrate=LIG")
@@ -666,9 +661,9 @@ EOF
     [[ -n $ligname ]] && {
         if [[ -z $clash_cut ]] ; then
             local clash_cut_true=$(awk '
-                $1=="HETATM" && $NF!="H" { n++ } END { print int(n/2) }
+                $1=="HETATM" && $NF!="H" { n++ } END { m = int(n/3) ? int(n/3) : 1 ; print m }
             ' $diffused)
-            echo "Using --clash_cut $clash_cut_true (half of all non-hydrogen ligand atoms)"
+            echo "Using --clash_cut $clash_cut_true (a third of all non-hydrogen ligand atoms)"
         else
             local clash_cut_true="$clash_cut"
             echo "Using --clash_cut $clash_cut_true"
