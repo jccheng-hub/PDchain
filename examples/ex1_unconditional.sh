@@ -3,7 +3,7 @@
 pixi run rfd_chain 140-160 \
     --idealize --relax --ca_stdev 1 \
     --model_type protein_mpnn \
-    --design_cycles 2 \
+    --design_cycles 3 \
     --numdes 5 \
     --outprefix outputs/ex1_rand
 

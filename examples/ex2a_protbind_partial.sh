@@ -5,7 +5,7 @@ pixi run rfd_chain NONE --skip_mpnn \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax \
     --ca_stdev 1 \
-    --design_cycles 5 \
+    --design_cycles 3 \
     --select_met min:ddg \
     --numdes 1 \
     --outprefix outputs/ex2_1brs_control
@@ -18,7 +18,7 @@ pixi run rfd_chain \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
-    --design_cycles 5 \
+    --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
     --outprefix outputs/ex2a_1brs_partial

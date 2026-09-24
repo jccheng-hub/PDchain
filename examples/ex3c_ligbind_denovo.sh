@@ -7,8 +7,8 @@ pixi run rfd_chain NONE --skip_mpnn \
     --ligname 6NT \
     --idealize --relax \
     --ca_stdev 1 \
-    --fix_stdev 0.5 --lig_stdev 0.5 --ap_stdev 1.0 \
-    --design_cycles 5 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
     --select_met min:ddg \
     --numdes 1 \
     --outprefix outputs/ex3_5rgf_control
@@ -30,8 +30,8 @@ pixi run rfd_chain \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
-    --fix_stdev 0.5 --lig_stdev 0.5 --ap_stdev 1.0 \
-    --design_cycles 5 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
     --select_met min:ddg \
     --numdes 2000 \
     --outprefix outputs/ex3c_5rgf_denovo
