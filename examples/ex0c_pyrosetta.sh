@@ -37,8 +37,8 @@ xml = XmlObjects.create_from_string(xml_string).get_mover('ParsedProtocol')
 pose = pyrosetta.pose_from_pdb('inputs/1a53_clean.pdb')
 xml.apply(pose)
 
-Path('outputs_ex0c').mkdir(parents=True, exist_ok=True)
-pose.dump_pdb('outputs_ex0c/1a53_clean_rlx.pdb')
+Path('outputs').mkdir(parents=True, exist_ok=True)
+pose.dump_pdb('outputs/ex0c_1a53_rlx.pdb')
 EOF
 
 # --- Description --- #
@@ -57,7 +57,7 @@ python script from within this pyrosetta environment.
 Here, we take the input pdb at [inputs/1a53_clean.pdb] and apply two movers. The
 first mover adds constraints to the CA atoms, and the second mover applies the
 FastRelax mover with those constraints. The output is then saved to
-[outputs_ex0c/1a53_clean_rlx.pdb].
+[outputs/ex0c_1a53_rlx.pdb].
 
 For more information on how to run Rosetta and Pyrosetta, refer to the Rosetta
 and PyRosetta documentation.

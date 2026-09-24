@@ -84,11 +84,11 @@ RFdiffusion options:
                             of timesteps for this partial diffusion rerun.
   --partial                 Use partial diffusion
   --monomer_ROG             Apply monomer radius of gyration potential
-  --ppi_mode                Apply settings recommended for PPI
-                            I.e. noise_scale_ca=0.5 and noise_scale_frame=0.5
   --inpaint_seq             If a residue has its backbone fixed for RFdiffusion
                             but is not fixed for sequence design, then hide the
                             residue identity during RFdiffusion.
+  --noise_scale [float]     Noise scale (0-1) for RFdiffusion. Higher values
+                            result in more diversity but lower quality.
 
 LigandMPNN + PyRosetta options:
   --design_cycles [int]     Number of MPNN-FastRelax cycles.
@@ -160,13 +160,13 @@ val_opts=(
     temperature         threads             timesteps           vary_linkers 
     ap_stdev            backrub             nterm_trim          cterm_trim
     nterm_add           cterm_add           helix_cap           reset_perc
-    nbr_dist            select_met
+    nbr_dist            select_met          noise_scale
 )
 
 bool_opts=(
     disallow_cys        dec_only            ss_to_contigs     
     fix_bb              fix_chi             idealize            inc_only            
-    monomer_ROG         partial             ppi_mode            random_order        
+    monomer_ROG         partial             random_order        
     randsuffix          regap               relax               inpaint_seq
     sc_context          skip_mpnn           skip_refine         ignore_metals
     help
@@ -212,6 +212,7 @@ helix_cap=""
 reset_perc="0"
 nbr_dist=""
 select_met=""
+noise_scale="0.5"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -458,6 +459,7 @@ rfd_chain () {
     
     # Prepare options for RFdiffusion
     local rfd_opts=()
+    local rfd_opts=("denoiser.noise_scale_ca=$noise_scale" "denoiser.noise_scale_frame=$noise_scale")
     [[ -n $inpdb ]] && local rfd_opts+=("inference.input_pdb=$inpdb_tmp")
     
     if [[ $partial == 1 ]] ; then
@@ -470,25 +472,28 @@ rfd_chain () {
     local contigs_fixbb=$(sed -e 's|/| |g' -e 's| |\n|g' <<< "$contigs" | grep '^[A-Z]' | paste -sd ' ')
 
     [[ -n $ligname && $partial == 0 ]] && {
-        local rfd_opts+=("potentials.guide_scale=1 potentials.substrate=LIG")
-        local rfd_opts+=("'potentials.guiding_potentials=[\"type:substrate_contacts,s:1,r_0:8,rep_r_0:5.0,rep_s:2,rep_r_min:1\"]'")
+        echo "Adding substrate_contacts guiding potential"
+        local rfd_opts+=(
+            "potentials.substrate=LIG"
+            "potentials.guide_scale=1"
+            "'potentials.guiding_potentials=[\"type:substrate_contacts,s:1,r_0:8,rep_r_0:5.0,rep_s:2,rep_r_min:1\"]'"
+        )
     }
     
     [[ $monomer_ROG == 1 && $partial == 0 ]] && {
+        echo "Adding monomer_ROG guiding potential"
         local rfd_opts+=("'potentials.guiding_potentials=[\"type:monomer_ROG,weight:1,min_dist:10\"]'")
         local rfd_opts+=("potentials.guide_scale=2 potentials.guide_decay=\"quadratic\"")
     }
     
     [[ -n $ppi_hotspots ]] && {
+        echo "Adding hotspot residues"
         local ppi_hotspots=$(expand_res_range $ppi_hotspots)
         local rfd_opts+=("'ppi.hotspot_res=[${ppi_hotspots// /,}]'")
     }
     
-    [[ $ppi_mode == 1 ]] && {
-        local rfd_opts+=("denoiser.noise_scale_ca=0.5" "denoiser.noise_scale_frame=0.5")
-    }
-    
     [[ -n $contigs_fixbb ]] && {
+        echo "Using ActiveSite_ckpt.pt model for RFdiffusion"
         local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/ActiveSite_ckpt.pt")
     }
     
@@ -533,6 +538,8 @@ rfd_chain () {
                 'contigmap.contigs=[$contigs]' \
                 inference.output_prefix=$step1/Diffused \
                 inference.num_designs=1 \
+                denoiser.noise_scale_ca=$noise_scale \
+                denoiser.noise_scale_frame=$noise_scale \
                 ${rfd_opts[*]} ${rfd_suppress_logs[*]}
         "
     fi
@@ -661,9 +668,9 @@ EOF
     [[ -n $ligname ]] && {
         if [[ -z $clash_cut ]] ; then
             local clash_cut_true=$(awk '
-                $1=="HETATM" && $NF!="H" { n++ } END { m = int(n/3) ? int(n/3) : 1 ; print m }
+                $1=="HETATM" && $NF!="H" { n++ } END { m = int(n/2) ? int(n/2) : 1 ; print m }
             ' $diffused)
-            echo "Using --clash_cut $clash_cut_true (a third of all non-hydrogen ligand atoms)"
+            echo "Using --clash_cut $clash_cut_true (half of all non-hydrogen ligand atoms)"
         else
             local clash_cut_true="$clash_cut"
             echo "Using --clash_cut $clash_cut_true"
@@ -896,7 +903,7 @@ EOF
 # Generate ids
 if [[ $randsuffix == 1 ]] ; then
     i=$(awk "BEGIN{print(($numdes + 1) * 6)}")
-    id=($(tr -cd 'A-Z' </dev/urandom | head -c ${i} | fold -w 6))
+    id=($(tr -cd 'a-z' </dev/urandom | head -c ${i} | fold -w 6))
 else
     id=($(seq -w 0 9999))
 fi

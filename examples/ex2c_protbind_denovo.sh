@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
 
-rfd_chain 80-90/0 A17-138 \
-    --inpdb inputs/5o45_clean.pdb \
-    --ppi_hotspots A37 A39 A98 A100 \
+# Generate control
+pixi run rfd_chain NONE --skip_mpnn \
+    --inpdb inputs/1brs_af3mod0.pdb \
+    --idealize --relax \
+    --ca_stdev 1 \
+    --design_cycles 5 \
+    --select_met min:ddg \
+    --numdes 1 \
+    --outprefix outputs/ex2_1brs_control
+
+# Generate new designs
+pixi run rfd_chain 86-95/0 B1-110 \
+    --inpdb inputs/1brs_af3mod0.pdb \
+    --ppi_hotspots A73 A75 \
     --ppi_mode \
-    --fixedres A17-138 \
+    --fixedres B1-110 \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 5 \
     --select_met min:ddg \
-    --numdes 20 \
-    --outprefix outputs_ex3/5o45_protbind
+    --numdes 3 \
+    --outprefix outputs/ex2c_1brs_denovo
 
 # --- Description --- #
 cat << 'EOF' > /dev/null

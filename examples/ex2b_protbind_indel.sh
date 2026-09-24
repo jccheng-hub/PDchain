@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 
 # Generate control
-rfd_chain NONE --skip_mpnn \
+pixi run rfd_chain NONE --skip_mpnn \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax \
     --ca_stdev 1 \
     --design_cycles 5 \
     --select_met min:ddg \
     --numdes 1 \
-    --outprefix outputs_ex3/1brs_control
+    --outprefix outputs/ex2_1brs_control
 
 # Generate new designs
-rfd_chain \
+pixi run rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
     --ppi_mode \
     --fixedres B1-110 \
-    --ss_to_contigs --vary_linkers 1 --ss_trim 2 --inpaint_seq \
+    --ss_to_contigs --vary_linkers 1 --ss_trim 2-4 --inpaint_seq \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 5 \
     --select_met min:ddg \
-    --numdes 20 \
-    --outprefix outputs_ex3/1brs_indel_protbind
+    --numdes 3 \
+    --outprefix outputs/ex2b_1brs_indel
 
 # --- Description --- #
 cat << 'EOF' > /dev/null

@@ -125,12 +125,12 @@ BEGIN {
     tors["CYS"]["HG-SG-CB-CA"]  = free     ; tors["ASN"]["CG-CB-CA-N"]    = sp33       
     tors["CYS"]["SG-CB-CA-N"]   = sp33     ; tors["PRO"]                               
     tors["ASP"]["OD1-CG-CB-CA"] = sp23     ; tors["GLN"]["OE1-CD-CG-CB"]  = sp23       
-    tors["ASP"]["CG-CB-CA-N"]   = sp33     ; tors["GLN"]["CD-CG-CB-CA"]   = sp33       
+    tors["ASP"]["CG-CB-CA-N"]   = sp33     ; tors["GLN"]["CD-CG-CB-CA"]   = "180"       
     tors["GLU"]["OE1-CD-CG-CB"] = sp23     ; tors["GLN"]["CG-CB-CA-N"]    = sp33       
-    tors["GLU"]["CD-CG-CB-CA"]  = sp33     ; tors["ARG"]["NH1-CZ-NE-CD"]  = "0,180"    
+    tors["GLU"]["CD-CG-CB-CA"]  = "180"    ; tors["ARG"]["NH1-CZ-NE-CD"]  = "0,180"    
     tors["GLU"]["CG-CB-CA-N"]   = sp33     ; tors["ARG"]["CZ-NE-CD-CG"]   = "180"      
     tors["PHE"]["CD1-CG-CB-CA"] = sp23aro  ; tors["ARG"]["NE-CD-CG-CB"]   = "180"      
-    tors["PHE"]["CG-CB-CA-N"]   = sp33     ; tors["ARG"]["CD-CG-CB-N"]    = sp33       
+    tors["PHE"]["CG-CB-CA-N"]   = sp33     ; tors["ARG"]["CD-CG-CB-N"]    = "180"       
     tors["GLY"]                            ; tors["SER"]["HG-OG-CB-CA"]   = free       
     tors["HIS"]["ND1-CG-CB-CA"] = sp23aro  ; tors["SER"]["OG-CB-CA-N"]    = sp33       
     tors["HIS"]["CG-CB-CA-N"]   = sp33     ; tors["THR"]["1HG-OG1-CB-CA"] = free       
@@ -139,7 +139,7 @@ BEGIN {
     tors["LYS"]["NZ-CE-CD-CG"]  = "180"    ; tors["TRP"]["CD1-CG-CB-CA"]  = sp23aro
     tors["LYS"]["CE-CD-CG-CB"]  = "180"    ; tors["TRP"]["CG-CB-CA-N"]    = sp33       
     tors["LYS"]["CD-CG-CB-N"]   = "180"    ; tors["TYR"]["HH-OH-CZ-CE1"]  = free       
-    tors["LEU"]["CD1-CG-CB-CA"] = sp33     ; tors["TYR"]["CD1-CG-CB-CA"]  = sp23aro
+    tors["LEU"]["CD1-CG-CB-CA"] = "180"    ; tors["TYR"]["CD1-CG-CB-CA"]  = sp23aro
     tors["LEU"]["CG-CB-CA-N"]   = sp33     ; tors["TYR"]["CG-CB-CA-N"]    = sp33       
     tors["MET"]["1HE-CE-SD-CG"] = free
     tors["MET"]["CE-SD-CG-CB"]  = "180"

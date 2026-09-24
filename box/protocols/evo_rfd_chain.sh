@@ -59,6 +59,7 @@ Options:
                             directory every round. Useful when the input
                             directory is dynamically being updated with designs.
   --skip_diffusion          Skip RFdiffusion step during redesign.
+  --stop_at_capacity        Stop running when the number of designs >= poolsize.
   --help                    Display this help and exit
 EOF
 }
@@ -89,7 +90,7 @@ bool_opts=(
     fix_chi             idealize            inc_only            monomer_ROG
     partial             ppi_mode            relax               sc_context
     inpaint_seq         help                skip_diffusion      ignore_metals
-    auto_update
+    auto_update         stop_at_capacity
 )
 
 outdir="./evolved"
@@ -348,5 +349,15 @@ while [[ $SECONDS -lt $time_f ]] ; do
             echo "Exiting..."
             exit
         fi
+    }
+
+    # Stop at capacity
+    [[ $stop_at_capacity == 1 ]] && {
+        cursize=$(echo $outdir/*.pdb | wc -w)
+        [[ $cursize -ge $poolsize ]] && {
+            echo "The option --stop_at_capacity was enabled, and maximum capacity is reached."
+            echo "Exiting..."
+            exit
+        }
     }
 done

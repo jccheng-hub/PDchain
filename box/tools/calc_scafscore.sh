@@ -104,9 +104,9 @@ mets="mp_dst mp_dev rog_ala fc_dst fc_dev clash fc_compact mp_fc_dst nbr_count_u
 # >>> gawk_script >>> {{{
 gawk_script='
     BEGIN {
+        nbr_count = '"$nbr_count"'
         if (!chri)    chri = "'"$chri"'"
         if (!resn)    resn = "'"$resn"'"
-        if (!nbr_count) nbr_count = '"$nbr_count"'
     
         if (chri != "" || resn != "") {
             chri = expand_range(chri)

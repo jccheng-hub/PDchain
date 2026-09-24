@@ -1,19 +1,32 @@
 #!/usr/bin/env bash
 
-rfd_chain \
-    --inpdb inputs/1a53_clean.pdb \
-    --fixedres A52 A158 \
-    --ligname IGP \
-    --partial --timesteps 2 --ss_trim 100 \
-    --idealize \
-    --model_type protein_mpnn \
-    --relax \
+# Generate control
+pixi run rfd_chain NONE --skip_mpnn \
+    --inpdb inputs/5rgf_clean.pdb \
+    --fixedres A50 A127 \
+    --ligname 6NT \
+    --idealize --relax \
     --ca_stdev 1 \
     --lig_stdev 1 --fix_stdev 1 --ap_stdev 1 \
     --design_cycles 5 \
     --select_met min:ddg \
-    --numdes 5 \
-    --outprefix outputs_ex4/1a53_partial
+    --numdes 1 \
+    --outprefix outputs/ex3_5rgf_control
+
+# Generate designs
+pixi run rfd_chain \
+    --inpdb inputs/5rgf_clean.pdb \
+    --fixedres A50 A127 \
+    --ligname 6NT \
+    --ss_to_contigs --ss_trim 2 --vary_linkers 1 \
+    --idealize --relax \
+    --model_type protein_mpnn \
+    --ca_stdev 1 \
+    --lig_stdev 1 --fix_stdev 1 --ap_stdev 1 \
+    --design_cycles 5 \
+    --select_met min:ddg \
+    --numdes 3 \
+    --outprefix outputs/ex3b_1a53_indel
 
 # --- Description --- #
 cat << 'EOF' > /dev/null

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 pixi run -e rfdiffusion rfdiffusion \
-    'contigmap.contigs=[150-150]' \
-    inference.output_prefix=outputs_ex0a/uncond \
-    inference.num_designs=3 \
-    diffuser.T=15
+    diffuser.T=15 \
+    'contigmap.contigs=[A1-50/10-20/A66-247]' \
+    inference.input_pdb="inputs/1a53_clean.pdb" \
+    inference.output_prefix="outputs/ex0a_1a53_remodel" \
+    inference.num_designs=3 
 
 # --- Description --- #
 cat << 'EOF' > /dev/null
@@ -15,7 +16,7 @@ Essentially, the command [rfdiffusion] is linked directly to the
 
 The prefix [pixi run -e rfdiffusion] just tells pixi to activate the rfdiffusion
 environment before running the command that follows, which in this case is the
-command [rfdiffusion 'contigmap.contigs=[150-150]' ...].
+command [rfdiffusion diffuser.T=15 ...].
 
 For more details on how to run RFdiffusion, visit the official github:
 https://github.com/RosettaCommons/RFdiffusion.git

@@ -2,7 +2,7 @@
 
 pixi run -e ligandmpnn ligandmpnn \
     --pdb_path "inputs/1a53_clean.pdb" \
-    --out_folder "ex0b_ligandmpnn" \
+    --out_folder "outputs" \
     --model_type protein_mpnn \
     --batch_size 10 \
     --pack_side_chains 1 \

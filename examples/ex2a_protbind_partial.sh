@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
 # Generate control
-rfd_chain NONE --skip_mpnn \
+pixi run rfd_chain NONE --skip_mpnn \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax \
     --ca_stdev 1 \
     --design_cycles 5 \
     --select_met min:ddg \
     --numdes 1 \
-    --outprefix outputs_ex2/1brs_control
+    --outprefix outputs/ex2_1brs_control
 
 # Generate new designs
-rfd_chain \
+pixi run rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
     --fixedres B1-110 \
     --ppi_mode --partial --timesteps 1 \
@@ -20,8 +20,8 @@ rfd_chain \
     --ca_stdev 1 \
     --design_cycles 5 \
     --select_met min:ddg \
-    --numdes 20 \
-    --outprefix outputs_ex2/1brs_partial_protbind
+    --numdes 3 \
+    --outprefix outputs/ex2a_1brs_partial
 
 # --- Description --- #
 cat << 'EOF' > /dev/null

@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
 pixi run rfd_chain 140-160 \
-    --idealize \
+    --idealize --relax --ca_stdev 1 \
     --model_type protein_mpnn \
-    --relax \
-    --ca_stdev 1 \
     --design_cycles 2 \
     --numdes 5 \
-    --outprefix outputs_ex1/uncond
+    --outprefix outputs/ex1_rand
 
 # --- Description --- #
 cat << 'EOF' > /dev/null
