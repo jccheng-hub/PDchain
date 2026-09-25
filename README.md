@@ -26,17 +26,17 @@ Once you have pixi installed, run the following commands to download the reposit
 git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git && cd PDchain
 ```
 
-By default, the installation will be CPU-only. If you have an osx-arm64 and or cuda-compatible linux-64, there is an alternate pixi.toml file for mps/cuda GPU acceleration at `box/tomls/gpu.toml`. To install the GPU version, replace the `pixi.toml` in the root directory with `box/tomls/gpu.toml` before running the subsequent installation commands.
+Run the following for a CPU-only installation. This installation is more consistent across a variety of systems, but it doesn't leverage GPU acceleration for RFdiffusion.
 
 ```
-# Run the following line only if you have mps- or cuda-compatible systems
-# cp box/tomls/gpu.toml pixi.toml
-
-# Install PDchain and register its workspace name
-pixi run install && pixi workspace register --name PDchain
+cp box/tomls/cpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
 ```
 
-A copy of the default CPU-only pixi.toml is at `box/tomls/cpu.toml` if you want to revert back.
+If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to leverage GPU acceleration for RFdiffusion, run the following instead
+
+```
+cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
+```
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
