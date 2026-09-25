@@ -57,7 +57,7 @@ torch = "==2.2.1"
 torchdata = "==0.7.1"
 dgl = "==2.1.0"
 nvtx-mock = { git = "https://github.com/YaoYinYing/nvtx-mock" }
-rfdiffusion = { git = "https://github.com/YaoYinYing/RFdiffusion", rev = "mps-test-rfpeptide" }
+rfdiffusion = { git = "https://github.com/jccheng-hub/RFdiffusion", rev = "mps-test-rfpeptide" }
 se3-transformer = { git = "https://github.com/YaoYinYing/SE3Transformer", rev = "rfdiffusion-mps-test" }
 # rfdiffusion = { git = "https://github.com/YaoYinYing/RFdiffusion", rev = "cpu-only-rfpeptide" }
 # se3-transformer = { git = "https://github.com/YaoYinYing/SE3Transformer" }
@@ -78,7 +78,7 @@ torch = "==2.2.1"
 torchdata = "==0.7.1"
 dgl = "==2.1.0"
 nvtx-mock = { git = "https://github.com/YaoYinYing/nvtx-mock" }
-rfdiffusion = { git = "https://github.com/YaoYinYing/RFdiffusion", rev = "cpu-only-rfpeptide" }
+rfdiffusion = { git = "https://github.com/jccheng-hub/RFdiffusion", rev = "cpu-only-rfpeptide" }
 se3-transformer = { git = "https://github.com/YaoYinYing/SE3Transformer" }
 
 [feature.rdkit.dependencies]
@@ -114,4 +114,4 @@ rdkit = { features = ["rdkit"], no-default-feature = true }
 omegafold = { features = ["omegafold"], no-default-feature = true }
 
 [tasks]
-install = "pixi install --all; bash install.sh gpu"
+install = "pixi install --all && bash install.sh GPU"

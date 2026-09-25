@@ -26,7 +26,7 @@ pixi run rfd_chain \
     --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
-    --outprefix outputs/ex3b_1a53_indel
+    --outprefix outputs/ex3b_5rgf_indel
 
 # --- Description --- #
 cat << 'EOF' > /dev/null

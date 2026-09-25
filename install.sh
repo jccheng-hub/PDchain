@@ -8,14 +8,12 @@ pixirun="pixi run -m $pixitoml -e"
 }
 
 usage () { cat << EOF
-Usage: bash install.sh TYPE
+Usage: bash install.sh [CPU/GPU]
 Installation script for PDchain
 
-Parameters:
-    TYPE                    Type of installation (cpu or gpu)
-
 Options:
-  --scriptdirs [str]        Script directories in box to add as CLI tools
+  --scriptdirs [str]        Directories in box with scripts to be added as CLI
+                            tools
   --help                    Display this help and exit
 EOF
 }
@@ -33,7 +31,7 @@ optarg () {
 
 val_opts=(scriptdirs)
 bool_opts=(help)
-scriptdirs="protocols tools"
+scriptdirs=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -67,6 +65,13 @@ done
 set -e
 shopt -s nullglob
 
+# Declare type of installation
+if [[ $1 =~ ^CPU|GPU$ ]] ; then
+    echo "Setting up PDchain for $1 usage..."
+else
+    echo "Need to specify CPU or GPU." && exit 1
+fi
+
 # Download models
 mkdir -p $pixiroot/models
 modlinks=(
@@ -98,27 +103,11 @@ for link in ${modlinks[@]} ; do
     [[ ! -e $target ]] && wget -nc -P $pixiroot/models $link
 done
 
-# Tweak RFdiffusion
-rfddir="$pixiroot/box/programs/RFdiffusion"
-pkgdir=$(find $pixiroot/.pixi/envs/rfdiffusion -name "site-packages" | head -n1)
-[[ -e $pkgdir ]] && {
-    echo "Adjusting RFdiffusion environment..."
-    rsync -ah --info=progress2 --mkpath $rfddir/examples $pkgdir
-    rsync -ah --info=progress2 --mkpath $pixiroot/models $pkgdir
-    rsync -ah --info=progress2 --mkpath $rfddir/config $pixiroot/.pixi/envs/rfdiffusion
-}
-echo
-
 # Add RFdiffusion symlink
+rfddir="$pixiroot/box/programs/RFdiffusion"
 rfdlink="$pixiroot/.pixi/envs/rfdiffusion/bin/rfdiffusion"
-if [[ $1 == "cpu" ]] ; then
-    cp $rfddir/scripts/run_inference_cpu.py $rfddir/scripts/run_inference.py
-    echo "$rfddir/scripts/run_inference.py is set up for CPU use only."
-elif [[ $1 == "gpu" ]] ; then
-    cp $rfddir/scripts/run_inference_gpu.py $rfddir/scripts/run_inference.py
-    echo "$rfddir/scripts/run_inference.py is set up for GPU use (mps or cuda)."
-fi
-ln -sfn $pixiroot/box/programs/RFdiffusion/scripts/run_inference.py $rfdlink &&
+rfd_py="$pixiroot/.pixi/envs/rfdiffusion/bin/run_inference.py"
+ln -sfn $rfd_py $rfdlink &&
 echo "Added symlink: $rfdlink"
 
 # Add LigandMPNN symlink
@@ -133,7 +122,7 @@ pixi run -m $pixiroot/pixi.toml -e omegafold pip install --no-deps git+https://g
 boxdir="$pixiroot/box"
 bindir="$pixiroot/.pixi/envs/default/bin"
 cmdtools=()
-for dir in $scriptdirs ; do
+for dir in protocols tools $scriptdirs ; do
     scripts=($boxdir/$dir/*.sh)
     for script in ${scripts[@]} ; do
         bn=$(basename ${script%.*})

@@ -20,23 +20,23 @@ Follow the instructions provided in the terminal upon installation. You may need
 > [!IMPORTANT]
 > This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
 
-Once you have pixi installed, run the following commands.
+Once you have pixi installed, run the following commands to download the repository, then navigate into it.
 
 ```
-git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git    # Download repository
-cd PDchain                                # Navigate into root directory
+git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git && cd PDchain
+```
+
+By default, the installation will be CPU-only. If you have an osx-arm64 and or cuda-compatible linux-64, there is an alternate pixi.toml file for mps/cuda GPU acceleration at `box/tomls/gpu.toml`. To install the GPU version, replace the `pixi.toml` in the root directory with `box/tomls/gpu.toml` before running the subsequent installation commands.
+
+```
+# Run the following command only if you have mps- or cuda-compatible systems
+# cp box/tomls/gpu.toml pixi.toml
+
 pixi run install                          # Install all environments
 pixi workspace register --name PDchain    # Name workspace for convenience
 ```
 
-Linux-aarch64 will be cpu-only. Osx-arm64 and linux-64 will make use of mps/cuda. If you want the entire environment to be cpu-only regardless of system, replace `pixi.toml` with `box/tomls/cpu.toml` before running `pixi run install`, like so:
-
-```
-cp box/tomls/cpu.toml pixi.toml
-pixi run install
-```
-
-A copy of the default gpu-compatible pixi.toml is at `box/tomls/gpu.toml` if you want to revert back.
+A copy of the default CPU-only pixi.toml is at `box/tomls/cpu.toml` if you want to revert back.
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
