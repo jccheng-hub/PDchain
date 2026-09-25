@@ -20,7 +20,7 @@ Follow the instructions provided in the terminal upon installation. You may need
 > [!IMPORTANT]
 > This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
 
-Once you have pixi installed, run the following commands to download the repository, then navigate into it.
+Once you have pixi installed, run the following to download the repository and navigate into it.
 
 ```
 git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git && cd PDchain
@@ -32,7 +32,7 @@ Run the following for a CPU-only installation. This installation is more consist
 cp box/tomls/cpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
 ```
 
-If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to leverage GPU acceleration for RFdiffusion, run the following instead
+If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to leverage GPU acceleration for RFdiffusion, run the following instead.
 
 ```
 cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
