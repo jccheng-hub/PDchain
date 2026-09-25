@@ -49,10 +49,9 @@ cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register -
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
 ## Usage Examples
-
 Example scripts can be found in the `examples` directory.
 
-### Unconditional Monomer Generation
+### 1 - Unconditional Monomer Generation
 ```bash
 pixi run -w PDchain rfd_chain 140-160 \
     --idealize --relax --ca_stdev 1 \
@@ -80,7 +79,7 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 
 `--outprefix outputs/ex1_rand` specifies the path prefix of the output designs.
 
-### Protein Binder Design
+### 2 - Protein Binder Design
 
 The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
 
@@ -97,7 +96,7 @@ pixi run -w PDchain rfd_chain NONE --skip_mpnn \
 
 The `NONE` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion. The `--skip_mpnn` option tells `rfd_chain` to skip MPNN sequence design. This leaves just the Rosetta refinement with Idealize and FastRelax. This provides us with a reference point from which we can compare subsequent designs.
 
-#### Protein Binder Redesign with Partial Diffusion
+#### 2a - Protein Binder Redesign with Partial Diffusion
 The following command will diversify the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN sequence design + Rosetta FastRelax.
 
 ```bash
@@ -120,7 +119,7 @@ pixi run -w PDchain rfd_chain \
 
 `--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **ADD SECTION HERE** for available metrics.
 
-#### Protein Binder Redesign with Indels
+#### 2b - Protein Binder Redesign with Indels
 
 The following command will diversify the binder by rediffusing loop regions while allowing for insertions and deletions.
 
@@ -146,7 +145,7 @@ pixi run -w PDchain rfd_chain \
 
 The indel diversification approach is more computationally expensive than partial diffusion because it requires a minimum of 15 timesteps during RFdiffusion, but the additional diversity it provides can be beneficial depending on the design goal.
 
-#### Protein Binder De Novo Design
+#### 2c - Protein Binder De Novo Design
 
 The following command will generate de novo protein binders.
 
