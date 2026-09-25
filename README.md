@@ -10,11 +10,11 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 # Table of Contents
 - [Installation](#installation)
 - [Usage Examples](#usage-examples)
-  - [Unconditional Monomer Generation](#unconditional-monomer-generation)
-  - [Protein Binder Design](#protein-binder-design)
-    - [Protein Binder Redesign with Partial Diffusion](#protein-binder-redesign-with-partial-diffusion)
-    - [Protein Binder Redesign with Indels](#protein-binder-redesign-with-indels)
-    - [Protein Binder De Novo Design](#protein-binder-de-novo-design)
+  - [Unconditional Monomer Generation](#1-unconditional-monomer-generation)
+  - [Protein Binder Design](#2-protein-binder-design)
+    - [Protein Binder Redesign with Partial Diffusion](#2a-protein-binder-redesign-with-partial-diffusion)
+    - [Protein Binder Redesign with Indels](#2b-protein-binder-redesign-with-indels)
+    - [Protein Binder De Novo Design](#2c-protein-binder-de-novo-design)
 
 ## Installation
 If your system doesn't have pixi already, run the following command to install it. 
