@@ -18,7 +18,7 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
 ## Installation
 If your system doesn't have pixi already, run the following command to install it. 
-```
+```bash
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
 Restart your terminal or source your shell's rc file (e.g. `source ~/.bashrc`) to complete the installation. You can check if pixi is registered with `command -V pixi`.
@@ -30,19 +30,19 @@ See https://pixi.prefix.dev/latest/installation/ for more information.
 
 Once you have pixi installed, run the following to download the repository and navigate into it.
 
-```
+```bash
 git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git && cd PDchain
 ```
 
 Run the following for a CPU-only installation. This installation is more consistent across a variety of systems, but it doesn't leverage GPU acceleration for RFdiffusion.
 
-```
+```bash
 cp box/tomls/cpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
 ```
 
 If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to leverage GPU acceleration for RFdiffusion, run the following instead.
 
-```
+```bash
 cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
 ```
 
@@ -53,7 +53,7 @@ Installation will take some time (~10-20 minutes) as it will download all of the
 Example scripts can be found in the `examples` directory.
 
 ### Unconditional Monomer Generation
-```
+```bash
 pixi run -w PDchain rfd_chain 140-160 \
     --idealize --relax --ca_stdev 1 \
     --model_type protein_mpnn \
@@ -84,7 +84,7 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 
 The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
 
-```
+```bash
 pixi run -w PDchain rfd_chain NONE --skip_mpnn \
     --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
     --idealize --relax \
@@ -100,7 +100,7 @@ The `NONE` keyword at where the contigs is supposed to be tells `rfd_chain` to s
 #### Protein Binder Redesign with Partial Diffusion
 The following command will diversify the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN sequence design + Rosetta FastRelax.
 
-```
+```bash
 pixi run -w PDchain rfd_chain \
     --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
     --fixedres B1-110 \
@@ -124,7 +124,7 @@ pixi run -w PDchain rfd_chain \
 
 The following command will diversify the binder by rediffusing loop regions while allowing for insertions and deletions.
 
-```
+```bash
 pixi run -w PDchain rfd_chain \
     --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
     --fixedres B1-110 \
@@ -150,7 +150,7 @@ The indel diversification approach is more computationally expensive than partia
 
 The following command will generate de novo protein binders.
 
-```
+```bash
 pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
     --ppi_hotspots A73 A75 \
@@ -169,14 +169,14 @@ Here, we provided the contigs `86-95/0 B1-110` to specify that we want to genera
 `--ppi_hotspots A73 A75` provides hotspots for RFdiffusion, and it will attempt to generate a backbone near those specified residues.
 
 ##### A Note on De Novo Design
-De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. In this example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight binding (so the bar in this example is exceptionally high), the fact that large scale generation and screening is often necessary still stands.
+De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. For example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight complex (so the bar [HA!] is pretty high here), large scale generation and screening will still often be necessary to have high confidence in your designs.
 
-Because we are unlikely to get excellent designs right away, it is often necessary (at least from my experience), to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better, and that is the main reason why the *in silico* continuous evolution system here was built. See the section on `evo_rfd_chain` for more details.
+Because we are unlikely to get excellent designs right away, it is often necessary (at least from my experience), to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better, and that is the main reason why this *in silico* continuous evolution system here was built. See the section on `evo_rfd_chain` for more details.
 
 ## Using the `pdchain` function (shortcut for pixi commands)
 Finishing the installation process should spawn a script called `pdchain.sh` in the root directory. If you `source` this file, you will have access to the `pdchain` function, which is essentially a shortcut for pixi commands tailored for PDchain.
 
-```
+```bash
 # Register the pdchain function
 source /path/to/PDchain/pdchain.sh
 
