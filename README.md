@@ -8,14 +8,13 @@ Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN
 Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
 ## Installation
-Make sure pixi is installed on your command line. 
-
+If your system doesn't have pixi already, run the following command to install it. 
 ```
-# Install pixi if you don't have it already
 curl -fsSL https://pixi.sh/install.sh | sh
 ```
+Restart your terminal or source your shell's rc file (e.g. `source ~/.bashrc`) to complete the installation. You can check if pixi is registered with `command -V pixi`.
 
-Follow the instructions provided in the terminal upon installation. You may need to restart your terminal and/or add ~/.pixi/bin to your PATH. See https://pixi.prefix.dev/latest/installation/ for more information.
+See https://pixi.prefix.dev/latest/installation/ for more information.
 
 > [!IMPORTANT]
 > This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
