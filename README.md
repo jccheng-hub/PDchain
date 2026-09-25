@@ -7,7 +7,7 @@ Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN
 
 Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
-# Table of Contents
+## Table of Contents
 - [Installation](#installation)
 - [Usage Examples](#usage-examples)
   - [Unconditional Monomer Generation](#1---unconditional-monomer-generation)
