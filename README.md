@@ -29,11 +29,11 @@ git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git && cd 
 By default, the installation will be CPU-only. If you have an osx-arm64 and or cuda-compatible linux-64, there is an alternate pixi.toml file for mps/cuda GPU acceleration at `box/tomls/gpu.toml`. To install the GPU version, replace the `pixi.toml` in the root directory with `box/tomls/gpu.toml` before running the subsequent installation commands.
 
 ```
-# Run the following command only if you have mps- or cuda-compatible systems
+# Run the following line only if you have mps- or cuda-compatible systems
 # cp box/tomls/gpu.toml pixi.toml
 
-pixi run install                          # Install all environments
-pixi workspace register --name PDchain    # Name workspace for convenience
+# Install PDchain and register its workspace name
+pixi run install && pixi workspace register --name PDchain
 ```
 
 A copy of the default CPU-only pixi.toml is at `box/tomls/cpu.toml` if you want to revert back.

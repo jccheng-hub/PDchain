@@ -72,6 +72,9 @@ else
     echo "Need to specify CPU or GPU." && exit 1
 fi
 
+# Install omegafold github
+pixi run -m $pixiroot/pixi.toml -e omegafold pip install --no-deps git+https://github.com/HeliXonProtein/OmegaFold.git
+
 # Download models
 mkdir -p $pixiroot/models
 modlinks=(
@@ -114,9 +117,6 @@ echo "Added symlink: $rfdlink"
 mpnnlink="$pixiroot/.pixi/envs/ligandmpnn/bin/ligandmpnn"
 ln -sfn $pixiroot/box/programs/LigandMPNN/run.py $mpnnlink &&
 echo "Added symlink: $mpnnlink"
-
-# Install omegafold github
-pixi run -m $pixiroot/pixi.toml -e omegafold pip install --no-deps git+https://github.com/HeliXonProtein/OmegaFold.git
 
 # Add box protocols and tools to bin
 boxdir="$pixiroot/box"
