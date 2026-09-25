@@ -1,7 +1,8 @@
 .DS_Store
-examples/outputs
+outputs/
 foldrepo/
 models/
 pdchain.sh
 archive*
 sandbox*
+.*.swp

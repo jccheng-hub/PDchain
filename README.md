@@ -7,6 +7,15 @@ Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN
 
 Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
+# Table of Contents
+- [Installation](#installation)
+- [Usage Examples](#usage-examples)
+  - [Unconditional Monomer Generation](#unconditional-monomer-generation)
+  - [Protein Binder Design](#protein-binder-design)
+    - [Protein Binder Redesign with Partial Diffusion](#protein-binder-redesign-with-partial-diffusion)
+    - [Protein Binder Redesign with Indels](#protein-binder-redesign-with-indels)
+    - [Protein Binder De Novo Design](#protein-binder-de-novo-design)
+
 ## Installation
 If your system doesn't have pixi already, run the following command to install it. 
 ```
@@ -39,24 +48,130 @@ cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register -
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
-## Example one-off usage
-```
-# Make sandbox directory for quick tests
-mkdir -p sandbox && cd sandbox
+## Usage Examples
 
-# Generate unconditional relaxed monomer 101 residues long
-pixi run rfd_chain 101-101 --relax --outprefix outputs/sample1
+Example scripts can be found in the `examples` directory.
+
+### Unconditional Monomer Generation
+```
+pixi run -w PDchain rfd_chain 140-160 \
+    --idealize --relax --ca_stdev 1 \
+    --model_type protein_mpnn \
+    --design_cycles 3 \
+    --numdes 3 \
+    --outprefix outputs/ex1_rand
 ```
 
-Pixi is designed with workspaces in mind, so these `pixi run` commands will normally only work if you're inside the PDchain directory or its subdirectories. When outside the workplace, you'll need to specify the full path to `pixi.toml` with the `-m` or `-w` options.
+Here, we run `rfd_chain` to randomly generate monomeric proteins with RFdiffusion, sequence design with ProteinMPNN, and refine the structure with Rosetta FastRelax.
+
+Run `rfd_chain --help` to display the manual on the command line.
+
+The input argument `140-160` specifies the contigs string. Here we tell RFdiffusion that we want to generate a backbone 140 to 160 residues long. See the RFdiffusion github documentation for more information on contigs.
+
+`--idealize` specifies that we want to idealize the backbone after RFdiffusion. This is done using Rosetta.
+
+`--model_type protein_mpnn` specifies that we want to sequence design with the ProteinMPNN model.
+
+`--relax --ca_stdev 1` specifies that we want to apply FastRelax with constraints to the CA atoms in the backbone. A standard deviation of 1 is applied here. See Rosetta documentation on constraints for more information.
+
+`--design_cycles 3` specifies that we want a total of three rounds of MPNN sequence design and FastRelax. The output of each round is only accepted if it improves Rosetta score and/or MPNN score.
+
+`--numdes 3` specifies that we want a total of three designs.
+
+`--outprefix outputs/ex1_rand` specifies the path prefix of the output designs.
+
+### Protein Binder Design
+
+The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
 
 ```
-# Run from any directory by specifying full path:
-pixi run -m /path/to/PDchain/pixi.toml rfd_chain 102-102 --relax --outprefix outputs/sample2
-
-# Run from any directory by specifying workspace name
-pixi run -w PDchain rfd_chain 102-102 --relax --outprefix outputs/sample2
+pixi run -w PDchain rfd_chain NONE --skip_mpnn \
+    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --idealize --relax \
+    --ca_stdev 1 \
+    --design_cycles 3 \
+    --select_met min:ddg \
+    --numdes 1 \
+    --outprefix outputs/ex2_1brs_control
 ```
+
+The `NONE` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion. The `--skip_mpnn` option tells `rfd_chain` to skip MPNN sequence design. This leaves just the Rosetta refinement with Idealize and FastRelax. This provides us with a reference point from which we can compare subsequent designs.
+
+#### Protein Binder Redesign with Partial Diffusion
+The following command will diversify the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN sequence design + Rosetta FastRelax.
+
+```
+pixi run -w PDchain rfd_chain \
+    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --fixedres B1-110 \
+    --partial --timesteps 1 \
+    --idealize --relax \
+    --model_type protein_mpnn \
+    --ca_stdev 1 \
+    --design_cycles 3 \
+    --select_met min:ddg \
+    --numdes 3 \
+    --outprefix outputs/ex2a_1brs_partial
+```
+
+`--partial` turns on partial diffusion. Note that the output diffused structure will always match the input structure in length with partial diffusion.
+
+`--fixedres B1-110` is necessary here to prevent MPNN from sequence designing the target protein (the barnase on chain B).
+
+`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **ADD SECTION HERE** for available metrics.
+
+#### Protein Binder Redesign with Indels
+
+The following command will diversify the binder by rediffusing loop regions while allowing for insertions and deletions.
+
+```
+pixi run -w PDchain rfd_chain \
+    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --fixedres B1-110 \
+    --ss_to_contigs --vary_linkers 1 --ss_trim 1-3 \
+    --idealize --relax \
+    --model_type protein_mpnn \
+    --ca_stdev 1 \
+    --design_cycles 3 \
+    --select_met min:ddg \
+    --numdes 3 \
+    --outprefix outputs/ex2b_1brs_indel
+```
+
+`--ss_to_contigs` will generate a contigs string based on the secondary structure of the input PDB. Loop residues will be masked from RFdiffusion.
+
+`--vary_linkers 1` will allow the loop regions to vary in length by 1 residue. So if a loop region was originally 5 residues long, that region can end up 4-6 residues long in the output design.
+
+`--ss_trim 1-3` will allow 1-3 helix/sheet residues neighboring loop residues to be masked from RFdiffusion. This gives RFdiffusion more wiggle room when filling in those masked regions.
+
+The indel diversification approach is more computationally expensive than partial diffusion because it requires a minimum of 15 timesteps during RFdiffusion, but the additional diversity it provides can be beneficial depending on the design goal.
+
+#### Protein Binder De Novo Design
+
+The following command will generate de novo protein binders.
+
+```
+pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
+    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --ppi_hotspots A73 A75 \
+    --fixedres B1-110 \
+    --idealize --relax \
+    --model_type protein_mpnn \
+    --ca_stdev 1 \
+    --design_cycles 3 \
+    --select_met min:ddg \
+    --numdes 3 \
+    --outprefix outputs/ex2c_1brs_denovo
+```
+
+Here, we provided the contigs `86-95/0 B1-110` to specify that we want to generate a backbone 86-95 residues long while preserving our target (chain B residues 1-110).
+
+`--ppi_hotspots A73 A75` provides hotspots for RFdiffusion, and it will attempt to generate a backbone near those specified residues.
+
+##### A Note on De Novo Design
+De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. In this example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight binding (so the bar in this example is exceptionally high), the fact that large scale generation and screening is often necessary still stands.
+
+Because we are unlikely to get excellent designs right away, it is often necessary (at least from my experience), to take an agreeable-but-not-excellent de novo design and diversify around that to get something better, and that is the main reason why the *in silico* continuous evolution system here was built. See the section on `evo_rfd_chain` for more details.
 
 ## Using the `pdchain` function (shortcut for pixi commands)
 Finishing the installation process should spawn a script called `pdchain.sh` in the root directory. If you `source` this file, you will have access to the `pdchain` function, which is essentially a shortcut for pixi commands tailored for PDchain.
