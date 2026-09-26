@@ -157,7 +157,7 @@ The following command will generate de novo protein binders.
 ```bash
 pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --ppi_hotspots A73 A75 \
+    --ppi_hotspots B73 B75 \
     --fixedres B1-110 \
     --idealize --relax \
     --model_type protein_mpnn \
@@ -174,7 +174,7 @@ Here, we provided the contigs `86-95/0 B1-110` to specify that we want to genera
 
 De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. For example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight complex (so the bar [HA!] is pretty high here), large scale generation and screening will still often be necessary to have high confidence in your designs.
 
-Because we are unlikely to get excellent designs right away, it is often necessary (at least from my experience), to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better, and that is the main reason why this *in silico* continuous evolution system here was built. See the section on `evo_rfd_chain` for more details.
+Because we are unlikely to get excellent designs right away, it is often necessary to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better. This is the main reason why the *in silico* continuous evolution system in PDchain was built. See the section on `evo_rfd_chain` for more details.
 
 ## Using the `pdchain` function (shortcut for pixi commands)
 Finishing the installation process should spawn a script called `pdchain.sh` in the root directory. If you `source` this file, you will have access to the `pdchain` function, which is essentially a shortcut for pixi commands tailored for PDchain.

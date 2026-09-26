@@ -90,6 +90,8 @@ RFdiffusion options:
                             residue identity during RFdiffusion.
   --noise_scale [float]     Noise scale (0-1) for RFdiffusion. Higher values
                             result in more diversity but lower quality.
+  --active_site_ckpt        Use active site checkpoint. Recommended for motif
+                            scaffolding.
 
 LigandMPNN + PyRosetta options:
   --design_cycles [int]     Number of MPNN-FastRelax cycles.
@@ -156,7 +158,7 @@ val_opts=(
     fixbbres            fixedres            indir               inpdb
     lig_stdev           ligname             loop_cut            mingap
     mintot              model_type          natbias             numdes
-    outprefix           ppi_hotspots        ppi_target
+    outprefix           ppi_hotspots        
     redesres            relax_repeats       rog_cut             ss_trim
     temperature         threads             timesteps           vary_linkers 
     ap_stdev            backrub             nterm_trim          cterm_trim
@@ -165,7 +167,7 @@ val_opts=(
 )
 
 bool_opts=(
-    disallow_cys        dec_only            ss_to_contigs     
+    disallow_cys        dec_only            ss_to_contigs       active_site_ckpt
     fix_bb              fix_chi             idealize            inc_only            
     monomer_ROG         partial             random_order        persistent
     randsuffix          regap               relax               inpaint_seq
@@ -196,7 +198,6 @@ natbias=""
 numdes="1"
 outprefix="outputs/rfd_des"
 ppi_hotspots=""
-ppi_target=""
 redesres=""
 relax_repeats="1"
 rog_cut="9999"
@@ -364,7 +365,6 @@ rfd_chain () {
     local contigs=$1 outprefix=$2
     local tmpdir=$tmpdir
     local inpdb=$inpdb
-    local ppi_target=$ppi_target
     local redesres=$redesres
     local fixedres=$fixedres
     local fixbbres=$fixbbres
@@ -376,21 +376,6 @@ rfd_chain () {
         )
     }
     [[ -z $fixbbres && -n $fixedres ]] && local fixbbres="$fixedres"
-
-    # If ppi_target was provided with contigs, then generate contigs
-    [[ -z $contigs && -n $ppi_target ]] && {
-        echo "PPI target provided without contigs. Generating contigs..."
-        local fixedres=$(awk ' 
-            $1=="ATOM" && $3=="CA" { chain[++n]=$5; resi[n]=$6 } END {
-                ch = chain[1] ; r1 = resi[1]
-                for (i=1; i<=n; i++) if (chain[i]==ch) r2 = resi[i]
-                print ch r1 "-" r2
-            }
-        ' $ppi_target)
-        local contigs=$(gen_contigs ${all_opts[@]})
-        local contigs="$contigs/0 $fixedres"
-        local inpdb="$ppi_target"
-    }
 
     # Collapse input contigs if it is provided
     [[ -n $contigs ]] && {
@@ -493,7 +478,7 @@ rfd_chain () {
         local rfd_opts+=("'ppi.hotspot_res=[${ppi_hotspots// /,}]'")
     }
     
-    [[ -n $contigs_fixbb ]] && {
+    [[ $active_site_ckpt == 1 ]] && {
         echo "Using ActiveSite_ckpt.pt model for RFdiffusion"
         local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/ActiveSite_ckpt.pt")
     }
