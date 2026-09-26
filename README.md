@@ -49,7 +49,7 @@ cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register -
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
 ## Usage Examples
-Example scripts can be found in the `examples` directory. All example scripts are written as if they would be ran from with `examples` as the working directory.
+Example scripts can be found in the `examples` directory. All example scripts are written as if they would be ran with `examples` as the working directory.
 
 ### 1 - Unconditional Monomer Generation
 ```bash
