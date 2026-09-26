@@ -120,6 +120,8 @@ pixi run -w PDchain rfd_chain \
 
 `--partial` turns on partial diffusion. Note that the output diffused structure will always match the input structure in length with partial diffusion.
 
+`--timesteps 1` specifies the number of timesteps for RFdiffusion. When using partial diffusion, this number is allowed to dip below 15. The higher number of timesteps, the greater the deviation from the original input structure.
+
 `--fixedres B1-110` is necessary here to prevent MPNN from sequence designing the target protein (the barnase on chain B).
 
 `--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **ADD SECTION HERE** for available metrics.
