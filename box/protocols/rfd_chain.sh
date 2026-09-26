@@ -31,6 +31,7 @@ General options:
   --outprefix [str]         Output prefix
                             E.g. --outprefix ./outputs/rfd_des
   --randsuffix              Generate a random string for the suffix
+  --persistent              If a design fails to generate, keep trying.
   --help                    Display this help and exit
 
 Contigs options:
@@ -166,7 +167,7 @@ val_opts=(
 bool_opts=(
     disallow_cys        dec_only            ss_to_contigs     
     fix_bb              fix_chi             idealize            inc_only            
-    monomer_ROG         partial             random_order        
+    monomer_ROG         partial             random_order        persistent
     randsuffix          regap               relax               inpaint_seq
     sc_context          skip_mpnn           skip_refine         ignore_metals
     help
@@ -923,7 +924,7 @@ while [[ $i -le $numdes ]] ; do
         echo "Input directory (--indir) was specified."
         inpdb=$(shuf -e -n1 ${indir%/}/*.pdb)
         if [[ -z $inpdb ]] ; then
-            echo "No PDBs detected in input directory." && exit
+            echo "No PDBs detected in input directory." && break
         else
             echo "Random pull as input PDB: $inpdb"
         fi
@@ -938,6 +939,7 @@ while [[ $i -le $numdes ]] ; do
         ((i++))
     else
         echo "${outprefix}_${id[i]}.pdb failed to generate."
+        [[ $persistent == 1 ]] || break
     fi
 done
 

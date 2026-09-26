@@ -84,9 +84,10 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
 
 ```bash
-pixi run -w PDchain rfd_chain NONE --skip_mpnn \
+pixi run -w PDchain rfd_chain NONE \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax \
+    --model_type protein_mpnn --natbias 10 \
     --ca_stdev 1 \
     --design_cycles 3 \
     --select_met min:ddg \
@@ -94,7 +95,11 @@ pixi run -w PDchain rfd_chain NONE --skip_mpnn \
     --outprefix outputs/ex2_1brs_control
 ```
 
-The `NONE` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion. The `--skip_mpnn` option tells `rfd_chain` to skip MPNN sequence design. This leaves just the Rosetta refinement with Idealize and FastRelax. This provides us with a reference point from which we can compare subsequent designs.
+The `NONE` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion.
+
+`--natbias 10` applies a biasing weight of 10 towards the native (input) residues at every position during MPNN sequence design. A weight of 10 basically forces MPNN to recover the input residues at every position, preventing any actual sequence design but still allowing MPNN to rebuild/repack the side chains.
+
+Rosetta Idealize and FastRelax refinement is then applied after the MPNN sequence "design", and the output will serve a computational control.
 
 ### 2a - Protein Binder Redesign with Partial Diffusion
 The following command will diversify the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN sequence design + Rosetta FastRelax.
