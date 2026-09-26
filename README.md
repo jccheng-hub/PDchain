@@ -170,7 +170,7 @@ pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
 
 Here, we provided the contigs `86-95/0 B1-110` to specify that we want to generate a backbone 86-95 residues long while preserving our target (chain B residues 1-110).
 
-`--ppi_hotspots A73 A75` provides hotspots for RFdiffusion, and it will attempt to generate a backbone near those specified residues.
+`--ppi_hotspots B73 B75` provides hotspots for RFdiffusion, and it will attempt to generate a backbone near those specified residues.
 
 De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. For example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight complex (so the bar [HA!] is pretty high here), large scale generation and screening will still often be necessary to have high confidence in your designs.
 

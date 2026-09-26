@@ -5,4 +5,5 @@ models/
 pdchain.sh
 archive*
 sandbox*
+test.sh
 .*.swp
