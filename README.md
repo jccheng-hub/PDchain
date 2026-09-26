@@ -12,9 +12,10 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 - [Usage Examples](#usage-examples)
   - [Unconditional Monomer Generation](#1---unconditional-monomer-generation)
   - [Protein Binder Design](#2---protein-binder-design)
-    - [Protein Binder Redesign with Partial Diffusion](#2a---protein-binder-redesign-with-partial-diffusion)
-    - [Protein Binder Redesign with Indels](#2b---protein-binder-redesign-with-indels)
-    - [Protein Binder De Novo Design](#2c---protein-binder-de-novo-design)
+    - [Protein Binder Redesign with Native Backbone](#2a---protein-binder-redesign-with-native-backbone)
+    - [Protein Binder Redesign with Partial Diffusion](#2b---protein-binder-redesign-with-partial-diffusion)
+    - [Protein Binder Redesign with Indels](#2c---protein-binder-redesign-with-indels)
+    - [Protein Binder De Novo Design](#2d---protein-binder-de-novo-design)
 
 ## Installation
 If your system doesn't have pixi already, run the following command to install it. 
@@ -81,13 +82,14 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 
 ### 2 - Protein Binder Design
 
-The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
+The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction, without touching the backbone or sequence. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
 
 ```bash
-pixi run -w PDchain rfd_chain SKIP \
+pixi run -w PDchain rfd_chain SKIP --natbias 10 \
     --inpdb inputs/1brs_af3mod0.pdb \
+    --fixedres B1-110 \
     --idealize --relax \
-    --model_type protein_mpnn --natbias 10 \
+    --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 3 \
     --select_met min:ddg \
@@ -99,10 +101,29 @@ The `SKIP` keyword at where the contigs is supposed to be tells `rfd_chain` to s
 
 `--natbias 10` applies a biasing weight of 10 towards the native (input) residues at every position during MPNN sequence design. A weight of 10 basically forces MPNN to recover the input residues at every position, preventing any actual sequence design but still allowing MPNN to rebuild/repack the side chains.
 
-Rosetta Idealize and FastRelax refinement is then applied after the MPNN sequence "design", and the output will serve a computational control.
+### 2a - Protein Binder Redesign with Native Backbone
 
-### 2a - Protein Binder Redesign with Partial Diffusion
-The following command will diversify the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN sequence design + Rosetta FastRelax.
+The following command will diversify the binder sequence. RFdiffusion is not applied here (just MPNN-FastRelax). The command is identical to the control command except it does not have the `--natbias 10` option.
+
+```bash
+pixi run -w PDchain rfd_chain SKIP \
+    --inpdb inputs/1brs_af3mod0.pdb \
+    --fixedres B1-110 \
+    --idealize --relax \
+    --model_type protein_mpnn \
+    --ca_stdev 1 \
+    --design_cycles 3 \
+    --select_met min:ddg \
+    --numdes 3 \
+    --outprefix outputs/ex2a_1brs_natbb
+```
+
+`--fixedres B1-110` is necessary here to prevent MPNN from sequence designing the target protein (the barnase on chain B).
+
+`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **Built-in Metrics (WIP)** for available metrics.
+
+### 2b - Protein Binder Redesign with Partial Diffusion
+The following command will diversify the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN-FastRelax.
 
 ```bash
 pixi run -w PDchain rfd_chain \
@@ -115,18 +136,14 @@ pixi run -w PDchain rfd_chain \
     --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
-    --outprefix outputs/ex2a_1brs_partial
+    --outprefix outputs/ex2b_1brs_partial
 ```
 
 `--partial` turns on partial diffusion. Note that the output diffused structure will always match the input structure in length with partial diffusion.
 
 `--timesteps 1` specifies the number of timesteps for RFdiffusion. When using partial diffusion, this number is allowed to dip below 15. The higher number of timesteps, the greater the deviation from the original input structure.
 
-`--fixedres B1-110` is necessary here to prevent MPNN from sequence designing the target protein (the barnase on chain B).
-
-`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **ADD SECTION HERE** for available metrics.
-
-### 2b - Protein Binder Redesign with Indels
+### 2c - Protein Binder Redesign with Indels
 
 The following command will diversify the binder by rediffusing loop regions while allowing for insertions and deletions.
 
@@ -141,7 +158,7 @@ pixi run -w PDchain rfd_chain \
     --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
-    --outprefix outputs/ex2b_1brs_indel
+    --outprefix outputs/ex2c_1brs_indel
 ```
 
 `--ss_to_contigs` will generate a contigs string based on the secondary structure of the input PDB. Loop residues will be masked from RFdiffusion.
@@ -152,7 +169,7 @@ pixi run -w PDchain rfd_chain \
 
 The indel diversification approach is more computationally expensive than partial diffusion because it requires a minimum of 15 timesteps during RFdiffusion, but the additional diversity it provides can be beneficial depending on the design goal.
 
-### 2c - Protein Binder De Novo Design
+### 2d - Protein Binder De Novo Design
 
 The following command will generate de novo protein binders.
 
@@ -167,7 +184,7 @@ pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
-    --outprefix outputs/ex2c_1brs_denovo
+    --outprefix outputs/ex2d_1brs_denovo
 ```
 
 Here, we provided the contigs `86-95/0 B1-110` to specify that we want to generate a backbone 86-95 residues long while preserving our target (chain B residues 1-110).

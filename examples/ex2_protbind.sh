@@ -9,6 +9,18 @@ pixi run -w PDchain rfd_chain SKIP \
     --numdes 1 \
     --outprefix outputs/ex2_1brs_control
 
+# Native Backbone
+pixi run -w PDchain rfd_chain SKIP \
+    --inpdb inputs/1brs_af3mod0.pdb \
+    --fixedres B1-110 \
+    --idealize --relax \
+    --model_type protein_mpnn \
+    --ca_stdev 1 \
+    --design_cycles 3 \
+    --select_met min:ddg \
+    --numdes 3 \
+    --outprefix outputs/ex2a_1brs_natbb
+
 # Partial Diffusion
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
@@ -20,7 +32,7 @@ pixi run -w PDchain rfd_chain \
     --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
-    --outprefix outputs/ex2a_1brs_partial
+    --outprefix outputs/ex2b_1brs_partial
 
 # Indel
 pixi run -w PDchain rfd_chain \
@@ -33,7 +45,7 @@ pixi run -w PDchain rfd_chain \
     --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
-    --outprefix outputs/ex2b_1brs_indel
+    --outprefix outputs/ex2c_1brs_indel
 
 # De Novo
 pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
@@ -46,4 +58,4 @@ pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --design_cycles 3 \
     --select_met min:ddg \
     --numdes 3 \
-    --outprefix outputs/ex2c_1brs_denovo
+    --outprefix outputs/ex2d_1brs_denovo
