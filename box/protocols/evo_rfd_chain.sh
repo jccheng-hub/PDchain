@@ -186,8 +186,8 @@ fi
 # Get final time
 time_f=$(echo "$SECONDS + $tlim_s" | bc)
 
-# Set contigs to NONE with --skip_diffusion
-[[ $skip_diffusion == 1 ]] && contigs="NONE"
+# Set contigs to SKIP with --skip_diffusion
+[[ $skip_diffusion == 1 ]] && contigs="SKIP"
 
 # Determine pool size and famisize
 [[ $poolsize == "ALL" ]] && poolsize=$(echo $indir/*pdb | wc -w)

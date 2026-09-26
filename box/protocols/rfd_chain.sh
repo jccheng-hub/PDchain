@@ -18,7 +18,7 @@ Parameters:
                             E.g. 20-30/A5-76/20-30
                             If CONTIGS is not provided, then one will be
                             generated using the contigs options.
-                            To skip RFdiffusion, input NONE as your contigs
+                            To skip RFdiffusion, input SKIP as your contigs
 
 General options:
   --inpdb [str]             Input PDB path
@@ -265,8 +265,8 @@ res_to_sel () {
 # Take input contigs and oldres list and gets new resi | format oldres:newres
 get_newres () {
 
-    # If contigs is NONE, then execute this block (requires inpdb defined)
-    [[ $1 == NONE ]] && {
+    # If contigs is SKIP, then execute this block (requires inpdb defined)
+    [[ $1 == SKIP ]] && {
         awk -v oldres="${*:2}" '
             BEGIN {
                 n = split(oldres, a, " ")
@@ -412,7 +412,7 @@ rfd_chain () {
     [[ -z $contigs ]] && {
         echo "No contigs were provided. Generating contigs..."
         local contigs_opts=()
-        [[ -n $oldcontigs && $oldcontigs != NONE ]] && {
+        [[ -n $oldcontigs && $oldcontigs != SKIP ]] && {
             echo "Using old contigs found in input PDB for fixing backbone: $oldcontigs"
             local oldfixbb=$(echo $oldcontigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')
             local fixbbres=$(get_newres "$oldcontigs" $oldfixbb | cut -d: -f2 | paste -sd ' ')
@@ -515,8 +515,8 @@ rfd_chain () {
         "hydra/hydra_logging=disabled"
         "hydra.run.dir=."
     )
-    if [[ -n $inpdb && $contigs == NONE ]] ; then
-        echo "Input pdb detected and contigs set to NONE. Skipping diffusion."
+    if [[ -n $inpdb && $contigs == SKIP ]] ; then
+        echo "Input pdb detected and contigs set to SKIP. Skipping diffusion."
         grep "^ATOM" $inpdb > $step1/Diffused_0.pdb
     else
         eval "

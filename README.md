@@ -84,7 +84,7 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
 
 ```bash
-pixi run -w PDchain rfd_chain NONE \
+pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax \
     --model_type protein_mpnn --natbias 10 \
@@ -95,7 +95,7 @@ pixi run -w PDchain rfd_chain NONE \
     --outprefix outputs/ex2_1brs_control
 ```
 
-The `NONE` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion.
+The `SKIP` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion.
 
 `--natbias 10` applies a biasing weight of 10 towards the native (input) residues at every position during MPNN sequence design. A weight of 10 basically forces MPNN to recover the input residues at every position, preventing any actual sequence design but still allowing MPNN to rebuild/repack the side chains.
 
