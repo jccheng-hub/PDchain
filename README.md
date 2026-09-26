@@ -85,15 +85,16 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction, without touching the backbone or sequence. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
 
 ```bash
-pixi run -w PDchain rfd_chain SKIP --natbias 10 \
+pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --fixedres B1-110 \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 3 \
-    --select_met min:ddg \
     --numdes 1 \
+    --fixedres B1-110 \
+    --select_met min:ddg \
+    --natbias 10 \
     --outprefix outputs/ex2_1brs_control
 ```
 
@@ -108,13 +109,13 @@ The following command will diversify the binder sequence. RFdiffusion is not app
 ```bash
 pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --fixedres B1-110 \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 3 \
-    --select_met min:ddg \
     --numdes 3 \
+    --fixedres B1-110 \
+    --select_met min:ddg \
     --outprefix outputs/ex2a_1brs_natbb
 ```
 
@@ -128,16 +129,19 @@ The following command will diversify the binder (the barstar on chain A) with pa
 ```bash
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --fixedres B1-110 \
-    --partial --timesteps 1 \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 3 \
-    --select_met min:ddg \
     --numdes 3 \
+    --fixedres B1-110 \
+    --select_met min:ddg \
+    --model_ckpt Complex_base \
+    --partial --timesteps 1 \
     --outprefix outputs/ex2b_1brs_partial
 ```
+
+`--model_ckpt Complex_base` specifies the model checkpoint used for RFdiffusion. `Complex_base` is recommended for protein binder design.
 
 `--partial` turns on partial diffusion. Note that the output diffused structure will always match the input structure in length with partial diffusion.
 
@@ -150,14 +154,15 @@ The following command will diversify the binder by rediffusing loop regions whil
 ```bash
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --fixedres B1-110 \
-    --ss_to_contigs --vary_linkers 1 --ss_trim 1-3 \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 3 \
-    --select_met min:ddg \
     --numdes 3 \
+    --fixedres B1-110 \
+    --select_met min:ddg \
+    --model_ckpt Complex_base \
+    --ss_to_contigs --vary_linkers 1 --ss_trim 1-3 \
     --outprefix outputs/ex2c_1brs_indel
 ```
 
@@ -176,14 +181,15 @@ The following command will generate de novo protein binders.
 ```bash
 pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --ppi_hotspots B73 B75 \
-    --fixedres B1-110 \
     --idealize --relax \
     --model_type protein_mpnn \
     --ca_stdev 1 \
     --design_cycles 3 \
-    --select_met min:ddg \
     --numdes 3 \
+    --fixedres B1-110 \
+    --select_met min:ddg \
+    --model_ckpt Complex_base \
+    --ppi_hotspots B73 B75 \
     --outprefix outputs/ex2d_1brs_denovo
 ```
 

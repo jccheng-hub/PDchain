@@ -90,8 +90,14 @@ RFdiffusion options:
                             residue identity during RFdiffusion.
   --noise_scale [float]     Noise scale (0-1) for RFdiffusion. Higher values
                             result in more diversity but lower quality.
-  --active_site_ckpt        Use active site checkpoint. Recommended for motif
-                            scaffolding.
+  --model_ckpt [str]        Specify model checkpoint for RFdiffusion.
+                            Available checkpoints:
+                                Base                    ActiveSite
+                                Complex_base            Complex_Fold_base
+                                InpaintSeq              InpaintSeq_Fold
+                                Complex_beta
+                            See RFdiffusion documentation for more details on
+                            model checkpoints.
 
 LigandMPNN + PyRosetta options:
   --design_cycles [int]     Number of MPNN-FastRelax cycles.
@@ -163,11 +169,11 @@ val_opts=(
     temperature         threads             timesteps           vary_linkers 
     ap_stdev            backrub             nterm_trim          cterm_trim
     nterm_add           cterm_add           helix_cap           reset_perc
-    nbr_dist            select_met          noise_scale
+    nbr_dist            select_met          noise_scale         model_ckpt
 )
 
 bool_opts=(
-    disallow_cys        dec_only            ss_to_contigs       active_site_ckpt
+    disallow_cys        dec_only            ss_to_contigs     
     fix_bb              fix_chi             idealize            inc_only            
     monomer_ROG         partial             random_order        persistent
     randsuffix          regap               relax               inpaint_seq
@@ -215,6 +221,7 @@ reset_perc="0"
 nbr_dist=""
 select_met=""
 noise_scale="0.5"
+model_ckpt=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -478,9 +485,10 @@ rfd_chain () {
         local rfd_opts+=("'ppi.hotspot_res=[${ppi_hotspots// /,}]'")
     }
     
-    [[ $active_site_ckpt == 1 ]] && {
-        echo "Using ActiveSite_ckpt.pt model for RFdiffusion"
-        local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/ActiveSite_ckpt.pt")
+    # Model Checkpoint
+    [[ -n $model_ckpt ]] && {
+        echo "Using ${model_ckpt}_ckpt.pt model for RFdiffusion"
+        local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/${model_ckpt}_ckpt.pt")
     }
     
     [[ $inpaint_seq == 1 && -n $contigs_fixbb ]] && {
@@ -557,7 +565,6 @@ rfd_chain () {
                 inference.output_prefix=$step1/ReDiffused \
                 inference.num_designs=1 \
                 diffuser.partial_T=${backrub} \
-                inference.ckpt_override_path=$pixiroot/models/ActiveSite_ckpt.pt \
                 ${rfd_suppress_logs[*]}
         "
         mv $step1/ReDiffused_0.pdb $step1/Diffused_0.pdb

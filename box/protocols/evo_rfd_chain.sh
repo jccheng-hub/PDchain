@@ -83,14 +83,14 @@ val_opts=(
     poolperc            gen0perc            nterm_trim
     cterm_trim          ca_stdev            nterm_add           cterm_add
     max_totres          helix_cap           reset_perc          loop_cut
-    rog_cut             famiperc            select_met
+    rog_cut             famiperc            select_met          model_ckpt
 )
 bool_opts=(
-    active_site         disallow_cys        dec_only            fix_bb
+    disallow_cys        dec_only            fix_bb
     fix_chi             idealize            inc_only            monomer_ROG
     partial             ppi_mode            relax               sc_context
     inpaint_seq         help                skip_diffusion      ignore_metals
-    auto_update         stop_at_capacity    persistent          active_site_ckpt
+    auto_update         stop_at_capacity    persistent
 )
 
 outdir="./evolved"
@@ -122,6 +122,7 @@ max_totres=""
 helix_cap=""
 reset_perc="0"
 select_met=""
+model_ckpt=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
