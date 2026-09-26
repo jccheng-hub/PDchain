@@ -1,5 +1,5 @@
 # Control
-pixi run -w PDchain rfd_chain NONE \
+pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax \
     --model_type protein_mpnn --natbias 10 \
