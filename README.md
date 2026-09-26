@@ -49,7 +49,7 @@ cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register -
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
 ## Usage Examples
-Example scripts can be found in the `examples` directory.
+Example scripts can be found in the `examples` directory. All example scripts are written as if they would be ran from with `examples` as the working directory.
 
 ### 1 - Unconditional Monomer Generation
 ```bash
@@ -85,7 +85,7 @@ The following command Rosetta refines the input PDB (barnase-barstar complex), w
 
 ```bash
 pixi run -w PDchain rfd_chain NONE --skip_mpnn \
-    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax \
     --ca_stdev 1 \
     --design_cycles 3 \
@@ -101,7 +101,7 @@ The following command will diversify the binder (the barstar on chain A) with pa
 
 ```bash
 pixi run -w PDchain rfd_chain \
-    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --inpdb inputs/1brs_af3mod0.pdb \
     --fixedres B1-110 \
     --partial --timesteps 1 \
     --idealize --relax \
@@ -125,7 +125,7 @@ The following command will diversify the binder by rediffusing loop regions whil
 
 ```bash
 pixi run -w PDchain rfd_chain \
-    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --inpdb inputs/1brs_af3mod0.pdb \
     --fixedres B1-110 \
     --ss_to_contigs --vary_linkers 1 --ss_trim 1-3 \
     --idealize --relax \
@@ -151,7 +151,7 @@ The following command will generate de novo protein binders.
 
 ```bash
 pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
-    --inpdb ${PIXI_PROJECT_ROOT}/examples/inputs/1brs_af3mod0.pdb \
+    --inpdb inputs/1brs_af3mod0.pdb \
     --ppi_hotspots A73 A75 \
     --fixedres B1-110 \
     --idealize --relax \
