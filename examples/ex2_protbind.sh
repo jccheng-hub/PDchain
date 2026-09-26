@@ -38,7 +38,7 @@ pixi run -w PDchain rfd_chain \
 # De Novo
 pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --ppi_hotspots A73 A75 \
+    --ppi_hotspots B73 B75 \
     --fixedres B1-110 \
     --idealize --relax \
     --model_type protein_mpnn \
