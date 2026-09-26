@@ -85,9 +85,8 @@ RFdiffusion options:
                             of timesteps for this partial diffusion rerun.
   --partial                 Use partial diffusion
   --monomer_ROG             Apply monomer radius of gyration potential
-  --inpaint_seq             If a residue has its backbone fixed for RFdiffusion
-                            but is not fixed for sequence design, then hide the
-                            residue identity during RFdiffusion.
+  --inpaint_seq [str]       Hide the specified residue identity from RFdiffusion
+  --inpaint_str [str]       Hide the specified structure from RFdiffusion
   --noise_scale [float]     Noise scale (0-1) for RFdiffusion. Higher values
                             result in more diversity but lower quality.
   --model_ckpt [str]        Specify model checkpoint for RFdiffusion.
@@ -170,17 +169,20 @@ val_opts=(
     ap_stdev            backrub             nterm_trim          cterm_trim
     nterm_add           cterm_add           helix_cap           reset_perc
     nbr_dist            select_met          noise_scale         model_ckpt
+    inpaint_seq         inpaint_str
 )
 
 bool_opts=(
     disallow_cys        dec_only            ss_to_contigs     
     fix_bb              fix_chi             idealize            inc_only            
     monomer_ROG         partial             random_order        persistent
-    randsuffix          regap               relax               inpaint_seq
+    randsuffix          regap               relax         
     sc_context          skip_mpnn           skip_refine         ignore_metals
     help
 )
 
+inpaint_seq=""
+inpaint_str=""
 addgap="100"
 addtot="80"
 ap_stdev=""
@@ -491,22 +493,14 @@ rfd_chain () {
         local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/${model_ckpt}_ckpt.pt")
     }
     
-    [[ $inpaint_seq == 1 && -n $contigs_fixbb ]] && {
-        echo "The flag --inpaint_seq was invoked."
-        local exp_fixed=$(expand_res_range $fixedres)
-        local exp_fixbb=$(expand_res_range $contigs_fixbb)
-        local inpainted=$(sed 's| |\n|g' <<< "$exp_fixbb" | awk -v sc_str="$exp_fixed" '
-            BEGIN {
-                n = split(sc_str, a, " ")
-                for (i=1; i<=n; i++) sc[a[i]] = 1
-            }
-            $1 in sc { next } 1
-        ' | paste -sd '/')
-        [[ -n $inpainted ]] && {
-            echo -n "The following residues will have their sequence hidden during diffusion: "
-            sed 's|/| |g' <<< "$inpainted"
-            local rfd_opts+=("'contigmap.inpaint_seq=[$inpainted]'")
-        }
+    # Inpainting
+    [[ -n $inpaint_seq ]] && {
+        echo -n "Masking the following residues with --inpaint_seq: ${inpaint_seq}"
+        local rfd_opts+=("'contigmap.inpaint_seq=[${inpaint_seq// //}]'")
+    }
+    [[ -n $inpaint_str ]] && {
+        echo -n "Masking the following structures with --inpaint_str: ${inpaint_str}"
+        local rfd_opts+=("'contigmap.inpaint_str=[${inpaint_str// //}]'")
     }
 
     [[ -n $inpdb && ! -e $inpdb ]] && {

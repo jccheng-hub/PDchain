@@ -62,5 +62,5 @@ pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --fixedres B1-110 \
     --select_met min:ddg \
     --model_ckpt Complex_base \
-    --ppi_hotspots B73 B75 \
+    --ppi_hotspots B27 B38 B54-59 B82-85 B101-104 \
     --outprefix outputs/ex2d_1brs_denovo
