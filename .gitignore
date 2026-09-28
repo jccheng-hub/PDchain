@@ -7,3 +7,4 @@ archive*
 sandbox*
 test.sh
 .*.swp
+pixi.lock
