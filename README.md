@@ -44,13 +44,13 @@ git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git && cd 
 Run the following for a CPU-only installation. This installation is more consistent across a variety of systems, but it doesn't leverage GPU acceleration for RFdiffusion.
 
 ```bash
-cp box/tomls/cpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
+cp box/tomls/cpu/pixi.* . && pixi run install && pixi workspace register --name PDchain
 ```
 
 If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to leverage GPU acceleration for RFdiffusion, run the following instead.
 
 ```bash
-cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register --name PDchain
+cp box/tomls/gpu/pixi.* . && pixi run install && pixi workspace register --name PDchain
 ```
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.

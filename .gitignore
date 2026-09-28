@@ -2,9 +2,9 @@
 outputs/
 foldrepo/
 models/
-pdchain.sh
 archive*
 sandbox*
-test.sh
+pdchain.sh
+./pixi.lock
+./pixi.toml
 .*.swp
-pixi.lock
