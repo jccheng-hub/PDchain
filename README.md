@@ -408,7 +408,7 @@ pixi run -w PDchain rfd_chain \
 
 `--indir outputs/ex3d_invrots` specifies that we want the input to be a directory, and that input directory is where our previously generated inverse rotamers are located `outputs/ex3d_invrots`. When you specify an input directory (with `--indir`) as opposed to an input pdb (with `--inpdb`), a random .pdb file from that input directory is chosen as the input pdb.
 
-As mentioned previously, what used to be A127 is now B127 because of `gen_invrots` splitting them up.
+As mentioned previously, what used to be A127 is now B127 because of `gen_invrots` placing each input fixed residue on its own chain.
 
 `--fixbbres A49-51 B126-128` specifies what residues we want fixed during RFdiffusion. Given that our main residues are on A50 and B127, this example here retains an extra residue on both ends for both A50 and B127. Note that we could have gone up to the range of A47-53 and B124-130 because of how we generated those inverse rotamers (7-residue peptide scaffolding each key residue).
 
