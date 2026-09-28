@@ -292,7 +292,8 @@ write_py_ss_invrot () {
     
     function rand_chars(num,    len, chars, clen, i, j, output) {
         len = len ? len : 6
-        chars = chars ? chars : "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        # chars = chars ? chars : "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        chars = chars ? chars : "abcdefghijklmnopqrstuvwxyz"
         clen = length(chars)
         for (i=1; i<=num; i++) {
             for (j=1; j<=len; j++) {

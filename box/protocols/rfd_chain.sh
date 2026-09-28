@@ -921,11 +921,10 @@ while [[ $i -le $numdes ]] ; do
 
     # Check outputs
     if [[ -s ${outprefix}_${id[i]}.pdb ]] ; then
-        echo "${outprefix}_${id[i]}.pdb was generated successfully."
-        ((i++))
+        echo "${outprefix}_${id[i]}.pdb was generated successfully." && ((i++))
     else
         echo "${outprefix}_${id[i]}.pdb failed to generate."
-        [[ $persistent == 1 ]] || break
+        [[ $persistent == 1 ]] || ((i++))
     fi
 done
 
