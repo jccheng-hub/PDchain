@@ -72,7 +72,7 @@ This can be a bit verbose, so PDchain will spawn a script called `pdchain.sh` up
 source pdchain.sh
 ```
 
-If you have registered the `pdchain` function, can you just run the following to access commands from within PDchain. For example...
+If you have registered the `pdchain` function, you can use `pdchain` as a prefix to access commands from within PDchain. For example...
 ```bash
 pdchain rfd_chain --help
 ```
