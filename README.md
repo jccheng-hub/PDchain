@@ -16,11 +16,11 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
     - [Protein Binder Redesign with Partial Diffusion](#2b---protein-binder-redesign-with-partial-diffusion)
     - [Protein Binder Redesign with Indels](#2c---protein-binder-redesign-with-indels)
     - [Protein Binder De Novo Design](#2d---protein-binder-de-novo-design)
-  - [Ligand Binder / Enzyme Design](#3---ligand-binder-/-enzyme-design)
-    - [Ligand Binder / Enzyme Redesign with Native Backbone](#3a---ligand-binder-/-enzyme-redesign-with-native-backbone)
-    - [Ligand Binder / Enzyme Redesign with Partial Diffusion](#3b---ligand-binder-/-enzyme-redesign-with-partial-diffusion)
-    - [Ligand Binder / Enzyme Redesign with Indels](#3c---ligand-binder-/-enzyme-redesign-with-indels)
-    - [Ligand Binder / Enzyme De Novo Design](#3d---ligand-binder-/-enzyme-de-novo-design)
+  - [Ligand Binder / Enzyme Design](#3---ligand-binder--enzyme-design)
+    - [Ligand Binder / Enzyme Redesign with Native Backbone](#3a---ligand-binder--enzyme-redesign-with-native-backbone)
+    - [Ligand Binder / Enzyme Redesign with Partial Diffusion](#3b---ligand-binder--enzyme-redesign-with-partial-diffusion)
+    - [Ligand Binder / Enzyme Redesign with Indels](#3c---ligand-binder--enzyme-redesign-with-indels)
+    - [Ligand Binder / Enzyme De Novo Design](#3d---ligand-binder--enzyme-de-novo-design)
 
 ## Installation
 Run the following command to install the newest version of pixi.
