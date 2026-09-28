@@ -82,7 +82,7 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 
 ### 2 - Protein Binder Design
 
-The following command Rosetta refines the input PDB (barnase-barstar complex), which already has a protein-protein interaction, without touching the backbone or sequence. This generates a *computational control* (no design done) that we can use as a reference for later design protocols.
+The following command Rosetta refines the input protein-protein complex, which in this case is the barnase-barstar complex, without touching the backbone or sequence. This generates a control (no design done) that we can use as a reference for the actual design runs later in this section.
 
 ```bash
 pixi run -w PDchain rfd_chain SKIP \
@@ -162,7 +162,7 @@ pixi run -w PDchain rfd_chain \
     --fixedres B1-110 \
     --select_met min:ddg \
     --model_ckpt Complex_base \
-    --ss_to_contigs --vary_linkers 1 --ss_trim 1-3 \
+    --ss_to_contigs --vary_linkers 1 --ss_trim 2-3 \
     --outprefix outputs/ex2c_1brs_indel
 ```
 
@@ -170,7 +170,7 @@ pixi run -w PDchain rfd_chain \
 
 `--vary_linkers 1` will allow the loop regions to vary in length by 1 residue. So if a loop region was originally 5 residues long, that region can end up 4-6 residues long in the output design.
 
-`--ss_trim 1-3` will allow 1-3 helix/sheet residues neighboring loop residues to be masked from RFdiffusion. This gives RFdiffusion more wiggle room when filling in those masked regions.
+`--ss_trim 2-3` will allow 2-3 helix/sheet residues neighboring loop residues to be masked from RFdiffusion. This gives RFdiffusion more wiggle room when filling in those masked regions.
 
 The indel diversification approach is more computationally expensive than partial diffusion because it requires a minimum of 15 timesteps during RFdiffusion, but the additional diversity it provides can be beneficial depending on the design goal.
 
@@ -200,6 +200,157 @@ Here, we provided the contigs `86-95/0 B1-110` to specify that we want to genera
 De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. For example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight complex (so the bar [HA!] is pretty high here), large scale generation and screening will still often be necessary to have high confidence in your designs.
 
 Because we are unlikely to get excellent designs right away, it is often necessary to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better. This is the main reason why the *in silico* continuous evolution system in PDchain was built. See the section on `evo_rfd_chain` for more details.
+
+### 3 - Ligand Binder / Enzyme Design
+The following example takes a protein complexed with a ligand (in this case, a Kemp eliminase complexed with its transition-state analog) and refines it with Rosetta (without any sequence or backbone design). This command is meant to generate a computational control to serve as a reference point for later design runs.
+
+```bash
+pixi run -w PDchain rfd_chain SKIP \
+    --inpdb inputs/5rgf_clean.pdb \
+    --idealize --relax \
+    --model_type soluble_mpnn \
+    --ca_stdev 1 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
+    --numdes 1 \
+    --fixedres A50 A127 --ligname 6NT \
+    --select_met min:ddg \
+    --natbias 10 \
+    --outprefix outputs/ex3_5rgf_control
+```
+
+Setting the contigs to `SKIP` skips RFdiffusion entirely, and `--natbias 10` forces MPNN to recover the native sequence. Together, these prevent any backbone or sequence design.
+
+### 3a - Ligand Binder / Enzyme Redesign with Native Backbone
+
+The following command will redesign the sequence using the native backbone (no RFdiffusion done here). The command is identical to that of the control in the previous section except without `--natbias 10`.
+
+```bash
+pixi run -w PDchain rfd_chain SKIP \
+    --inpdb inputs/5rgf_clean.pdb \
+    --idealize --relax \
+    --model_type soluble_mpnn \
+    --ca_stdev 1 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
+    --numdes 1 \
+    --fixedres A50 A127 --ligname 6NT \
+    --select_met min:ddg \
+    --outprefix outputs/ex3a_5rgf_natbb
+```
+
+`--fixedres A50 A127` fixes the the residues 50 and 127 on chain A. In this example, they correspond to an Asp and Gln that hydrogen-bond to the ligand 6NT.
+
+`--ligname 6NT` specifies the ligand from the input structure you want to keep. Without specifying the ligand names, `rfd_chain` will ignore it entirely.
+
+`--model_type soluble_mpnn` specifies that the use of the SolubleMPNN model, which was not trained to be ligand-aware. When you specify a `--model_type` that isn't `ligand_mpnn` but you include a ligand, the model you specified will be applied first, then the residues within 8 angstroms of the ligand will be redesigned with LigandMPNN. This ensures that at least the residues surrounding the ligand are being redesigned in a ligand-conscious manner.
+
+`--lig_stdev 0.5` applies Rosetta coordinate constraints to the ligand. This one was done with a standard deviation of 0.5, which makes it stronger than the CA coordinate constraints specified with `--ca_stdev 1` in this example.
+
+`--ap_stdev 0.5` applies Rosetta distance (AtomPair) constraints between the ligand and fixed residues. This option only works when both `--fixedres` and `--ligname` are specified. These constraints will preserve the relative geometry between the ligand and the fixed residues (the Asp on A50 and the Gln on A127 in this case).
+
+`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **Built-in Metrics (WIP)** for available metrics.
+
+
+### 3b - Ligand Binder / Enzyme Redesign with Partial Diffusion
+
+The following example will noise/denoise the input backbone with partial diffusion before MPNN-FastRelax.
+
+```bash
+pixi run -w PDchain rfd_chain \
+    --inpdb inputs/5rgf_clean.pdb \
+    --idealize --relax \
+    --model_type soluble_mpnn \
+    --ca_stdev 1 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
+    --numdes 3 \
+    --fixedres A50 A127 --ligname 6NT \
+    --select_met min:ddg \
+    --partial --timesteps 1 \
+    --outprefix outputs/ex3b_5rgf_partial
+```
+
+`--partial` enables partial diffusion, and `--timesteps 1` sets the number of noising/denoising steps to 1. Increase the value for `--timesteps` if you want more diversity from the original input.
+
+### 3c - Ligand Binder / Enzyme Redesign with Indels
+
+The following example will preserve helix and sheet residues while allowing loop regions to rediffuse with varying lengths, allowing for insertions and deletions.
+
+```
+pixi run -w PDchain rfd_chain \
+    --inpdb inputs/5rgf_clean.pdb \
+    --idealize --relax \
+    --model_type soluble_mpnn \
+    --ca_stdev 1 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
+    --numdes 3 \
+    --fixedres A50 A127 --ligname 6NT \
+    --select_met min:ddg \
+    --ss_to_contigs --ss_trim 2-3 --vary_linkers 1 \
+    --outprefix outputs/ex3b_5rgf_indel
+```
+
+`--ss_to_contigs` will generate a contigs string based on the secondary structure of the input PDB. Loop residues will be masked from RFdiffusion.
+
+`--vary_linkers 1` will allow the loop regions to vary in length by 1 residue. So if a loop region was originally 5 residues long, that region can end up 4-6 residues long in the output design.
+
+`--ss_trim 2-3` will allow 2-3 helix/sheet residues neighboring loop residues to be masked from RFdiffusion. This gives RFdiffusion more wiggle room when filling in those masked regions.
+
+The indel diversification approach is more computationally expensive than partial diffusion because it requires a minimum of 15 timesteps during RFdiffusion, but the additional diversity it provides can be beneficial depending on the design goal.
+
+### 3d Ligand Binder / Enzyme De Novo Design
+
+> [!NOTE]
+> This repository integrates the original RFdiffusion, not RFdiffusion2 or RFdiffusion3. While RFdiffusion2 and RFdiffusion3 supports ligand binder / enzyme design without the need to specify starting backbone coordinates or residue indices, the original RFdiffusion does not. In other words, using RFdiffusion for this design task is not the most elegant strategy given the existence of its successors. Still, it is entirely possible to scaffold active sites with the original RFdiffusion, and this example will show how it can be done in the context of this pixi workspace.
+
+The first thing we need is a set of inverse rotamers. The following example shows how we can generate them.
+
+```bash
+pixi run -w PDchain gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
+    --numrots 10 \
+    --parallel 1 \
+    --outdir outputs/ex3d_invrots
+```
+
+The command `gen_invrots` will randomly generate inverse rotamers from the input PDB (given as the first argument). The second argument and onward will tell `gen_invrots` exactly what residues to keep. In this example, we are keeping residues A50 (catalytic Asp), A127 (catalytic Gln), and X1 (ligand).
+
+If a residue specified by `gen_invrots` is an amino acid, you have the option of placing those residues on secondary structures. This follows the format of `[residue]:[H/E/N][int]`, where H, E, and N represent helix, sheet, and any (either helix or sheet), and the integer that follows specifies the number of residues to add at each end of that residue. So for example, our `A50:N3` will scaffold residue A50 on either a 7-residue beta-strand or a 7-residue helix with the residue of interest (Asp on A50) being right in the middle.
+
+`--numrots 10` specify the number of inverse rotamers you want to generate. Once the number of generated rotamers exceed this value, `gen_invrots` will stop generating more.
+
+`--parallel 1` specifies the number of parallel jobs you want to run simultaneously to generate inverse rotamers. Here, we only spawn one job at a time, but increasing this value will make generating inverse rotamers faster. This should not exceed the number of CPU cores you have on your system.
+
+`--outdir outputs/ex3d_invrots` specify where we want to store the inverse rotamers. This directory will serve as the input for the actual design run.
+
+Once you have generated your inverse rotamers, you can take a peak at them in pymol to see if they are reasonable with `pixi run -w PDchain pymol $(echo outputs/ex3d_invrots/*.pdb | cut -d' ' -f1-10)`. Notice that the chain letter code is now different. While A50 is still on A50, A127 is now on B127, and X1 (the ligand) is now on C1. This is because `gen_invrots` has to split each input residue onto its own chain to prevent potential overlap in both residue number and residue chain when the additional residues for secondary structures are added. As a result, we need to be make sure we specify the new chain+residue ids in the subsequent design command.
+
+The following command will generate a de novo binder to the target ligand using the inverse rotamers we previously generated.
+
+```
+pixi run -w PDchain rfd_chain \
+    --indir outputs/ex3d_invrots \
+    --idealize --relax \
+    --model_type soluble_mpnn \
+    --ca_stdev 1 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
+    --numdes 3 \
+    --select_met min:ddg \
+    --fixedres A50 B127 --ligname 6NT \
+    --fixbbres A49-51 B126-128 \
+    --mintot 180 --addtot 40 \
+    --outprefix outputs/ex3d_5rgf_denovo
+```
+
+As mentioned previously, what used to be A127 is now B127 because of `gen_invrots` splitting them up.
+
+`--fixbbres A49-51 B126-128` specifies what residues we want fixed during RFdiffusion. Given that our main residues are on A50 and B127, this example here retains an extra residue on both ends for both A50 and B127. Note that we could have gone up to the range of A47-53 and B124-130 because of how we generated those inverse rotamers (7-residue peptide scaffolding each key residue).
+
+Note that the order in which the residues are specified for `--fixbbres` matters here. The contigs generated by `rfd_chain`'s internal contigs generator `gen_contigs` will slice in those fixed residues in the specified order. In this case, the output will follow the sequence of [linker]
+
+`--mintot 180 --addtot 40` provides the overall length of the desired monomer. Here, we are requesting a monomer 180-220 residues long (minimum 180 with a maximum addition of 40). This option in conjunction with `--fixbbres` will trigger `rfd_chain` to run its internal contigs generator. You still have the option to specify your own contigs as the first argument if you want more specific control.
 
 ## Using the `pdchain` function (shortcut for pixi commands)
 Finishing the installation process should spawn a script called `pdchain.sh` in the root directory. If you `source` this file, you will have access to the `pdchain` function, which is essentially a shortcut for pixi commands tailored for PDchain.

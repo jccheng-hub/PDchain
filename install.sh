@@ -13,7 +13,8 @@ Installation script for PDchain
 
 Options:
   --scriptdirs [str]        Directories in box with scripts to be added as CLI
-                            tools
+                            tools. The directories 'protocols' and 'tools' are
+                            included by default.
   --help                    Display this help and exit
 EOF
 }

@@ -183,7 +183,7 @@ bool_opts=(
 
 inpaint_seq=""
 inpaint_str=""
-addgap="100"
+addgap="80"
 addtot="80"
 ap_stdev=""
 backrub=""

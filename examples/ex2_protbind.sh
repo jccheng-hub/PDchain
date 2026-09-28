@@ -48,7 +48,7 @@ pixi run -w PDchain rfd_chain \
     --fixedres B1-110 \
     --select_met min:ddg \
     --model_ckpt Complex_base \
-    --ss_to_contigs --vary_linkers 1 --ss_trim 1-3 \
+    --ss_to_contigs --vary_linkers 1 --ss_trim 2-3 \
     --outprefix outputs/ex2c_1brs_indel
 
 # De Novo
