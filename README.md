@@ -9,6 +9,7 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
 ## Table of Contents
 - [Installation](#installation)
+- [Using the `pdchain` function (shortcut for pixi commands)](#using-the-optional-pdchain-function-shortcut-for-pixi-commands)
 - [Usage Examples](#usage-examples)
   - [Unconditional Monomer Generation](#1---unconditional-monomer-generation)
   - [Protein Binder Design](#2---protein-binder-design)
@@ -54,7 +55,7 @@ cp box/tomls/gpu.toml pixi.toml && pixi run install && pixi workspace register -
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
-### Using the optional `pdchain` function (shortcut for pixi commands)
+## Using the optional `pdchain` function (shortcut for pixi commands)
 
 Normally, when you want to run a command from a pixi workspace, you would need to prefix your command with `pixi run`. For example:
 ```bash
