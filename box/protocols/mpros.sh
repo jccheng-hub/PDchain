@@ -621,6 +621,9 @@ else
         done
     done
 fi
+ls $step1/packed/*.pdb &>/dev/null || {
+    echo -e "No pdbs found in $step1/packed\nExiting..." && exit 1
+}
 
 # Run PyRosetta for refinement
 step2="$tmpdir/step2" ; mkdir -p $step2
@@ -629,10 +632,13 @@ if [[ $skip_refine == 0 ]] ; then
 else
     cp $step1/packed/*.pdb $step2
 fi
+ls $step2/*.pdb &>/dev/null || {
+    echo -e "No pdbs found in $step2\nExiting..." && exit 1
+}
 
 # Score outputs with LigandMPNN
 [[ $skip_mpnn_score == 0 ]] &&
-mpnn_score ${step2}/*.pdb --model_type ${model_type}
+mpnn_score $step2/*.pdb --model_type $model_type
 
 # Output
 for i_pdb in ${inpdb[@]} ; do
