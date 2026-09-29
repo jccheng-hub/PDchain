@@ -184,7 +184,7 @@ pixi run -w PDchain rfd_chain SKIP \
 `--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **Built-in Metrics (WIP)** for available metrics.
 
 ### 2b - Protein Binder Redesign with Partial Diffusion
-The following command will diversify the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN-FastRelax.
+The following command will noise/denoise the backbone of the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN-FastRelax.
 
 ```bash
 pixi run -w PDchain rfd_chain \
