@@ -24,6 +24,7 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
     - [Ligand Binder / Enzyme De Novo Design](#3d---ligand-binder--enzyme-de-novo-design)
 
 ## Installation
+
 Run the following command to install the newest version of pixi.
 ```bash
 curl -fsSL https://pixi.sh/install.sh | sh
@@ -36,22 +37,22 @@ See https://pixi.prefix.dev/latest/installation/ for more information.
 > This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
 
 Once you have pixi installed, run the following to download the repository and navigate into it.
-
 ```bash
 git clone --recurse-submodules https://github.com/jccheng-hub/PDchain.git && cd PDchain
 ```
 
 Run the following for a CPU-only installation. This installation is more consistent across a variety of systems, but it doesn't leverage GPU acceleration for RFdiffusion.
-
 ```bash
 cp box/tomls/cpu/pixi.* . && pixi run install && pixi workspace register --name PDchain
 ```
 
 If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to leverage GPU acceleration for RFdiffusion, run the following instead.
-
 ```bash
 cp box/tomls/gpu/pixi.* . && pixi run install && pixi workspace register --name PDchain
 ```
+
+> [!NOTE]
+> The CUDA version listed in the pixi.toml file for the Linux GPU installation of RFdiffusion is 11.8. Some newer GPUs from NVIDIA are incompatible with CUDA 11.8 and requires newer versions of CUDA. If this is the case, then the installation will fail despite having a CUDA-compatible GPU. To get around this, you can attempt to fix the pixi.toml file to run on a newer version of CUDA. This may require additional adjustments like changing the python/pytorch/dgl versions, shifting to installation from pypi instead of conda-forge, and/or changing the available channels.
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
