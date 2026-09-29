@@ -10,14 +10,14 @@ pixi run -e rfdiffusion rfdiffusion \
     'contigmap.contigs=[A1-50/10-20/A66-247]' \
     inference.input_pdb="inputs/1a53_clean.pdb" \
     inference.output_prefix="outputs/ex0a_1a53_remodel" \
-    inference.num_designs=3 
+    inference.num_designs=1
 
 # LigandMPNN example
 pixi run -e ligandmpnn ligandmpnn \
     --pdb_path "inputs/1a53_clean.pdb" \
     --out_folder "outputs" \
     --model_type protein_mpnn \
-    --batch_size 10 \
+    --batch_size 1 \
     --pack_side_chains 1 \
     --number_of_packs_per_design 1 \
     --pack_with_ligand_context 1 \
