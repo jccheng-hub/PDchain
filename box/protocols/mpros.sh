@@ -64,6 +64,8 @@ PyRosetta options:
   --fix_chi                 Fix chi angles during refinement
   --ignore_metals           Do not set up metal-binding constraints
   --renumber_chain          Renumber each chain for the output pdb
+  --rosetta_lig_nbr         Apply RosettaDesign to residues around ligand. Uses
+                            --nbr_dist for neighbor detection.       
   --keep_script             Keep the PyRosetta script used
   --skip_refine             Skip Rosetta refinement
 EOF
@@ -93,7 +95,7 @@ bool_opts=(
     idealize            ignore_metals       keep_script         ncaa_pal
     relax               renumber_chain      repack              sc_context
     skip_mpnn           skip_refine         minimize            inplace
-    skip_mpnn_score     help
+    skip_mpnn_score     rosetta_lig_nbr     help
 )
 
 batch_size="1"
@@ -556,6 +558,25 @@ EOF
         echo 's| (Add mover_name="idealize")|<\1|' >> $sed_script
     }
     
+    # If rosetta_lig_nbr was enabled, then make resfile for design
+    [[ -z $resfile && $rosetta_lig_nbr == 1 && -n $ligname ]] && {
+        local nbrres=$(find_neighbors "$(echo $indir/*.pdb)" "" "$ligname")
+        local finres=$(
+            echo $nbrres        | sed 's/ /\n/g'                       |
+            sort -k1,1.1 -k1.2n | awk '$1!~/^('"${fixedres// /|}"')$/' |
+            paste -sd ' '
+        )
+        echo "The following residues were within ${nbr_dist} angstroms of $ligname: $nbrres"
+        echo "List of fixed residues: ${fixedres}"
+        echo "List of residues to redesign with Rosetta: ${finres}"
+        echo "All other residues will be fixed but will not be repacked."
+        echo "Cysteines are prohibited in this mode."
+        local resfile="$tmpdir/rosetta_lig_nbr.res"
+        echo -e "NATRO\nSTART\n" > $resfile
+        echo $finres | sed 's| |\n|g' |
+        awk '{ch=substr($1,1,1); ri=substr($1,2); printf "%s %s ALLAAxc\n", ri, ch}' >> $resfile
+    }
+
     # Refinement
     if [[ -n $resfile ]] ; then 
         echo "Including design mover with resfile."

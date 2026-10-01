@@ -135,6 +135,8 @@ LigandMPNN + PyRosetta options:
   --sc_context              Use side chain atoms as ligands during LigandMPNN
   --idealize                Idealize bond lengths and bond angles
   --relax                   Use relax as a refinement
+  --rosetta_lig_nbr         Use RosettaDesign on residues within --nbr_dist of
+                            ligands. Cysteines are prohibited.
   --fix_bb                  Fix backbones
   --fix_chi                 Fix chi angles
   --skip_mpnn               Skip MPNN
@@ -174,7 +176,7 @@ bool_opts=(
     monomer_ROG         partial             random_order        persistent
     randsuffix          regap               relax         
     sc_context          skip_mpnn           skip_refine         ignore_metals
-    help
+    rosetta_lig_nbr     help
 )
 
 tot_range="180-220"
