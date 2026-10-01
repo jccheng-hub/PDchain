@@ -57,8 +57,8 @@ get_newres () {
     # Take input contigs and oldres list and return new resi
     # Output format: oldres:newres
 
-    # If contigs is NONE, then execute this block (requires inpdb defined)
-    [[ $1 == NONE ]] && {
+    # If contigs is SKIP, then execute this block (requires inpdb defined)
+    [[ $1 == SKIP ]] && {
         awk -v oldres="${*:2}" '
             BEGIN {
                 n = split(oldres, a, " ")
@@ -164,7 +164,7 @@ update_contigs () {
     sed -e 's|^/||' -e 's|^0-0/||' -e 's|/0-0$||'
 }
 
-if [[ $newcontigs == NONE ]] ; then
+if [[ $newcontigs == SKIP ]] ; then
     echo $oldcontigs
 else
     update_contigs "$oldcontigs" "$newcontigs"

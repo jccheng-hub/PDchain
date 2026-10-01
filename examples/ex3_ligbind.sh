@@ -3,78 +3,71 @@
 # Control
 pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 1 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
-    --natbias 10 \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --skip_mpnn \
     --outprefix outputs/ex3_5rgf_control
 
-# Native Backbone
+# Native backbone
 pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --outprefix outputs/ex3a_5rgf_natbb
 
-# Partial Diffusion
+# Partial diffusion
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
     --partial --timesteps 1 \
     --outprefix outputs/ex3b_5rgf_partial
 
-# Indel
+# Indel diffusion
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
     --ss_to_contigs --ss_trim 2-3 --vary_linkers 1 \
     --outprefix outputs/ex3c_5rgf_indel
 
-# Generate Inverse Rotamers
+# Inverse rotamer generation
 pixi run -w PDchain gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
     --numrots 10 \
     --parallel 1 \
     --outdir outputs/ex3d_invrots
 
-# De Novo
+# De novo
 pixi run -w PDchain rfd_chain \
     --indir outputs/ex3d_invrots \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 B127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 B127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
-    --fixbbres A49-51 B126-128 \
-    --mintot 180 --addtot 40 \
+    --fixbbres A49-51 B126-128 --tot_range 180-220 \
     --outprefix outputs/ex3d_5rgf_denovo

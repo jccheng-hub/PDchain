@@ -82,7 +82,7 @@ val_opts=(
     relax_repeats       redes_dist          model_type          design_cycles
     poolperc            gen0perc            nterm_trim
     cterm_trim          ca_stdev            nterm_add           cterm_add
-    max_totres          helix_cap           reset_perc          loop_cut
+    helix_cap           reset_perc          loop_cut
     rog_cut             famiperc            select_met          model_ckpt
 )
 bool_opts=(
@@ -118,7 +118,6 @@ redes_dist=""
 gen0perc=""
 model_type="protein_mpnn"
 ca_stdev=""
-max_totres=""
 helix_cap=""
 reset_perc="0"
 select_met=""
@@ -160,11 +159,6 @@ indir="${args[1]%/}"
 mets="${args[@]:2}"
 outdir="${outdir%/}" ; mkdir -p $outdir
 tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EXIT
-
-# Add max_totres
-[[ -n $max_totres ]] && {
-    all_opts+=("--mintot $max_totres" "--addtot 0")
-}
 
 # Check time limit
 tlim_s=$(gawk -v tlim="$tlim" 'BEGIN {
@@ -276,41 +270,41 @@ while [[ $SECONDS -lt $time_f ]] ; do
         echo "$inpdb does not exist." && continue
     fi
 
-    # Prepare values for rog_cut and loop_cut (tolerate small increase in base value)
-    unset extra_opts
-    rog_cut_tol=$(awk '
-        $1=="rog_ala" && $2 { sum += $2 ; idx++ ; val[idx] = $2 }
-        END {
-            if (idx + 0 > 20) {
-                avg = sum / idx
-                for (i=1; i<=idx; i++) { ssq += ( val[i] - avg )^2 }
-                print sqrt(ssq / idx)
-            } else if (idx + 0 > 0) {
-                print 9999
-            } else {
-                print 0
-            }
-        }
-    ' $outdir/*.pdb)
-    loop_cut_tol=$(awk '
-        $1=="perc_loop" && $2 { sum += $2 ; idx++ ; val[idx] = $2 }
-        END {
-            if (idx + 0 > 20) {
-                avg = sum / idx
-                for (i=1; i<=idx; i++) { ssq += ( val[i] - avg )^2 }
-                print sqrt(ssq / idx)
-            } else if (idx + 0 > 0) {
-                print 9999
-            } else {
-                print 0
-            }
-        }
-    ' $outdir/*.pdb)
-    rog_cut_true=$(awk -v tol="$rog_cut_tol" '$1=="rog_ala" && $2 {print $2 + tol}' $inpdb)
-    loop_cut_true=$(awk -v tol="$loop_cut_tol" '$1=="perc_loop" && $2 {print $2 + tol}' $inpdb)
-    [[ -n $rog_cut_true ]] && extra_opts+=("--rog_cut $rog_cut_true")
-    [[ -n $loop_cut_true ]] && extra_opts+=("--loop_cut $loop_cut_true")
-    [[ -n $extra_opts ]] && echo "Appending the following options: ${extra_opts[@]}"
+    # # Prepare values for rog_cut and loop_cut (tolerate small increase in base value)
+    # unset extra_opts
+    # rog_cut_tol=$(awk '
+    #     $1=="rog_ala" && $2 { sum += $2 ; idx++ ; val[idx] = $2 }
+    #     END {
+    #         if (idx + 0 > 20) {
+    #             avg = sum / idx
+    #             for (i=1; i<=idx; i++) { ssq += ( val[i] - avg )^2 }
+    #             print sqrt(ssq / idx)
+    #         } else if (idx + 0 > 0) {
+    #             print 9999
+    #         } else {
+    #             print 0
+    #         }
+    #     }
+    # ' $outdir/*.pdb)
+    # loop_cut_tol=$(awk '
+    #     $1=="perc_loop" && $2 { sum += $2 ; idx++ ; val[idx] = $2 }
+    #     END {
+    #         if (idx + 0 > 20) {
+    #             avg = sum / idx
+    #             for (i=1; i<=idx; i++) { ssq += ( val[i] - avg )^2 }
+    #             print sqrt(ssq / idx)
+    #         } else if (idx + 0 > 0) {
+    #             print 9999
+    #         } else {
+    #             print 0
+    #         }
+    #     }
+    # ' $outdir/*.pdb)
+    # rog_cut_true=$(awk -v tol="$rog_cut_tol" '$1=="rog_ala" && $2 {print $2 + tol}' $inpdb)
+    # loop_cut_true=$(awk -v tol="$loop_cut_tol" '$1=="perc_loop" && $2 {print $2 + tol}' $inpdb)
+    # [[ -n $rog_cut_true ]] && extra_opts+=("--rog_cut $rog_cut_true")
+    # [[ -n $loop_cut_true ]] && extra_opts+=("--loop_cut $loop_cut_true")
+    # [[ -n $extra_opts ]] && echo "Appending the following options: ${extra_opts[@]}"
 
     # Run rfd_chain
     outbn=($(basename ${inpdb%.*} | sed -E 's|_([^_]+)_([^_]+)$| \1 \2|'))

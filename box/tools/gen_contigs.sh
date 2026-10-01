@@ -8,8 +8,8 @@ E.g. gen_contigs A3-3 A7-10 A72-72
 23-23/A3-3/11-11/A7-10/39-39/A72-72/57-57
 
 Depending on the input, the default script might fail to find a contigs string
-that matches the specifications. Tune the parameters --mingap, --mintot,
---addgap, and --addtot to increase likelihood of success.
+that matches the specifications. Tune the parameters --tot_range and --gap_range
+to increase likelihood of success.
 
 Parameters:
     RES                     Residues to keep in chain+resi format
@@ -17,14 +17,10 @@ Parameters:
                             E.g. A5-10
 
 Options for default usage:
-  --mingap [int]            Mininum residues in each gap
-  --addgap [int]            Maximum possible number added to --mingap
-                            E.g. --mingap 20 --addgap 60 allows each gap to be
-                            between 20-80 residues long.
-  --mintot [int]            Minimum residues in diffused protein
-  --addtot [int]            Maximum possible rumber added to --mintot
-                            E.g. --mintot 160 --addtot 40 allows the total
-                            residue count to be 160-200
+  --tot_range [str]         Range for total number of residues
+                            E.g. --tot_range 180-220
+  --gap_range [str]         Range for number of residues per gap
+                            E.g. --gap_range 20-100
   --random_order            Randomize the input RES order
 
 Options for ss usage:
@@ -78,10 +74,9 @@ optarg () {
 }
 
 val_opts=(
-    mingap              addgap              mintot              addtot
     inpdb               ss_trim             nterm_trim          cterm_trim
     vary_linkers        nterm_add           cterm_add           helix_cap
-    reset_perc 
+    reset_perc          tot_range           gap_range
 )
 
 bool_opts=(
@@ -89,10 +84,8 @@ bool_opts=(
     regap               help
 )
 
-mintot="180"
-addtot="40"
-mingap="20"
-addgap="100"
+tot_range="180-220"
+gap_range="20-100"
 inpdb=""
 ss_trim="1"
 nterm_trim="1"
@@ -146,6 +139,12 @@ nterm_add=$(collapse_range $nterm_add)
 cterm_add=$(collapse_range $cterm_add)
 nterm_trim=$(collapse_range $nterm_trim)
 cterm_trim=$(collapse_range $cterm_trim)
+
+# Extract mintot, addtot, mingap, addgap
+mintot=($(sed 's/-/ /' <<< $tot_range))
+addtot=$(echo "${mintot[1]}-$mintot" | bc)
+mingap=($(sed 's/-/ /' <<< $gap_range))
+addgap=$(echo "${mingap[1]}-$mingap" | bc)
 
 # If reset_perc is enabled, max out ss_trim at a specified chance
 [[ $(echo "$reset_perc > 0" | bc) == 1 ]] && {

@@ -43,10 +43,6 @@ Contigs options:
   --random_order            If --fixbbres (or --fixedres) is provided, then the
                             order of the fixed residues are shuffled during
                             contigs generation.
-  --mingap [int]            Minimum number of diffusable residues in each gap
-  --addgap [int]            Added to --mingap determines maximum residue gap
-  --mintot [int]            Minimum total residues of the entire protein
-  --addtot [int]            Added to --mintot determines maximum total residues
   --vary_linkers [int]      Allow diffusable regions to vary by this number
   --inc_only                If --vary_linkers is provided, then the diffusable
                             regions cannot decrease in length.
@@ -158,12 +154,12 @@ optarg () {
 }
 
 val_opts=(
-    addgap              addtot              ca_stdev            
+    ca_stdev            
     clash_cut           cstfile             design_cycles       fix_stdev
     fixbbres            fixedres            indir               inpdb
-    lig_stdev           ligname             loop_cut            mingap
-    mintot              model_type          natbias             numdes
-    outprefix           ppi_hotspots        
+    lig_stdev           ligname             loop_cut 
+    model_type          natbias             numdes
+    outprefix           ppi_hotspots        tot_range           gap_range
     redesres            relax_repeats       rog_cut             ss_trim
     temperature         threads             timesteps           vary_linkers 
     ap_stdev            backrub             nterm_trim          cterm_trim
@@ -181,10 +177,10 @@ bool_opts=(
     help
 )
 
+tot_range="180-220"
+gap_range="20-100"
 inpaint_seq=""
 inpaint_str=""
-addgap="80"
-addtot="80"
 ap_stdev=""
 backrub=""
 ca_stdev=""
@@ -199,8 +195,6 @@ inpdb=""
 lig_stdev=""
 ligname=""
 loop_cut="9999"
-mingap="20"
-mintot="120"
 model_type="protein_mpnn"
 natbias=""
 numdes="1"
@@ -379,7 +373,7 @@ rfd_chain () {
     local fixbbres=$fixbbres
 
     # Generate fixbbres if not provided
-    [[ -z $fixbbres && -n $contigs ]] && {
+    [[ -z $fixbbres && -n $contigs && $contigs != SKIP ]] && {
         local fixbbres=$(
             sed -e 's|/| |g' -e 's| |\n|g' <<< $contigs | grep '^[A-Z]' | paste -sd ' '
         )
@@ -387,7 +381,7 @@ rfd_chain () {
     [[ -z $fixbbres && -n $fixedres ]] && local fixbbres="$fixedres"
 
     # Collapse input contigs if it is provided
-    [[ -n $contigs ]] && {
+    [[ -n $contigs && $contigs != SKIP ]] && {
         local contigs=$(collapse_contigs "$contigs")
     }
     
@@ -519,7 +513,9 @@ rfd_chain () {
     )
     if [[ -n $inpdb && $contigs == SKIP ]] ; then
         echo "Input pdb detected and contigs set to SKIP. Skipping diffusion."
-        grep "^ATOM" $inpdb > $step1/Diffused_0.pdb
+        clean_pdb $inpdb --renumber --outdir $step1 &&
+        mv $step1/$(basename ${inpdb%.pdb})_clean.pdb $step1/Diffused_0.pdb
+        local contigs=$(gen_contigs $fixbbres --inpdb $inpdb --ss_trim 100 --ss_to_contigs --vary_linkers 0)
     else
         eval "
             $pixirun rfdiffusion rfdiffusion \

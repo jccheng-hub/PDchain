@@ -13,7 +13,7 @@ Options:
                             E.g. --chains A B C
   --outdir [str]            Output directory
   --suffix [str]            Suffix
-  --renumber                Renumber each chain starting at 1
+  --renumber                Renumber each residue starting at 1
   --help                    Display this help and exit
 EOF
 }
@@ -87,15 +87,19 @@ clean_pdb () {
             delete a ; split(lin[j], a)
             if (pass[a[5]a[6]] == 1) {
                 if ('$renumber') {
-                    if (ch=="" || ch!=a[5]) { d = a[6] - 1 ; x = 0 ; ch = a[5] }
+                    if (ch=="" || ch!=a[5]) { d = a[6] - 1 ; x = 0 ; ch = a[5] ; s+=resi }
 
                     # Check for insertion numbers
                     if (a[6]~/[A-Z]/) {
                         if (x_id!=a[6]) { x_id=a[6]; x++ }
                     }
+
                     sub(/[A-Z]/,"",a[6])
-                    resi = sprintf("%4d", a[6] - d + x)
+                    resi = sprintf("%4d", a[6] - d + x + s)
                     lin[j] = substr(lin[j],1,22) resi " " substr(lin[j],28)
+
+                    # s will make it so that resi never overlaps
+                    # x will account for insertion numbers (e.g. CDR loops)
                 }
                 print lin[j]
             }

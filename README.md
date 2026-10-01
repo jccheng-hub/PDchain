@@ -22,6 +22,7 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
     - [Ligand Binder / Enzyme Redesign with Partial Diffusion](#3b---ligand-binder--enzyme-redesign-with-partial-diffusion)
     - [Ligand Binder / Enzyme Redesign with Indels](#3c---ligand-binder--enzyme-redesign-with-indels)
     - [Ligand Binder / Enzyme De Novo Design](#3d---ligand-binder--enzyme-de-novo-design)
+  - [Continuous Evolution of Designs](#4---continuous-evolution-of-designs)
 
 ## Installation
 
@@ -116,9 +117,9 @@ Example scripts can be found in the `examples` directory. All example scripts ar
 ```bash
 pixi run -w PDchain rfd_chain 140-160 \
     --idealize --relax --ca_stdev 1 \
-    --model_type protein_mpnn \
     --design_cycles 3 \
     --numdes 3 \
+    --model_type protein_mpnn \
     --outprefix outputs/ex1_rand
 ```
 
@@ -147,41 +148,36 @@ The following command Rosetta refines the input protein-protein complex, which i
 ```bash
 pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --idealize --relax \
-    --model_type protein_mpnn \
-    --ca_stdev 1 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 1 \
-    --fixedres B1-110 \
     --select_met min:ddg \
-    --natbias 10 \
+    --fixedres B1-110 \
+    --skip_mpnn \
     --outprefix outputs/ex2_1brs_control
 ```
 
-The `SKIP` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion.
-
-`--natbias 10` applies a biasing weight of 10 towards the native (input) residues at every position during MPNN sequence design. A weight of 10 basically forces MPNN to recover the input residues at every position, preventing any actual sequence design but still allowing MPNN to rebuild/repack the side chains.
+The `SKIP` keyword at where the contigs is supposed to be tells `rfd_chain` to skip RFdiffusion, and `--skip_mpnn` skips the MPNN sequence design step. The result is a computational control refined by Rosetta.
 
 ### 2a - Protein Binder Redesign with Native Backbone
 
-The following command will diversify the binder sequence. RFdiffusion is not applied here (just MPNN-FastRelax). The command is identical to the control command except it does not have the `--natbias 10` option.
+The following command will diversify the binder sequence. RFdiffusion is not applied here (just MPNN-FastRelax).
 
 ```bash
 pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --idealize --relax \
-    --model_type protein_mpnn \
-    --ca_stdev 1 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres B1-110 \
     --select_met min:ddg \
+    --fixedres B1-110 \
+    --model_type protein_mpnn \
     --outprefix outputs/ex2a_1brs_natbb
 ```
 
-`--fixedres B1-110` is necessary here to prevent MPNN from sequence designing the target protein (the barnase on chain B).
+`--fixedres B1-110` prevents MPNN from sequence designing the target protein (the barnase on chain B).
 
-`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **Built-in Metrics (WIP)** for available metrics.
+`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section on [Continuous Evolution of Designs](#4---continuous-evolution-of-designs) for available metrics.
 
 ### 2b - Protein Binder Redesign with Partial Diffusion
 The following command will noise/denoise the backbone of the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN-FastRelax.
@@ -189,13 +185,12 @@ The following command will noise/denoise the backbone of the binder (the barstar
 ```bash
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --idealize --relax \
-    --model_type protein_mpnn \
-    --ca_stdev 1 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres B1-110 \
     --select_met min:ddg \
+    --fixedres B1-110 \
+    --model_type protein_mpnn \
     --model_ckpt Complex_base \
     --partial --timesteps 1 \
     --outprefix outputs/ex2b_1brs_partial
@@ -214,13 +209,12 @@ The following command will diversify the binder by rediffusing loop regions whil
 ```bash
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --idealize --relax \
-    --model_type protein_mpnn \
-    --ca_stdev 1 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres B1-110 \
     --select_met min:ddg \
+    --fixedres B1-110 \
+    --model_type protein_mpnn \
     --model_ckpt Complex_base \
     --ss_to_contigs --vary_linkers 1 --ss_trim 2-3 \
     --outprefix outputs/ex2c_1brs_indel
@@ -241,13 +235,12 @@ The following command will generate de novo protein binders.
 ```bash
 pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
     --inpdb inputs/1brs_af3mod0.pdb \
-    --idealize --relax \
-    --model_type protein_mpnn \
-    --ca_stdev 1 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres B1-110 \
     --select_met min:ddg \
+    --fixedres B1-110 \
+    --model_type protein_mpnn \
     --model_ckpt Complex_base \
     --ppi_hotspots B27 B38 B54-59 B82-85 B101-104 \
     --outprefix outputs/ex2d_1brs_denovo
@@ -259,7 +252,7 @@ Here, we provided the contigs `86-95/0 B1-110` to specify that we want to genera
 
 De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. For example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight complex (so the bar [HA!] is pretty high here), large scale generation and screening will still often be necessary to have high confidence in your designs.
 
-Because we are unlikely to get excellent designs right away, it is often necessary to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better. This is the main reason why the *in silico* continuous evolution system in PDchain was built. See the section on `evo_rfd_chain` for more details.
+Because we are unlikely to get excellent designs right away, it is often necessary to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better. This is the main reason why the *in silico* continuous evolution system in PDchain was built. See the section on [Contnuous Evolution of Designs](#4---continuous-evolution-of-designs) for more details.
 
 ### 3 - Ligand Binder / Enzyme Design
 The following example takes a protein complexed with a ligand (in this case, a Kemp eliminase complexed with its transition-state analog) and refines it with Rosetta (without any sequence or backbone design). This command is meant to generate a computational control to serve as a reference point for later design runs.
@@ -267,35 +260,33 @@ The following example takes a protein complexed with a ligand (in this case, a K
 ```bash
 pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 1 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
-    --natbias 10 \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --skip_mpnn \
     --outprefix outputs/ex3_5rgf_control
 ```
 
-Setting the contigs to `SKIP` skips RFdiffusion entirely, and `--natbias 10` forces MPNN to recover the native sequence. Together, these prevent any backbone or sequence design.
+Setting the contigs to `SKIP` skips RFdiffusion entirely, and `--skip_mpnn` skips the MPNN sequence design step.
+
 
 ### 3a - Ligand Binder / Enzyme Redesign with Native Backbone
 
-The following command will redesign the sequence using the native backbone (no RFdiffusion done here). The command is identical to that of the control in the previous section except without `--natbias 10`.
+The following command will redesign the sequence using the native backbone (no RFdiffusion done here).
 
 ```bash
 pixi run -w PDchain rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --outprefix outputs/ex3a_5rgf_natbb
 ```
 
@@ -303,13 +294,15 @@ pixi run -w PDchain rfd_chain SKIP \
 
 `--ligname 6NT` specifies the ligand from the input structure you want to keep. Without specifying the ligand names, `rfd_chain` will ignore it entirely.
 
-`--model_type soluble_mpnn` specifies that the use of the SolubleMPNN model, which was not trained to be ligand-aware. When you specify a `--model_type` that isn't `ligand_mpnn` but you include a ligand, the model you specified will be applied first, then the residues within 8 angstroms of the ligand will be redesigned with LigandMPNN. This ensures that at least the residues surrounding the ligand are being redesigned in a ligand-conscious manner.
-
 `--lig_stdev 0.5` applies Rosetta coordinate constraints to the ligand. This one was done with a standard deviation of 0.5, which makes it stronger than the CA coordinate constraints specified with `--ca_stdev 1` in this example.
 
 `--ap_stdev 0.5` applies Rosetta distance (AtomPair) constraints between the ligand and fixed residues. This option only works when both `--fixedres` and `--ligname` are specified. These constraints will preserve the relative geometry between the ligand and the fixed residues (the Asp on A50 and the Gln on A127 in this case).
 
-`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section **Built-in Metrics (WIP)** for available metrics.
+`--model_type soluble_mpnn` specifies that the use of the SolubleMPNN model, which was not trained to be ligand-aware. When you specify a `--model_type` that isn't `ligand_mpnn` but you include a ligand, the model you specified will be applied first, then the residues within 8 angstroms of the ligand will be redesigned with LigandMPNN. This ensures that at least the residues surrounding the ligand are being redesigned in a ligand-conscious manner.
+
+`--sc_context` allows LigandMPNN to use fixed residues as additional ligand atoms. Presumably this makes the sequence design of LigandMPNN sensitive to the existing rotamer.
+
+`--select_met min:ddg` specifies the selection metric during iterative rounds of MPNN-FastRelax. By default, designs with improved Rosetta score and/or MPNN confidence scores will be accepted after refinement, but this flag will make it so that acceptance/rejection depends solely on the specified metric. Here, the `min:` prefix specifies that we want lower values of `ddg`. If you want to maximize some metric value instead, you would use the `max:` prefix (e.g. `--select_met max:protein_mpnn_score`). If you want to lean towards some specific values, you would use the `val` prefix followed by `=[desired_value]` (e.g. `--select_met val:dsasa=0.7`). See section on [Continuous Evolution of Designs](#4---continuous-evolution-of-designs) for more metrics.
 
 
 ### 3b - Ligand Binder / Enzyme Redesign with Partial Diffusion
@@ -319,14 +312,13 @@ The following example will noise/denoise the input backbone with partial diffusi
 ```bash
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
     --partial --timesteps 1 \
     --outprefix outputs/ex3b_5rgf_partial
@@ -341,14 +333,13 @@ The following example will preserve helix and sheet residues while allowing loop
 ```
 pixi run -w PDchain rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 A127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 A127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
     --ss_to_contigs --ss_trim 2-3 --vary_linkers 1 \
     --outprefix outputs/ex3c_5rgf_indel
@@ -393,17 +384,15 @@ The following command will generate a de novo binder to the target ligand using 
 ```
 pixi run -w PDchain rfd_chain \
     --indir outputs/ex3d_invrots \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
-    --fixedres A50 B127 --ligname 6NT \
     --select_met min:ddg \
+    --fixedres A50 B127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
-    --fixbbres A49-51 B126-128 \
-    --mintot 180 --addtot 40 \
+    --fixbbres A49-51 B126-128 --tot_range 180-220 \
     --outprefix outputs/ex3d_5rgf_denovo
 ```
 
@@ -413,7 +402,7 @@ As mentioned previously, what used to be A127 is now B127 because of `gen_invrot
 
 `--fixbbres A49-51 B126-128` specifies what residues we want fixed during RFdiffusion. Given that our main residues are on A50 and B127, this example here retains an extra residue on both ends for both A50 and B127. Note that we could have gone up to the range of A47-53 and B124-130 because of how we generated those inverse rotamers (7-residue peptide scaffolding each key residue).
 
-`--mintot 180 --addtot 40` provides the overall length of the desired monomer. Here, we are requesting a monomer 180-220 residues long (minimum 180 with a maximum addition of 40). This option in conjunction with `--fixbbres` will trigger `rfd_chain` to run `gen_contigs` to generate a contigs string based on these constraints. You still have the option to specify your own contigs as the first argument if you want more specific control.
+`--tot_range 180-220` provides the overall length of the desired monomer. Here, we are requesting a monomer 180-220 residues long. This option in conjunction with `--fixbbres` will trigger `rfd_chain` to run `gen_contigs` to generate a contigs string based on these constraints. You still have the option to specify your own contigs as the first argument if you want more specific control.
 
 Note that the order in which the residues are specified for `--fixbbres` matters. The command `gen_contigs`, which `rfd_chain` automatically accesses when a contigs string is not provided, will add residues in between the fixed regions *in the specified order* as well as additional residues at the N and C termini. In this case, the output will follow the order of `[diffused]-[A49-51]-[diffused]-[B126-128]-[diffused]` in which `[diffused]` represent the backbone regions filled in by RFdiffusion. Had we specified `--fixbbres B126-128 A49-51` instead, the order between the two fixed regions would have been flipped (i.e. `[diffused]-[B126-128]-[diffused]-[A49-51]-[diffused]`).
 
@@ -424,26 +413,67 @@ Note that the order in which the residues are specified for `--fixbbres` matters
 
 As mentioned in the example with de novo protein binder design, it is unlikely to get "reasonable" de novo designs from a small-scale computational run. Getting promising design candidates often require generating thousands of designs and screening through them. Sometimes, even the best designs from a large-scale batch might not meet all of your desired criteria. For example, they might be globular with ample secondary structure composition, but the binding pocket is completely buried/exposed. In these situations, it might be better to redesign these candidates to optimize for those desired properties rather than to repeatedly fish for new designs that meet all of your criteria all at once. See the section on `evo_rfd_chain` to see how one can evolve designs based on desirable metrics.
 
+### 4 - Continuous Evolution of Designs
+> [!NOTE]
+> This section is under construction!
+
+Not every design output will possess properties you are looking for---this is especially true for de novo designs. Often times, you end up with designs that check some boxes but not others. In these situations, it may be worth attempting optimization of these designs by using them as a starting point for cycles of diversification and selection.
+
+We did some version of this in the protein binding and ligand binding examples in which we used the `--select_met min:ddg` option to tune the MPNN-FastRelax protocol built into `rfd_chain`. As MPNN-FastRelax is applied through multiple cycles, it will only accept the new output if it improves the specified score. In this case, we instructed `rfd_chain` to select for lower values of `ddg`. This means that, at the end of each cycle of MPNN-FastRelax, the output is only accepted if it has lower `ddg` than the input.
+
+The main benefit to `--select_met` is that it can direct MPNN-FastRelax to select for sequences (from its current backbone) more tailored to your design goal, but it is only concerned about a singular metric. In addition, `rfd_chain` itself has no knowledge of how any of your other designs compare to the current one you are optimizing.
+
+The command `evo_rfd_chain` was written to address these limitations. It will take an input batch of designs, generate a pool of designs by diversifying those inputs, then select the "best" in that pool based on specified metrics for further diversification. The output design will then get added into the same pool of designs before the next round of selection and diversification begins.
+
+### 4a - Generate Initial Design Pool
+
+An initial design pool is provided at `examples/inputs/oripool`. This pool was generated from the ligand-binding enzyme design example (Kemp eliminase). This pool has 200 initial designs that have not been vetted beyond the original `rfd_chain` command that generated them. The hope is that this batch will contain at least some workable starting point for *in silico* evolution.
+
+The following snippet was used to generate this original pool. Running it yourself is optional since `examples/inputs/oripool` already has the outputs. Feel free to move onto the next section after reviewing the snippet.
+
+```bash
+# Generate inverse rotamers if we have less than 200
+[[ $(echo inputs/oripool/invrots/*.pdb | wc -w) -lt 200 ]] && {
+    pixi run -w PDchain gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
+        --numrots 200 \
+        --parallel 1 \
+        --outdir inputs/oripool/invrots
+}
+
+# Generate initial pool of designs
+pixi run -w PDchain rfd_chain \
+    --indir inputs/oripool/invrots \
+    --idealize --relax \
+    --model_type soluble_mpnn \
+    --ca_stdev 1 \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --design_cycles 3 \
+    --numdes 200 \
+    --fixedres A50 B127 --ligname 6NT \
+    --select_met min:ddg \
+    --model_ckpt ActiveSite \
+    --fixbbres A49-51 B126-128 \
+    --tot_range 180-220 \
+    --outprefix inputs/oripool/ex4_5rgf_denovo
+```
+
+### 4b - Evolving Designs
+
+Every design that is outputted by `rfd_chain` will contain information that allows them to be evolved by `evo_rfd_chain`. Notably, information such as the original contigs, the fixed residues, the ligand names, the Rosetta constraints, and various selection metrics are all included in the footer of each PDB (try `cat $(shuf -e -n1 inputs/oripool/*.pdb)` to display the contents of a random design to see for yourself).
+
+Given that most of these designs will not be ideal.
+
 ## Acknowledgements
 
 PDchain was built on top of the following works:
 
 * RosettaCommons/RFdiffusion
-
 * YaoYinYing/RFdiffusion (mps- and cpu-compatible RFdiffusion)
-
 * YaoYinYing/SE3Transformer (mps- and cpu-compatible SE3Transformer)
-
 * dauparas/LigandMPNN
-
 * RosettaCommons/rosetta
-
 * facebookresearch/esm
-
 * HeliXonProtein/OmegaFold
-
 * schrodinger/pymol-open-source
-
 * rdkit/rdkit
-
 * matteoferla/rdkit-to-params
