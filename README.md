@@ -1,7 +1,7 @@
 # PDchain
 
 > [!NOTE]
-> This README is still a work in progress!
+This README is still a work in progress!
 
 Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN, and PyRosetta) using a pixi workspace. Can iteratively optimize designs based on desired metrics with an *in silico* continuous evolution system.
 
@@ -9,20 +9,20 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
 ## Table of Contents
 - [Installation](#installation)
-- [Using the `pdchain` function (shortcut for pixi commands)](#using-the-optional-pdchain-function-shortcut-for-pixi-commands)
-- [Usage Examples](#usage-examples)
-  - [Unconditional Monomer Generation](#1---unconditional-monomer-generation)
-  - [Protein Binder Design](#2---protein-binder-design)
-    - [Protein Binder Redesign with Native Backbone](#2a---protein-binder-redesign-with-native-backbone)
-    - [Protein Binder Redesign with Partial Diffusion](#2b---protein-binder-redesign-with-partial-diffusion)
-    - [Protein Binder Redesign with Indels](#2c---protein-binder-redesign-with-indels)
-    - [Protein Binder De Novo Design](#2d---protein-binder-de-novo-design)
-  - [Ligand Binder / Enzyme Design](#3---ligand-binder--enzyme-design)
-    - [Ligand Binder / Enzyme Redesign with Native Backbone](#3a---ligand-binder--enzyme-redesign-with-native-backbone)
-    - [Ligand Binder / Enzyme Redesign with Partial Diffusion](#3b---ligand-binder--enzyme-redesign-with-partial-diffusion)
-    - [Ligand Binder / Enzyme Redesign with Indels](#3c---ligand-binder--enzyme-redesign-with-indels)
-    - [Ligand Binder / Enzyme De Novo Design](#3d---ligand-binder--enzyme-de-novo-design)
-  - [Continuous Evolution of Designs](#4---continuous-evolution-of-designs)
+- [Running PDchain Commands](#running-pdchain-commands)
+- [Unconditional Monomer Generation](#1---unconditional-monomer-generation)
+- [Protein Binder Design](#2---protein-binder-design)
+  - [Protein Binder Redesign with Native Backbone](#2a---protein-binder-redesign-with-native-backbone)
+  - [Protein Binder Redesign with Partial Diffusion](#2b---protein-binder-redesign-with-partial-diffusion)
+  - [Protein Binder Redesign with Indels](#2c---protein-binder-redesign-with-indels)
+  - [Protein Binder De Novo Design](#2d---protein-binder-de-novo-design)
+- [Ligand Binder / Enzyme Design](#3---ligand-binder--enzyme-design)
+  - [Ligand Binder / Enzyme Redesign with Native Backbone](#3a---ligand-binder--enzyme-redesign-with-native-backbone)
+  - [Ligand Binder / Enzyme Redesign with Partial Diffusion](#3b---ligand-binder--enzyme-redesign-with-partial-diffusion)
+  - [Ligand Binder / Enzyme Redesign with Indels](#3c---ligand-binder--enzyme-redesign-with-indels)
+  - [Ligand Binder / Enzyme De Novo Design](#3d---ligand-binder--enzyme-de-novo-design)
+- [Continuous Evolution of Designs](#4---continuous-evolution-of-designs)
+- [Built-In Metrics](#built-in-metrics)
 
 ## Installation
 
@@ -35,7 +35,7 @@ Restart your terminal or source your shell's rc file (e.g. `source ~/.bashrc`) t
 See https://pixi.prefix.dev/latest/installation/ for more information.
 
 > [!IMPORTANT]
-> This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
+This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
 
 Once you have pixi installed, run the following to download the repository and navigate into it.
 ```bash
@@ -52,76 +52,50 @@ If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to 
 cp box/tomls/gpu/pixi.* . && pixi run install && pixi workspace register --name PDchain
 ```
 
+The `pixi workspace reigster --name PDchain` command will register `PDchain` as the workspace name. This allows you to use the `-w PDchain` option for various pixi commands. More on this in the [Running PDchain Commands](#running-pdchain-commands) section.
+
 > [!NOTE]
-> The CUDA version listed in the pixi.toml file for the Linux GPU installation of RFdiffusion is 11.8. Some newer GPUs from NVIDIA are incompatible with CUDA 11.8 and requires newer versions of CUDA. If this is the case, then the installation may fail despite having a CUDA-compatible GPU. I'm not entirely sure how to get around this (though I would be surprised if there wasn't a way around this), but you can attempt to fix the pixi.toml file to run on a newer version of CUDA. This may require additional adjustments like changing the python/pytorch/dgl versions, shifting to installation from pypi instead of conda-forge, changing the available channels, etc.
+The CUDA version listed in the pixi.toml file for the Linux GPU installation of RFdiffusion is 11.8. Some newer GPUs from NVIDIA are incompatible with CUDA 11.8 and requires newer versions of CUDA. If this is the case, then the installation may fail despite having a CUDA-compatible GPU. I'm not entirely sure how to get around this (though I would be surprised if there wasn't a way around this), but you can attempt to fix the pixi.toml file to run on a newer version of CUDA. This may require additional adjustments like changing the python/pytorch/dgl versions, shifting to installation from pypi instead of conda-forge, changing the available channels, etc.
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
 
-## Using the optional `pdchain` function (shortcut for pixi commands)
+## Running PDchain Commands
 
-Normally, when you want to run a command from a pixi workspace, you would need to prefix your command with `pixi run`. For example:
+You can then enter a subshell with PDchain's default environment with *any* of the following lines:
 ```bash
-pixi run rfd_chain --help
+pixi shell                                  # Must be in PDchain subdirectory
+pixi shell -w PDchain                       # Works anywhere if PDchain is a registered workspace name
+pixi shell -m /path/to/PDchain/pixi.toml    # Works anywhere
+```
+You can always exit out of your PDchain subshell with the command `exit`.
+
+If you want to activate PDchain's default environment in your current shell, run the following instead:
+```bash
+source pdchain.sh    # pdchain.sh should have spawned in PDchain's root directory upon installation
 ```
 
-But this only works if you are within the pixi workspace's subdirectories. If you want to access that workspace regardless of your working directory path, you would have to specify either (1) the path to pixi.toml or (2) the workspace name if it has one.
-```bash
-pixi run -m /path/to/PDchain/pixi.toml rfd_chain --help
-pixi run -w PDchain rfd_chain --help
-```
-
-This can be a bit verbose, so PDchain will spawn a script called `pdchain.sh` upon finishing the installation process. If you `source` this file, you will register the `pdchain` function, which is essentially a shortcut that allows you to run PDchain commands from anywhere with minimal typing.
-```bash
-source pdchain.sh
-```
-
-If you have registered the `pdchain` function, you can use `pdchain` as a prefix to access commands from within PDchain. For example...
-```bash
-pdchain rfd_chain --help
-```
-
-In addition to acting as a shortcut, you also have access to some additional commands.
-```bash
-pdchain list      # Lists available PDchain-specific commands
-pdchain activate  # Modify current shell for direct access to PDchain's default environment
-pdchain shell     # Create a new shell for direct access to PDchain's default environment
-```
-
-If you ran `pdchain activate` or `pdchain shell`, this will enable you to run PDchain commands without any prefixes.
+You can now directly access to a variety of command-line tools in the PDchain default environment. For example:
 ```bash
 rfd_chain --help
+esmfold_relax --help
 ```
 
-Using `pdchain activate` or `pdchain shell` will allow the command line tools in the PDchain environment to temporarily supercede your existing tools. Because this environment has its own `bash`, `sed`, `grep`, `awk`, `coreutils` (`ls`, `cd`, `rm`, `mkdir`, etc.), and `pymol`, your commands will default to these versions upon activating the environment.
+If you have chosen to `source pdchain.sh` to activate PDchain's default environment in your current shell, you can run `pdchain` to view all available commands.
 
-Under the hood, `pdchain shell` is just a shortcut for `pixi shell -m /path/to/PDchain/pixi.toml`, and `pdchain activate` is just a shortcut for `eval "$(pixi shell-hook -m /path/to/PDchain/pixi.toml)"`.
-
-If you don't already have a preferred molecular viewing software, PDchain's default environment does come with the open-source version of PyMOL, which you can access in a number of ways as mentioned above, summarized here.
+If you want to run PDchain commands without having to change/switch environments whatsoever, you can run *any* of the following lines:
 ```bash
-pixi run -m /path/to/PDchain/pixi.toml pymol  # Run from anywhere
-pixi run -w PDchain pymol                     # Run from anywhere (if PDchain is registered as the workspace name)
-pixi run pymol                                # Run from PDchain subdirectories
-pdchain pymol                                 # Run from anywhere (if `source pdchain.sh` was ran)
-pymol                                         # Run from anywhere after `pdchain activate` or `pdchain shell`
+pixi run rfd_chain --help                                  # Only works in PDchain subdirectory
+pixi run -w PDchain rfd_chain --help                       # Works anywhere if PDchain is a registered workspace name
+pixi run -m /path/to/PDchain/pixi.toml rfd_chain --help    # Works anywhere
 ```
 
-For more information on the `pdchain` function, run the following.
-```bash
-pdchain --help
-```
+> [!TIP]
+If you don't mind using the free and open source version of PyMOL, it is available in PDchain's default environment. You can simply run `pymol` (if you're in the environment) or `pixi run -w PDchain pymol` (if you're outside the environment).
 
-## Usage Examples
-Example scripts can be found in the `examples` directory. All example scripts and commands are written as if they would be ran with `examples` as the working directory.
+## 1 - Unconditional Monomer Generation
+> [!IMPORTANT]
+All examples in this README are meant to be executed in PDchain's default environment from the `examples` directory. In other words, run `source pdchain.sh` (or `pixi shell -w PDchain`) and `cd examples` before attempting to run these example blocks of code.
 
-In addition, all example scripts and commands are written as if you are already in the default PDchain environment. You can enter a shell with the PDchain environment with:
-
-```bash
-pixi shell -w PDchain
-```
-
-Make sure you run the above command before attempting to directly execute commands from PDchain. See the section on the [pdchain function](#using-the-optional-pdchain-function-shortcut-for-pixi-commands) for more details.
-
-### 1 - Unconditional Monomer Generation
 ```bash
 rfd_chain 140-160 \
     --idealize --relax --ca_stdev 1 \
@@ -149,7 +123,7 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 
 `--outprefix outputs/ex1_rand` specifies the path prefix of the output designs.
 
-### 2 - Protein Binder Design
+## 2 - Protein Binder Design
 
 The following command Rosetta refines the input protein-protein complex, which in this case is the barnase-barstar complex, without touching the backbone or sequence. This generates a control (no design done) that we can use as a reference for the actual design runs later in this section.
 
@@ -262,7 +236,7 @@ De novo design often requires generating thousands of designs and computationall
 
 Because we are unlikely to get excellent designs right away, it is often necessary to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better. This is the main reason why the *in silico* continuous evolution system in PDchain was built. See the section on [Contnuous Evolution of Designs](#4---continuous-evolution-of-designs) for more details.
 
-### 3 - Ligand Binder / Enzyme Design
+## 3 - Ligand Binder / Enzyme Design
 The following example takes a protein complexed with a ligand (in this case, a Kemp eliminase complexed with its transition-state analog) and refines it with Rosetta (without any sequence or backbone design). This command is meant to generate a computational control to serve as a reference point for later design runs.
 
 ```bash
@@ -365,7 +339,7 @@ The indel diversification approach is more computationally expensive than partia
 ### 3d - Ligand Binder / Enzyme De Novo Design
 
 > [!NOTE]
-> This repository integrates the original RFdiffusion, not RFdiffusion2 or RFdiffusion3. While RFdiffusion2 and RFdiffusion3 supports ligand binder / enzyme design without the need to specify starting backbone coordinates or residue indices, the original RFdiffusion does not. In other words, using RFdiffusion for this design task is not the most elegant strategy given the existence of its successors. Still, it is entirely possible to scaffold active sites with the original RFdiffusion, and this example will show how it can be done in the context of this pixi workspace.
+This repository integrates the original RFdiffusion, not RFdiffusion2 or RFdiffusion3. While RFdiffusion2 and RFdiffusion3 supports ligand binder / enzyme design without the need to specify starting backbone coordinates or residue indices, the original RFdiffusion does not. In other words, using RFdiffusion for this design task is not the most elegant strategy given the existence of its successors. Still, it is entirely possible to scaffold active sites with the original RFdiffusion, and this example will show how it can be done in the context of this pixi workspace.
 
 The first thing we need is a set of inverse rotamers. The following example shows how we can generate them.
 
@@ -418,13 +392,13 @@ Note that the order in which the residues are specified for `--fixbbres` matters
 `--model_ckpt ActiveSite` tells RFdiffusion to use the ActiveSite checkpoint, which is tailored for scaffolding small motifs. This is more necessary here as we are essentially scaffolding small peptides floating in space. This isn't as necessary for the partial diffusion or indel examples above, but it was kept in those examples too for consistency.
 
 > [!NOTE]
-> RFdiffusion generates backbones around ligands with an auxillary potential (see RFdiffusion documentation for more details). However, even with this potential, RFdiffusion can produce backbones that clash with the input ligand. The command `rfd_chain` was therefore programmed to exclude backbones with excess clashes to ligand atoms. As a result, you may not see the same amount of design outputs as intended. For example, we have `--numdes 3` in the command above, but you may end up with just `ex3d_5grf_denovo_0002.pdb` in the outputs without the first and third designs because they failed the clash checker. If you want to guarantee the exact number of outputs as specified by `--numdes`, add the option `--persistent` to make RFdiffusion try again if it fails. If you want to turn off the clash checker entirely, you can set the threshold to an excessively high number like `--clash_cut 9999` so that every backbone RFdiffusion generates will always pass regardless of ligand clashes. This is not recommended, however, as MPNN may get an unreasonable input and Rosetta may have a hard time resolving those clashes.
+RFdiffusion generates backbones around ligands with an auxillary potential (see RFdiffusion documentation for more details). However, even with this potential, RFdiffusion can produce backbones that clash with the input ligand. The command `rfd_chain` was therefore programmed to exclude backbones with excess clashes to ligand atoms. As a result, you may not see the same amount of design outputs as intended. For example, we have `--numdes 3` in the command above, but you may end up with just `ex3d_5grf_denovo_0002.pdb` in the outputs without the first and third designs because they failed the clash checker. If you want to guarantee the exact number of outputs as specified by `--numdes`, add the option `--persistent` to make RFdiffusion try again if it fails. If you want to turn off the clash checker entirely, you can set the threshold to an excessively high number like `--clash_cut 9999` so that every backbone RFdiffusion generates will always pass regardless of ligand clashes. This is not recommended, however, as MPNN may get an unreasonable input and Rosetta may have a hard time resolving those clashes.
 
 As mentioned in the example with de novo protein binder design, it is unlikely to get "reasonable" de novo designs from a small-scale computational run. Getting promising design candidates often require generating thousands of designs and screening through them. Sometimes, even the best designs from a large-scale batch might not meet all of your desired criteria. For example, they might be globular with ample secondary structure composition, but the binding pocket is completely buried/exposed. In these situations, it might be better to redesign these candidates to optimize for those desired properties rather than to repeatedly fish for new designs that meet all of your criteria all at once. See the section on `evo_rfd_chain` to see how one can evolve designs based on desirable metrics.
 
-### 4 - Continuous Evolution of Designs
+## 4 - Continuous Evolution of Designs
 > [!NOTE]
-> This section is under construction!
+This section is under construction!
 
 Not every design output will possess properties you are looking for; this is especially true for de novo designs. Often times, you end up with designs that check some boxes but not others. In these situations, it may be worth attempting optimization of these designs by using them as starting points for cycles of diversification and selection.
 
@@ -485,7 +459,7 @@ Here, we are instructing `filter_pool` to rank designs in `inputs/oripool` based
 `--perc 5` specifies that we want to output the top 5% of designs, which will be stored in `inputs/oripool/filtered` in this case.
 
 > [!Note]
-> The command `filter_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `filter_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `dsasa`, `perc_loop`, `rog_ala`, and `cst_rmsd`. The algorithm then starts eliminating the worst designs on each metric. So during this first elimination round, four designs are eliminated: the design with the worst `dsasa`, the design with the worst `perc_loop`, the design with the worst `rog_ala`, and the design with the worst `cst_rmsd`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
+The command `filter_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `filter_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `dsasa`, `perc_loop`, `rog_ala`, and `cst_rmsd`. The algorithm then starts eliminating the worst designs on each metric. So during this first elimination round, four designs are eliminated: the design with the worst `dsasa`, the design with the worst `perc_loop`, the design with the worst `rog_ala`, and the design with the worst `cst_rmsd`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
 
 The full ranked list from `filter_pool` is in the text file `ranked.txt` in the output directory.
 
@@ -493,37 +467,6 @@ Open up the outputs in pymol for a sanity check.
 ```bash
 pymol inputs/oripool/filtered/*.pdb
 ```
-
-### Built-In Metrics
-
-There are a number of built-in metrics that are available for use. Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated).
-|General Metrics|Description|
-|:---:|:---|
-|`totres`|total number of residues|
-|`fin_reu`|total Rosetta Energy Units (REU); lower is better|
-|`fin_reu_per_res`| total REU divided by the number of residues; lower is better|
-|`protein_mpnn_score`| ProteinMPNN confidence score; higher is better; only scored with `--model_type protein_mpnn`|
-|`soluble_mpnn_score`| SolubleMPNN confidence score; higher is better only scored with `--model_type soluble_mpnn`|
-|`ligand_mpnn_score`| LigandMPNN confidence score; higher is better; only scored with `--model_type ligand_mpnn`|
-|`perc_helix`|helix composition of protein scaffold|
-|`perc_sheet`|sheet composition of protein scaffold|
-|`perc_loop`|loop composition of protein scaffold|
-|`fixedres_perc_helix`|helix composition of fixed residues +/- 2|
-|`fixedres_perc_sheet`|sheet composition of fixed residues +/- 2|
-|`fixedres_perc_loop`|loop composition of fixed residues +/- 2|
-|`ddg`|ddg metric from Rosetta (complex only); lower is better|
-|`dsasa`|dsasa metric from Rosetta (complex only)|
-|`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
-
-The following metrics are calculated with the poly-ala version of the design. These are meant to be sequence-agnostic. The term "focus residues" here refer to ligands and fixed residues.
-|Poly-Ala Metrics|Description|
-|:---:|:---|
-|`clash`|clashes between focus residues and poly-ala scaffold; lower is better|
-|`rog_ala`|approximate radius of gyration (heavy atoms only; all heavy atoms treated with equal weight); lower ~ compact and globular|
-|`mp_dev`|standard deviation of distances between scaffold midpoint and all scaffold atoms; lower ~ hollow and globluar|
-|`mp_fc_dst`|distance between the midpoint of focus residues and the midpoint of the rest of the poly-ala scaffold|
-|`fc_compact`|root mean squared distance between focus midpoint and atoms of the 50 closest residues; lower ~ compact backbone around ligands; works best for compact ligands|
-|`fc_dev`|standard deviation of distances between focus midpoint and atoms of the 50 closest residues; lower ~ hollow cavity around ligands; works best for compact ligands|
 
 ### 4c - Evolving Designs
 
@@ -553,6 +496,37 @@ Here, we are telling `evo_rfd_chain` to select designs within `inputs/oripool` b
 `--tlim 8h` specifies the time limit of your run. This example has this command running for 8 hours maximum.
 
 `--stop_at_capacity` tells `evo_rfd_chain` to stop running when the pool size reaches maximum capacity (whic is 2000 in this example due to `--poolsize 2000`). Without this flag, `evo_rfd_chain` will continue until the time limit is hit, and the worst-ranking designs will be archived as needed to keep the poolsize equal or under the limit.
+
+## Built-In Metrics
+
+There are a number of built-in metrics that are available for use. Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated).
+|General Metrics|Description|
+|:---:|:---|
+|`totres`|total number of residues|
+|`fin_reu`|total Rosetta Energy Units (REU); lower is better|
+|`fin_reu_per_res`| total REU divided by the number of residues; lower is better|
+|`protein_mpnn_score`| ProteinMPNN confidence score; higher is better; only scored with `--model_type protein_mpnn`|
+|`soluble_mpnn_score`| SolubleMPNN confidence score; higher is better only scored with `--model_type soluble_mpnn`|
+|`ligand_mpnn_score`| LigandMPNN confidence score; higher is better; only scored with `--model_type ligand_mpnn`|
+|`perc_helix`|helix composition of protein scaffold|
+|`perc_sheet`|sheet composition of protein scaffold|
+|`perc_loop`|loop composition of protein scaffold|
+|`fixedres_perc_helix`|helix composition of fixed residues +/- 2|
+|`fixedres_perc_sheet`|sheet composition of fixed residues +/- 2|
+|`fixedres_perc_loop`|loop composition of fixed residues +/- 2|
+|`ddg`|ddg metric from Rosetta (complex only); lower is better|
+|`dsasa`|dsasa metric from Rosetta (complex only)|
+|`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
+
+The following metrics are calculated with the poly-ala version of the design. These are meant to be sequence-agnostic. The term "focus residues" here refer to ligands and fixed residues.
+|Poly-Ala Metrics|Description|
+|:---:|:---|
+|`clash`|clashes between focus residues and poly-ala scaffold; lower is better|
+|`rog_ala`|approximate radius of gyration (heavy atoms only; all heavy atoms treated with equal weight); lower ~ compact and globular|
+|`mp_dev`|standard deviation of distances between scaffold midpoint and all scaffold atoms; lower ~ hollow and globluar|
+|`mp_fc_dst`|distance between the midpoint of focus residues and the midpoint of the rest of the poly-ala scaffold|
+|`fc_compact`|root mean squared distance between focus midpoint and atoms of the 50 closest residues; lower ~ compact backbone around ligands; works best for compact ligands|
+|`fc_dev`|standard deviation of distances between focus midpoint and atoms of the 50 closest residues; lower ~ hollow cavity around ligands; works best for compact ligands|
 
 ## Acknowledgements
 
