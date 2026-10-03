@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Control
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -12,7 +12,7 @@ pixi run -w PDchain rfd_chain SKIP \
     --outprefix outputs/ex2_1brs_control
 
 # Native backbone
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -23,7 +23,7 @@ pixi run -w PDchain rfd_chain SKIP \
     --outprefix outputs/ex2a_1brs_natbb
 
 # Partial diffusion
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -36,7 +36,7 @@ pixi run -w PDchain rfd_chain \
     --outprefix outputs/ex2b_1brs_partial
 
 # Indel diffusion
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -49,7 +49,7 @@ pixi run -w PDchain rfd_chain \
     --outprefix outputs/ex2c_1brs_indel
 
 # De novo
-pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
+rfd_chain 86-95/0 B1-110 \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Control
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -9,11 +9,12 @@ pixi run -w PDchain rfd_chain SKIP \
     --select_met min:ddg \
     --fixedres A50 A127 --ligname 6NT \
     --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn \
     --skip_mpnn \
     --outprefix outputs/ex3_5rgf_control
 
 # Native backbone
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -25,7 +26,7 @@ pixi run -w PDchain rfd_chain SKIP \
     --outprefix outputs/ex3a_5rgf_natbb
 
 # Partial diffusion
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -39,7 +40,7 @@ pixi run -w PDchain rfd_chain \
     --outprefix outputs/ex3b_5rgf_partial
 
 # Indel diffusion
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -53,13 +54,13 @@ pixi run -w PDchain rfd_chain \
     --outprefix outputs/ex3c_5rgf_indel
 
 # Inverse rotamer generation
-pixi run -w PDchain gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
+gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
     --numrots 10 \
     --parallel 1 \
     --outdir outputs/ex3d_invrots
 
 # De novo
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --indir outputs/ex3d_invrots \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \

@@ -111,11 +111,19 @@ pdchain --help
 ```
 
 ## Usage Examples
-Example scripts can be found in the `examples` directory. All example scripts are written as if they would be ran with `examples` as the working directory.
+Example scripts can be found in the `examples` directory. All example scripts and commands are written as if they would be ran with `examples` as the working directory.
+
+In addition, all example scripts and commands are written as if you are already in the default PDchain environment. You can enter a shell with the PDchain environment with:
+
+```bash
+pixi shell -w PDchain
+```
+
+Make sure you run the above command before attempting to directly execute commands from PDchain. See the section on the [pdchain function](#using-the-optional-pdchain-function-shortcut-for-pixi-commands) for more details.
 
 ### 1 - Unconditional Monomer Generation
 ```bash
-pixi run -w PDchain rfd_chain 140-160 \
+rfd_chain 140-160 \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 3 \
@@ -146,7 +154,7 @@ The input argument `140-160` specifies the contigs string. Here we tell RFdiffus
 The following command Rosetta refines the input protein-protein complex, which in this case is the barnase-barstar complex, without touching the backbone or sequence. This generates a control (no design done) that we can use as a reference for the actual design runs later in this section.
 
 ```bash
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -164,7 +172,7 @@ The `SKIP` keyword at where the contigs is supposed to be tells `rfd_chain` to s
 The following command will diversify the binder sequence. RFdiffusion is not applied here (just MPNN-FastRelax).
 
 ```bash
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -183,7 +191,7 @@ pixi run -w PDchain rfd_chain SKIP \
 The following command will noise/denoise the backbone of the binder (the barstar on chain A) with partial diffusion before applying cycles of MPNN-FastRelax.
 
 ```bash
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -207,7 +215,7 @@ pixi run -w PDchain rfd_chain \
 The following command will diversify the binder by rediffusing loop regions while allowing for insertions and deletions.
 
 ```bash
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -233,7 +241,7 @@ The indel diversification approach is more computationally expensive than partia
 The following command will generate de novo protein binders.
 
 ```bash
-pixi run -w PDchain rfd_chain 86-95/0 B1-110 \
+rfd_chain 86-95/0 B1-110 \
     --inpdb inputs/1brs_af3mod0.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -258,7 +266,7 @@ Because we are unlikely to get excellent designs right away, it is often necessa
 The following example takes a protein complexed with a ligand (in this case, a Kemp eliminase complexed with its transition-state analog) and refines it with Rosetta (without any sequence or backbone design). This command is meant to generate a computational control to serve as a reference point for later design runs.
 
 ```bash
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -266,6 +274,7 @@ pixi run -w PDchain rfd_chain SKIP \
     --select_met min:ddg \
     --fixedres A50 A127 --ligname 6NT \
     --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn \
     --skip_mpnn \
     --outprefix outputs/ex3_5rgf_control
 ```
@@ -278,7 +287,7 @@ Setting the contigs to `SKIP` skips RFdiffusion entirely, and `--skip_mpnn` skip
 The following command will redesign the sequence using the native backbone (no RFdiffusion done here).
 
 ```bash
-pixi run -w PDchain rfd_chain SKIP \
+rfd_chain SKIP \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -310,7 +319,7 @@ pixi run -w PDchain rfd_chain SKIP \
 The following example will noise/denoise the input backbone with partial diffusion before MPNN-FastRelax.
 
 ```bash
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -330,8 +339,8 @@ pixi run -w PDchain rfd_chain \
 
 The following example will preserve helix and sheet residues while allowing loop regions to rediffuse with varying lengths, allowing for insertions and deletions.
 
-```
-pixi run -w PDchain rfd_chain \
+```bash
+rfd_chain \
     --inpdb inputs/5rgf_clean.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -361,7 +370,7 @@ The indel diversification approach is more computationally expensive than partia
 The first thing we need is a set of inverse rotamers. The following example shows how we can generate them.
 
 ```bash
-pixi run -w PDchain gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
+gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
     --numrots 10 \
     --parallel 1 \
     --outdir outputs/ex3d_invrots
@@ -377,12 +386,12 @@ If a residue specified by `gen_invrots` is an amino acid, you have the option of
 
 `--outdir outputs/ex3d_invrots` specify where we want to store the inverse rotamers. This directory will serve as the input for the actual design run.
 
-Once you have generated your inverse rotamers, you can take a peak at them in pymol to see if they are reasonable with `pixi run -w PDchain pymol $(echo outputs/ex3d_invrots/*.pdb | cut -d' ' -f1-10)`. Notice that the chain letter code is now different. While A50 is still on A50, A127 is now on B127, and X1 (the ligand) is now on C1. This is because `gen_invrots` has to split each input residue onto its own chain to prevent potential overlap in both residue number and residue chain when the additional residues for secondary structures are added. As a result, we need to be make sure we specify the new chain+residue ids in the subsequent design command.
+Once you have generated your inverse rotamers, you can take a peak at them in pymol to see if they are reasonable with `pymol $(echo outputs/ex3d_invrots/*.pdb | cut -d' ' -f1-10)`. Notice that the chain letter code is now different. While A50 is still on A50, A127 is now on B127, and X1 (the ligand) is now on C1. This is because `gen_invrots` has to split each input residue onto its own chain to prevent potential overlap in both residue number and residue chain when the additional residues for secondary structures are added. As a result, we need to be make sure we specify the new chain+residue ids in the subsequent design command.
 
 The following command will generate a de novo binder to the target ligand using the inverse rotamers we previously generated.
 
-```
-pixi run -w PDchain rfd_chain \
+```bash
+rfd_chain \
     --indir outputs/ex3d_invrots \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
@@ -417,7 +426,7 @@ As mentioned in the example with de novo protein binder design, it is unlikely t
 > [!NOTE]
 > This section is under construction!
 
-Not every design output will possess properties you are looking for---this is especially true for de novo designs. Often times, you end up with designs that check some boxes but not others. In these situations, it may be worth attempting optimization of these designs by using them as a starting point for cycles of diversification and selection.
+Not every design output will possess properties you are looking for; this is especially true for de novo designs. Often times, you end up with designs that check some boxes but not others. In these situations, it may be worth attempting optimization of these designs by using them as starting points for cycles of diversification and selection.
 
 We did some version of this in the protein binding and ligand binding examples in which we used the `--select_met min:ddg` option to tune the MPNN-FastRelax protocol built into `rfd_chain`. As MPNN-FastRelax is applied through multiple cycles, it will only accept the new output if it improves the specified score. In this case, we instructed `rfd_chain` to select for lower values of `ddg`. This means that, at the end of each cycle of MPNN-FastRelax, the output is only accepted if it has lower `ddg` than the input.
 
@@ -427,41 +436,123 @@ The command `evo_rfd_chain` was written to address these limitations. It will ta
 
 ### 4a - Generate Initial Design Pool
 
-An initial design pool is provided at `examples/inputs/oripool`. This pool was generated from the ligand-binding enzyme design example (Kemp eliminase). This pool has 200 initial designs that have not been vetted beyond the original `rfd_chain` command that generated them. The hope is that this batch will contain at least some workable starting point for *in silico* evolution.
+An initial design pool is provided at `examples/inputs/oripool`. This pool was generated from the ligand-binding enzyme design example (Kemp eliminase). This pool has 200 initial designs that have not been vetted beyond the original `rfd_chain` command that generated them. The hope is that this batch will contain at least some workable starting point for design evolution.
 
-The following snippet was used to generate this original pool. Running it yourself is optional since `examples/inputs/oripool` already has the outputs. Feel free to move onto the next section after reviewing the snippet.
+The following snippet was used to generate this original pool. Running it yourself is optional (`examples/inputs/oripool` already has the outputs). Feel free to move onto the next section after reviewing the snippet.
 
 ```bash
-# Generate inverse rotamers if we have less than 200
 [[ $(echo inputs/oripool/invrots/*.pdb | wc -w) -lt 200 ]] && {
-    pixi run -w PDchain gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
+    gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
         --numrots 200 \
         --parallel 1 \
         --outdir inputs/oripool/invrots
 }
 
 # Generate initial pool of designs
-pixi run -w PDchain rfd_chain \
+rfd_chain \
     --indir inputs/oripool/invrots \
-    --idealize --relax \
-    --model_type soluble_mpnn \
-    --ca_stdev 1 \
-    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
-    --numdes 200 \
-    --fixedres A50 B127 --ligname 6NT \
+    --numdes 1000 \
     --select_met min:ddg \
+    --fixedres A50 B127 --ligname 6NT \
+    --lig_stdev 0.5 --ap_stdev 0.5 \
+    --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
-    --fixbbres A49-51 B126-128 \
-    --tot_range 180-220 \
+    --fixbbres A49-51 B126-128 --tot_range 160-200 \
+    --persistent \
     --outprefix inputs/oripool/ex4_5rgf_denovo
 ```
 
-### 4b - Evolving Designs
+### 4b - Selecting Candidates for Evolution
+
+The directory `inputs/oripool` contains an initial batch of de novo designs, and many of these will not have desirable properties. For example, the ligand might be too exposed, the active site constraints may not have been satisfied, the scaffold may be too elongated or loopy, etc.
+
+To avoid having to parse through a large batch of designs by hand, you can leverage the `filter_pool` command to select designs based on your desired criteria.
+
+```bash
+filter_pool inputs/oripool \
+    min:dsasa \
+    min:perc_loop \
+    min:rog_ala \
+    min:cst_rmsd \
+    --perc 5 \
+    --outdir inputs/oripool/filtered
+```
+
+Here, we are instructing `filter_pool` to rank designs in `inputs/oripool` based on four metrics: `dsasa`, `perc_loop`, `rog_ala`, and `cst_rmsd`. In this case, we are aiming for lower values of each with the `min` prefix. The `max` and `val` prefix are also available (run `filter_pool --help` for more details)
+
+`--perc 5` specifies that we want to output the top 5% of designs, which will be stored in `inputs/oripool/filtered` in this case.
+
+> [!Note]
+> The command `filter_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `filter_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `dsasa`, `perc_loop`, `rog_ala`, and `cst_rmsd`. The algorithm then starts eliminating the worst designs on each metric. So during this first elimination round, four designs are eliminated: the design with the worst `dsasa`, the design with the worst `perc_loop`, the design with the worst `rog_ala`, and the design with the worst `cst_rmsd`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
+
+The full ranked list from `filter_pool` is in the text file `ranked.txt` in the output directory.
+
+Open up the outputs in pymol for a sanity check.
+```bash
+pymol inputs/oripool/filtered/*.pdb
+```
+
+### Built-In Metrics
+
+There are a number of built-in metrics that are available for use. Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated).
+|General Metrics|Description|
+|:---:|:---|
+|`totres`|total number of residues|
+|`fin_reu`|total Rosetta Energy Units (REU); lower is better|
+|`fin_reu_per_res`| total REU divided by the number of residues; lower is better|
+|`protein_mpnn_score`| ProteinMPNN confidence score; higher is better; only scored with `--model_type protein_mpnn`|
+|`soluble_mpnn_score`| SolubleMPNN confidence score; higher is better only scored with `--model_type soluble_mpnn`|
+|`ligand_mpnn_score`| LigandMPNN confidence score; higher is better; only scored with `--model_type ligand_mpnn`|
+|`perc_helix`|helix composition of protein scaffold|
+|`perc_sheet`|sheet composition of protein scaffold|
+|`perc_loop`|loop composition of protein scaffold|
+|`fixedres_perc_helix`|helix composition of fixed residues +/- 2|
+|`fixedres_perc_sheet`|sheet composition of fixed residues +/- 2|
+|`fixedres_perc_loop`|loop composition of fixed residues +/- 2|
+|`ddg`|ddg metric from Rosetta (complex only); lower is better|
+|`dsasa`|dsasa metric from Rosetta (complex only)|
+|`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
+
+The following metrics are calculated with the poly-ala version of the design. These are meant to be sequence-agnostic. The term "focus residues" here refer to ligands and fixed residues.
+|Poly-Ala Metrics|Description|
+|:---:|:---|
+|`clash`|clashes between focus residues and poly-ala scaffold; lower is better|
+|`rog_ala`|approximate radius of gyration (heavy atoms only; all heavy atoms treated with equal weight); lower ~ compact and globular|
+|`mp_dev`|standard deviation of distances between scaffold midpoint and all scaffold atoms; lower ~ hollow and globluar|
+|`mp_fc_dst`|distance between the midpoint of focus residues and the midpoint of the rest of the poly-ala scaffold|
+|`fc_compact`|root mean squared distance between focus midpoint and atoms of the 50 closest residues; lower ~ compact backbone around ligands; works best for compact ligands|
+|`fc_dev`|standard deviation of distances between focus midpoint and atoms of the 50 closest residues; lower ~ hollow cavity around ligands; works best for compact ligands|
+
+### 4c - Evolving Designs
 
 Every design that is outputted by `rfd_chain` will contain information that allows them to be evolved by `evo_rfd_chain`. Notably, information such as the original contigs, the fixed residues, the ligand names, the Rosetta constraints, and various selection metrics are all included in the footer of each PDB (try `cat $(shuf -e -n1 inputs/oripool/*.pdb)` to display the contents of a random design to see for yourself).
 
-Given that most of these designs will not be ideal.
+```bash
+evo_rfd_chain inputs/oripool \
+    min:dsasa \
+    min:perc_loop \
+    min:rog_ala \
+    min:cst_rmsd \
+    --design_cycles 3 \
+    --model_type soluble_mpnn --sc_context \
+    --model_ckpt ActiveSite \
+    --poolsize 1000 --poolperc 5 \
+    --tlim 8h --stop_at_capacity \
+    --ss_trim 2-4 --vary_linkers 1 \
+    --outdir outputs/evopool
+```
+
+Here, we are telling `evo_rfd_chain` to select designs within `inputs/oripool` based on five metrics: `dsasa`, `perc_loop`, `rog_ala`, and `cst_rmsd`. In this case, lower values of each of these four metrics will be favored during design evolution. The ranking of designs based on the specified metrics is pool-dependent.
+
+`--poolsize 2000` specifies the maximum number of designs in the output directory, where the design evolution takes place. In this case, our input pool has 200 designs. These 200 designs will be transferred into the output directory from the start. The output directory of the initial 200 designs will grow to a maximum poolsize of 2000. Should the number of designs exceed this value, the "worst" design would be sent to the `archive` directory of `--outdir`, which in this case would be `outputs/evopool/archive`.
+
+`--poolperc 5` specifies the percent of your current poolsize that will be randomly selected as candidates for diversification. Once candidates are randomly selected, the best one (according to your specified metrics) on that list will be selected for diversification. For example, if your current pool has 200 designs, `--poolperc 5` means that 10 designs (5% of 200) will be randomly selected from your current pool, and the top-ranking design of that list of 10 is selected for design. Tune this number higher if you want a stronger bias for top-ranking designs. A value of 100 means that the top design has a 100% chance of being selected. A value of 0 means that the input design is selected randomly in an unbiased fashion (the candidate pool has to have at least one design at minimum).
+
+`--tlim 8h` specifies the time limit of your run. This example has this command running for 8 hours maximum.
+
+`--stop_at_capacity` tells `evo_rfd_chain` to stop running when the pool size reaches maximum capacity (whic is 2000 in this example due to `--poolsize 2000`). Without this flag, `evo_rfd_chain` will continue until the time limit is hit, and the worst-ranking designs will be archived as needed to keep the poolsize equal or under the limit.
 
 ## Acknowledgements
 
