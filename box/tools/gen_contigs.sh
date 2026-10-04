@@ -668,7 +668,7 @@ contigs=$(edit_linkers $contigs)
         }
         $1~/^[0-9]/ { con[c_i] += $1 ; next }
         $1~/^[A-Z]/ {
-            ch = substr($1,1,1) ; ri1 = substr($1,2) ; ri2 = $2 ? $2 : ri1
+            ch = substr($1,1,1) ; ri1 = substr($1,2)+0 ; ri2 = $2 ? $2+0 : ri1
 
             # Check if fixedblock has fixed residues
             keep = 0
