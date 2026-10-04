@@ -429,6 +429,7 @@ rfd_chain () {
         [[ -n $inpdb && $partial == 1 ]] && {
             local contigs_opts+=("--ss_to_contigs" "--ss_trim 100" "--vary_linkers 0")
         }
+        echo "Executing command: gen_contigs $fixbbres ${contigs_opts[@]} ${all_opts[@]}"
         local contigs=$(gen_contigs $fixbbres ${contigs_opts[@]} ${all_opts[@]})
         [[ $contigs == FAILED ]] && {
             sleep 1 ; echo "Failed to find contigs" ; return
