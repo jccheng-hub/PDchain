@@ -567,14 +567,16 @@ EOF
             paste -sd ' '
         )
         echo "The following residues were within ${nbr_dist} angstroms of $ligname: $nbrres"
-        echo "List of fixed residues: ${fixedres}"
-        echo "List of residues to redesign with Rosetta: ${finres}"
-        echo "All other residues will be fixed but will not be repacked."
+        echo "List of fixed residues to be repacked with Rosetta: ${fixedres}"
+        echo "List of residues to be designed with Rosetta: ${finres}"
+        echo "All other residues will be fixed."
         echo "Cysteines are prohibited in this mode."
         local resfile="$tmpdir/rosetta_lig_nbr.res"
         echo -e "NATRO\nSTART\n" > $resfile
-        echo $finres | sed 's| |\n|g' |
+        [[ -n $finres ]] && echo $finres | sed 's| |\n|g' |
         awk '{ch=substr($1,1,1); ri=substr($1,2); printf "%s %s ALLAAxc\n", ri, ch}' >> $resfile
+        [[ -n $fixedres ]] && echo $fixedres | sed 's| |\n|g' |
+        awk '{ch=substr($1,1,1); ri=substr($1,2); printf "%s %s NATAA\n", ri, ch}' >> $resfile
     }
 
     # Refinement
