@@ -218,9 +218,12 @@ trim_family () {
     }
 }
 
-# Check metrics
-[[ -z $mets ]] && {
-    echo "Need to enter metrics for evolution"
+# Check for metrics formatting
+fmt_check=$(sed 's/ /\n/g' <<< "${mets[*]}" | gawk -F ':' '
+    $1~/^(min|max|val|abv|blw)$/{i++} END {if (i==NR) {print 1} else {print 0}}'
+)
+[[ $fmt_check != 1 ]] && {
+    echo "All metrics provided must follow the format of max:metric, min:metric, or val:metric=ideal_val"
     exit
 }
 
