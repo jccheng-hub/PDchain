@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 usage () { cat << EOF
-Usage: filter_pool INDIR METRIC...
+Usage: filter_pool METRIC... --indir [str]
 Filter designs in pool using specified metrics.
 
-Approach is basically a venn diagram thing.
+Ranking algorithm:
 1.  Make an ordered list of each metric
-2.  Designs that appear in every list "passes"
-3.  If the number of passed designs is over the specified limit, shorten each
-    list by 1 design (i.e. take the worst one out from each list), then
-    repeat.
+2.  Track the worst designs on each list, then remove them from each list
+3.  Repeat tracking / elimination until no designs are left
+4.  Reverse the order of eliminated designs for a ranked list
 
 Parameters:
-    INDIR                   Input directory
     METRIC                  Metric string
                             Needs to have the format of min:metric, max:metric,
                             val:metric=ideal_val, abv:metric=cutoff,
@@ -23,6 +21,7 @@ Parameters:
                             E.g. val:dsasa=0.75
 
 Options:
+  --indir [str]             Input directory of designs
   --perc [float]            Target top percent
   --num [int]               Target top number (overrides --perc)
   --outdir [str]            Path to output directory to store passed designs
@@ -45,8 +44,9 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(num perc outfile outdir)
+val_opts=(indir num perc outfile outdir)
 bool_opts=(inplace help)
+indir="REQUIRED"
 num=""
 perc="10"
 outfile=""
@@ -82,8 +82,12 @@ done
 # <<< Defaults <<< }}}
 
 # Input arguments
-indir=${args[1]%/}
-mets=(${args[@]:2})
+mets=(${args[@]:1})
+if [[ ! -d $indir ]] ; then
+    echo "$indir is not a directory!" && exit
+elif [[ $(echo $indir/*.pdb | sed '/*/d' | wc -w) == 0 ]] ; then
+    echo "$indir doesn't contain any PDBs!" && exit
+fi
 
 # Output list of available metrics
 [[ -z ${mets[*]} ]] && {

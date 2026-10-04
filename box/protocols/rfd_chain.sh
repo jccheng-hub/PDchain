@@ -205,7 +205,7 @@ ppi_hotspots=""
 redesres=""
 relax_repeats="1"
 rog_cut="9999"
-ss_trim=""
+ss_trim="2"
 nterm_trim="1"
 cterm_trim="1"
 nterm_add="0"
@@ -373,6 +373,8 @@ rfd_chain () {
     local redesres=$redesres
     local fixedres=$fixedres
     local fixbbres=$fixbbres
+    local contigs_opts=()
+    local all_opts=(${all_opts[@]})
 
     # Generate fixbbres if not provided
     [[ -z $fixbbres && -n $contigs && $contigs != SKIP ]] && {
@@ -404,28 +406,26 @@ rfd_chain () {
         [[ -z $fixedres && -n $oldfixed ]] && {
             echo "Using old fixedres residues found in input PDB: $oldfixed"
             local fixedres="$oldfixed"
-            all_opts+=("--fixedres $fixedres")
+            local all_opts+=("--fixedres $fixedres")
+        }
+        [[ -z $fixbbres && -n $oldcontigs ]] && {
+            echo "Using old contigs found in input PDB for fixbbres: $oldcontigs"
+            local oldfixbb=$(echo $oldcontigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')
+            local fixbbres=$(get_newres "$oldcontigs" $oldfixbb | cut -d: -f2 | paste -sd ' ')
+            local contigs_opts+=("--ss_to_contigs")
         }
         [[ -z $ligname && -n $oldlig ]] && {
             echo "Using old ligands found in input PDB: $oldlig"
             local ligname=($oldlig)
-            all_opts+=("--ligname ${ligname[*]}")
+            local all_opts+=("--ligname ${ligname[*]}")
         }
     }
     
     # Generate contigs if one isn't provided
     [[ -z $contigs ]] && {
         echo "No contigs were provided. Generating contigs..."
-        local contigs_opts=()
-        [[ -n $oldcontigs && $oldcontigs != SKIP ]] && {
-            echo "Using old contigs found in input PDB for fixing backbone: $oldcontigs"
-            local oldfixbb=$(echo $oldcontigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')
-            local fixbbres=$(get_newres "$oldcontigs" $oldfixbb | cut -d: -f2 | paste -sd ' ')
-            local contigs_opts+=("--ss_to_contigs")
-        }
         [[ -n $inpdb && $partial == 1 ]] && {
-            local contigs_opts+=("--ss_to_contigs")
-            [[ -z $ss_trim ]] && local contigs_opts+=("--ss_trim 100")
+            local contigs_opts+=("--ss_to_contigs" "--ss_trim 100" "--vary_linkers 0")
         }
         local contigs=$(gen_contigs $fixbbres ${contigs_opts[@]} ${all_opts[@]})
         [[ $contigs == FAILED ]] && {
@@ -535,9 +535,9 @@ rfd_chain () {
         echo -n "The option --backrub was enabled. "
         echo "Running partial diffusion with $backrub timesteps..."
         if [[ -n $fixedres ]] ; then
-            local newfixbb=$(get_newres "$contigs" $fixedres | cut -d: -f2 | paste -sd ' ')
+            local newfixbb=$(get_newres "$contigs" $fixbbres | cut -d: -f2 | paste -sd ' ')
             local re_contigs=$( 
-                gen_contigs $newfixbb --ss_to_contigs --ss_trim 100 --inpdb $step1/Diffused_0.pdb
+                gen_contigs $newfixbb --ss_to_contigs --ss_trim 100 --vary_linkers 0 --inpdb $step1/Diffused_0.pdb
             )
         else
             # Without fixed residues, get contigs string that matches the exact length of the first chain
@@ -570,7 +570,8 @@ rfd_chain () {
     
     # If --idealize is used, then idealize diffused backbone, then take out idealize flag
     [[ $idealize == 1 ]] && {
-        mpros $diffused --idealize --inplace --skip_mpnn --skip_mpnn_score
+        echo "Idealizing scaffold with Rosetta..."
+        mpros $diffused --idealize --inplace --skip_mpnn --skip_mpnn_score >/dev/null
         mpnn_opts=($(
             sed 's/--/\n--/g' <<< "${mpnn_opts[@]}" | awk 'NF && $1!="--idealize"'
         ))

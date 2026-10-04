@@ -402,7 +402,7 @@ run_pyrosetta () {
             <Add metrics="total_reu" labels="fin_reu"/>
              Add metrics="fixed_reu" labels="fixedres_reu"/>
              Add metrics="sasa_metric" labels="fixedres_sasa"/>
-             Add metrics="hbond_metric" labels="hbonds_to_focus"/>
+             Add metrics="hbond_metric" labels="hbonds_to_lig"/>
              Add filter_name="dsasa"/>
              Add filter_name="ddg"/>
         </PROTOCOLS>

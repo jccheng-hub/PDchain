@@ -8,11 +8,10 @@ pixirun="pixi run -m $pixitoml -e"
 }
 
 usage () { cat << EOF
-Usage: evo_rfd_chain INDIR METRIC...
+Usage: evo_rfd_chain METRIC... --indir [str]
 Evolve rfd_chain designs found in INDIR
 
 Parameters:
-    INDIR                   Input directory with rfd_chain designs
     METRIC                  Metric string
                             Needs to have the format of min:metric, max:metric,
                             or val:metric=ideal_val
@@ -21,6 +20,7 @@ Parameters:
                             E.g. val:dsasa=0.7
 
 Options:
+  --indir [str]             Input directory of (rfd_chain) designs
   --outdir [str]            Output directory for design pool
   --poolsize [int/str]      Determines the design pool size. The design pool is
                             where designs will be aggregated and continuously
@@ -76,7 +76,7 @@ optarg () {
 }
 
 val_opts=(
-    outdir              poolsize            clash_cut
+    outdir              poolsize            clash_cut           indir
     tlim                ss_trim             vary_linkers        natbias
     backrub             timesteps           threads             temperature
     relax_repeats       redes_dist          model_type          design_cycles
@@ -93,6 +93,7 @@ bool_opts=(
     auto_update         stop_at_capacity    persistent          rosetta_lig_nbr
 )
 
+indir="REQUIRED"
 outdir="./evolved"
 poolsize="ALL"
 poolperc="0"
@@ -101,13 +102,13 @@ clash_cut=""
 loop_cut=""
 rog_cut=""
 tlim="2h"
-design_cycles="1"
-ss_trim="4"
+design_cycles=""
+ss_trim="2"
 nterm_trim="1"
 cterm_trim="1"
 nterm_add="0"
 cterm_add="0"
-vary_linkers="1"
+vary_linkers="0"
 natbias=""
 backrub=""
 timesteps="15"
@@ -152,11 +153,17 @@ done
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # }}}
 
+# Check input directory
+if [[ ! -d $indir ]] ; then
+    echo "$indir is not a directory!" && exit
+elif [[ $(echo $indir/*.pdb | sed '/*/d' | wc -w) == 0 ]] ; then
+    echo "$indir doesn't contain any PDBs!" && exit
+fi
+
 # Initialize
 shopt -s nullglob
 echo "Executing command:" "$0" "$@"
-indir="${args[1]%/}"
-mets="${args[@]:2}"
+mets="${args[@]:1}"
 outdir="${outdir%/}" ; mkdir -p $outdir
 tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EXIT
 
@@ -222,14 +229,14 @@ for inpdb in $indir/*.pdb ; do
         cp -v $inpdb $outdir/${bnpdb}_gen0_orides.pdb
     }
 done
-filter_pool $outdir $mets --num $poolsize --inplace
+filter_pool $mets --indir $outdir --num $poolsize --inplace
 
 # Start evolving
 while [[ $SECONDS -lt $time_f ]] ; do
 
     # Get ranked file
     rankfile="$tmpdir/ranked.txt"
-    filter_pool $outdir $mets --outfile $rankfile
+    filter_pool $mets --indir $outdir --num $poolsize --outfile $rankfile
 
     # Pull random subset of designs from pool, then choose best one from subset
     cursize=$(echo $outdir/*.pdb | wc -w)
@@ -328,7 +335,7 @@ while [[ $SECONDS -lt $time_f ]] ; do
     }
 
     # Filter
-    filter_pool $outdir $mets --num $poolsize --inplace
+    filter_pool $mets --indir $outdir --num $poolsize --inplace
     trim_family $outdir/ranked.txt $famisize
 
     # If gen0perc is set and the gen0 pool is below threshold, then exit
