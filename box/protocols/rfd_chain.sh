@@ -51,6 +51,8 @@ Contigs options:
   --ss_to_contigs           Converts secondary structure in input PDB to contigs
                             used for RFdiffusion. Secondary structure residues
                             are fixed, and loops are rediffused.
+  --fixed_seg_only          Preserve ss structures only on segments with fixed
+                            residues
   --ss_trim [int]           If --ss_to_contigs is used, allows the specified
                             number of ss residues neighboring loops to be
                             rediffused by RFdiffusion.
@@ -171,7 +173,7 @@ val_opts=(
 )
 
 bool_opts=(
-    disallow_cys        dec_only            ss_to_contigs     
+    disallow_cys        dec_only            ss_to_contigs       fixed_seg_only
     fix_bb              fix_chi             idealize            inc_only            
     monomer_ROG         partial             random_order        persistent
     randsuffix          regap               relax         

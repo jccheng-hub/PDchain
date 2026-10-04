@@ -86,7 +86,7 @@ val_opts=(
     rog_cut             famiperc            select_met          model_ckpt
 )
 bool_opts=(
-    disallow_cys        dec_only            fix_bb
+    disallow_cys        dec_only            fix_bb              fixed_seg_only
     fix_chi             idealize            inc_only            monomer_ROG
     partial             ppi_mode            relax               sc_context
     inpaint_seq         help                skip_diffusion      ignore_metals

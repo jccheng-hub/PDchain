@@ -45,8 +45,9 @@ Options for ss usage:
                             Can specify with range (e.g. --cterm_trim 2-4)
   --helix_cap [int]         Maximum length of a helix before making it entirely
                             rediffusable
-  --reset_perc [float]      Percent chance for setting ss_trim to 100, which
-                            will make all non-fixed residues rediffusable
+  --reset_perc [float]      Percent chance for triggering --fixed_seg_only
+  --fixed_seg_only          Only ss segments that contain fixed residues will be
+                            preserved
   --regap                   Redetermine gaps based on default usage.
                             Preserves all fixed backbones after --ss_trim [int]
 
@@ -81,7 +82,7 @@ val_opts=(
 
 bool_opts=(
     random_order        ss_to_contigs       dec_only            inc_only
-    regap               help
+    regap               fixed_seg_only      help
 )
 
 tot_range="180-220"
@@ -146,10 +147,10 @@ addtot=$(echo "${mintot[1]}-$mintot" | bc)
 mingap=($(sed 's/-/ /' <<< $gap_range))
 addgap=$(echo "${mingap[1]}-$mingap" | bc)
 
-# If reset_perc is enabled, max out ss_trim at a specified chance
+# If reset_perc is enabled, trigger fixed_seg_only at a specified chance
 [[ $(echo "$reset_perc > 0" | bc) == 1 ]] && {
     rand=$(( (RANDOM % 100) + 1 ))
-    [[ $(echo "$rand <= $reset_perc" | bc) == 1 ]] && ss_trim=100
+    [[ $(echo "$rand <= $reset_perc" | bc) == 1 ]] && fixed_seg_only=1
 }
 
 # >>> dss_disicl_tab () >>> {{{
@@ -651,6 +652,46 @@ contigs=$(edit_linkers $contigs)
             ' | paste -sd ' '
         )
     }
+}
+
+# Fixed segments only
+[[ $fixed_seg_only == 1 ]] && {
+    contigs=$(echo $contigs | sed 's|/|\n|g' | sed 's|-| |' | awk -v reslist="$reslist" '
+        BEGIN {
+            n = split(reslist, a, " ")
+            for (i=1; i<=n; i++) {
+                ch_i = substr(a[i], 1, 1) ; sub(/^[A-Z]/, "", a[i])
+                split(a[i], b, "-") ; if (!b[2]) b[2] = b[1]
+                for (j=b[1]; j<=b[2]; j++) reskey[ch_i j] = 1
+            }
+            c_i = 1
+        }
+        $1~/^[0-9]/ { con[c_i] += $1 ; next }
+        $1~/^[A-Z]/ {
+            ch = substr($1,1,1) ; ri1 = substr($1,2) ; ri2 = $2 ? $2 : ri1
+
+            # Check if fixedblock has fixed residues
+            keep = 0
+            for (i=ri1; i<=ri2; i++) if (ch i in reskey) { keep = 1 ; break }
+
+            # If fixedblock has fixed residues, then keep
+            if (keep == 1) {
+                con[++c_i] = $0 ; c_i++
+            } else {
+                con[c_i] += ri2 - ri1 + 1
+            } 
+        }
+        END {
+            for (i=1; i<=c_i; i++) {
+                if (con[i] ~ /^[0-9]/) {
+                    print con[i] "-" con[i]
+                } else {
+                    sub(" ", "-", con[i])
+                    print con[i]
+                }
+            }
+        }
+    ' | paste -sd '/')
 }
 
 # Output
