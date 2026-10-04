@@ -153,12 +153,15 @@ done
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # }}}
 
-# Check input directory
+# Check input directory then remove it from all_opts
 if [[ ! -d $indir ]] ; then
     echo "$indir is not a directory!" && exit
 elif [[ $(echo $indir/*.pdb | sed '/*/d' | wc -w) == 0 ]] ; then
     echo "$indir doesn't contain any PDBs!" && exit
 fi
+all_opts=($(
+    echo "${all_opts[@]}" | sed 's|--|\n--|g' | sed '/^--indir /d'
+))
 
 # Initialize
 shopt -s nullglob
