@@ -32,12 +32,14 @@ Options for ss usage:
   --inpdb [str]             Input pdb for determining contigs
   --ss_trim [int]           If using ss_to_contigs, then trims secondary
                             structures based on their sequence distance to
-                            loops.
-                            E.g. --ss_trim 1 with an ss string of LLHHHHLL
-                            allows the two H adjacent L to be rediffused. This
-                            effectively treats the ss string as LLLHHLLL. If
+                            loops. Helices are trimmed twice as much.
+                            E.g. --ss_trim 1 with an ss string of LLEEEELL
+                            allows the two E adjacent L to be rediffused. This
+                            effectively treats the ss string as LLLEELLL. If
                             --ss_trim 2 was used instead, then the ss string is
-                            effectively LLLLLLLL.
+                            effectively LLLLLLLL. If the ss_string was LLHHHHLL
+                            with --ss_trim 1, the ss_string will be treated as
+                            LLLLLLLL because helices get trimmed twice as much.
                             Can specify with range (e.g. --ss_term 2-4)
   --nterm_trim [int]        Trim specified number of residues from N terminus.
                             Can specify with range (e.g. --nterm_trim 2-4)
@@ -515,6 +517,11 @@ gen_contigs_from_disicl () {
         # Trim ss_str string
         for (i=1; i<=ss_trim; i++) {
             gsub(/[^L ]L/, "LL", ss_str) ; gsub(/L[^L ]/, "LL", ss_str)
+        }
+
+        # Trim ss_str string for helix one more time
+        for (i=1; i<=ss_trim; i++) {
+            gsub(/HL/, "LL", ss_str) ; gsub(/LH/, "LL", ss_str)
         }
 
         # Trim N and C termini
