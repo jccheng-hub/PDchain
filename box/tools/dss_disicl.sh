@@ -36,7 +36,7 @@ optarg () {
 val_opts=(fixedres fixedrange)
 bool_opts=(append help)
 fixedres=""
-fixedrange="2"
+fixedrange="3"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

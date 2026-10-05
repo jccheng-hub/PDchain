@@ -527,9 +527,9 @@ There are a number of built-in metrics that are available for use. Note that sec
 |`perc_helix`|helix composition of protein scaffold|
 |`perc_sheet`|sheet composition of protein scaffold|
 |`perc_loop`|loop composition of protein scaffold|
-|`fixedres_perc_helix`|helix composition of fixed residues +/- 2|
-|`fixedres_perc_sheet`|sheet composition of fixed residues +/- 2|
-|`fixedres_perc_loop`|loop composition of fixed residues +/- 2|
+|`fixedres_perc_helix`|helix composition of fixed residues +/- 3|
+|`fixedres_perc_sheet`|sheet composition of fixed residues +/- 3|
+|`fixedres_perc_loop`|loop composition of fixed residues +/- 3|
 |`ddg`|ddg metric from Rosetta (complex only); lower is better|
 |`dsasa`|dsasa metric from Rosetta (complex only)|
 |`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
