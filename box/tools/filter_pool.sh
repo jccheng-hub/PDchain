@@ -240,7 +240,7 @@ gawk -v topnum=$topnum -v ranked="$tmpdir/ranked.txt" '
 # Output
 if [[ -n $outfile ]] ; then
     mkdir -p $(dirname $outfile)
-    cp $tmpdir/ranked.txt $outfile
+    sed 's|^.*/||' $tmpdir/ranked.txt > $outfile
     echo "Ranked list (best to worst) saved to $outfile"
     echo "${mets[@]}" | sed 's/ /\n/g' > $(dirname $outfile)/ranked_metrics.txt
 elif [[ $inplace == 1 ]] ; then
@@ -257,12 +257,12 @@ elif [[ $inplace == 1 ]] ; then
     else
         echo "No designs were archived"
     fi
-    cp $tmpdir/ranked.txt $indir
+    sed 's|^.*/||' $tmpdir/ranked.txt > $indir/ranked.txt
     echo "Ranked list (best to worst) saved to $indir/ranked.txt"
     echo "${mets[@]}" | sed 's/ /\n/g' > $indir/ranked_metrics.txt
 else
     mkdir -p $outdir
-    cp $tmpdir/ranked.txt $outdir
+    sed 's|^.*/||' $tmpdir/ranked.txt > $outdir/ranked.txt
     cp $(head -n $topnum $tmpdir/ranked.txt) $outdir
     echo "Transferred top $topnum designs to $outdir"
     echo "Ranked list (best to worst) saved to $outdir/ranked.txt"

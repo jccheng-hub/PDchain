@@ -202,7 +202,7 @@ echo "Family size: $famisize"
 
 # Define function for removing worst family members
 trim_family () {
-    local rankfile="$1" famisize="$2"
+    local rankfile="$1" famisize="$2" pooldir="$3"
     local tormv=$(awk -v famisize=$famisize '
         {
             f++ ; file[f] = fami[f] = $1
@@ -211,7 +211,7 @@ trim_family () {
         }
 
         c[fami[f]] > famisize { print file[f] }
-    ' $rankfile | paste -sd ' ')
+    ' $rankfile | sed "s|^|${pooldir%/}/|" | paste -sd ' ')
     [[ -n $tormv ]] && {
         mv $tormv $outdir/archive &&
         echo "Archived the following designs for exceeding the maximum family size of $famisize: $tormv"
@@ -273,7 +273,7 @@ while [[ $SECONDS -lt $time_f ]] ; do
                     print lin[2]
                 }
             }
-        '
+        ' | sed "s|^|${outdir%/}/|"
     ))
 
     # Check if inpdb exists
@@ -342,7 +342,7 @@ while [[ $SECONDS -lt $time_f ]] ; do
 
     # Filter
     filter_pool $mets --indir $outdir --num $poolsize --inplace
-    trim_family $outdir/ranked.txt $famisize
+    trim_family "$outdir/ranked.txt" "$famisize" "$outdir"
 
     # If gen0perc is set and the gen0 pool is below threshold, then exit
     [[ -n $gen0perc ]] && {
@@ -355,7 +355,7 @@ while [[ $SECONDS -lt $time_f ]] ; do
         else
             echo "Current gen0perc is $cur_gen0perc%, meeting the cutoff of $gen0perc."
             echo "Exiting..."
-            exit
+            break
         fi
     }
 
@@ -364,8 +364,11 @@ while [[ $SECONDS -lt $time_f ]] ; do
         cursize=$(echo $outdir/*.pdb | wc -w)
         [[ $cursize -ge $poolsize ]] && {
             echo "The option --stop_at_capacity was enabled, and maximum capacity is reached."
-            echo "Exiting..."
-            exit
+            break
         }
     }
 done
+
+[[ $stop_at_capacity == 1 && $SECONDS -ge $time_f ]] && {
+    echo "The option --stop_at_capacity (with --poolsize $poolsize) was enabled, but the time limit (--tlim $tlim) was reached before capacity was reached. Rerun your command if you want to continue until max capacity."
+}

@@ -431,7 +431,7 @@ rfd_chain \
     --indir inputs/oripool/invrots \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
-    --numdes 1000 \
+    --numdes 200 \
     --select_met min:ddg \
     --fixedres A50 B127 --ligname 6NT \
     --lig_stdev 0.5 --ap_stdev 0.5 \
@@ -459,59 +459,68 @@ Here, we are instructing `filter_pool` to rank designs in `inputs/oripool` based
 
 The choice of metrics for `filter_pool` may not be immediately obvious *a priori*. You might need to experiment with various metrics to see which combination selects for more reasonable scaffolds depending on your active site. Generally, the three used up here is a good start for ligand binders.
 
-Keep in mind that selecting for more metrics doesn't necessarily correlate with better outputs, especially for this small batch of 200 designs. The algorithm works by finding designs that are *least offensive* across all listed metrics, and trying to be inoffensive for multiple metrics all at once will yield designs that do inadequately on everything.
+Keep in mind that selecting for more metrics doesn't necessarily correlate with better outputs, especially for this small batch of 200 designs. The algorithm works by finding designs that are *least offensive* across all listed metrics, and trying to be inoffensive for a large number of metrics all at once will yield designs that do inadequately on everything.
 
 `--perc 5` specifies that we want to output the top 5% of designs, which will be stored in `inputs/oripool/filtered` in this case.
 
 > [!Note]
-The command `filter_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `filter_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `dsasa`, `perc_loop`, `rog_ala`, and `cst_rmsd`. The algorithm then starts eliminating the worst designs on each metric. So during this first elimination round, four designs are eliminated: the design with the worst `dsasa`, the design with the worst `perc_loop`, the design with the worst `rog_ala`, and the design with the worst `cst_rmsd`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
+The command `filter_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `filter_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `fc_compact`, `fc_dev`, and `rog_ala`. The algorithm then starts eliminating the worst designs on each metric. During each elimination round, (at most) three designs are eliminated: the design with the worst `fc_compact`, the design with the worst `fc_dev`, and the design with the worst `rog_ala`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
 
 Open up the outputs in pymol for a sanity check.
 ```bash
 pymol inputs/oripool/filtered/*.pdb
 ```
 
-### 4c - Evolving Designs with Partial Diffusion
+### 4c - Evolving Designs (Major Rediffusion)
 
-The scaffold `inputs/oripool/filtered/ex4_5rgf_denovo_0142` seems promising. Its pocket seems reasonably accessible without being too exposed, and the scaffold itself seems fairly compact and globular without any obvious red flags like excess loopy regions. There are a couple others in this batch that might also work, but I will stick with this one for the following section.
+The scaffold `inputs/oripool/filtered/ex4_5rgf_denovo_0134.pdb` seems promising. The ligand is a bit too buried, but the scaffold wraps around it nicely without being unreasonably loopy. There are a couple others in this batch that might also work, but I will stick with this one for the following section.
 
-We first create a new directory where we will store only the designs we seek to diversify and evolve. In this example, we are storing just a single design in this new directory, but you can store multiple candidates if you'd like.
+We will first create a new directory where we will store only the designs we seek to diversify and evolve. In this example, we are storing just a single design in this new directory, but you can store multiple candidates if you'd like if you don't mind a more heterogenous starting pool.
 ```bash
-mkdir -p inputs/f0_partial
-cp -v inputs/oripool/filtered/ex4_5rgf_denovo_0142.pdb inputs/f0_partial
+mkdir -p inputs/selepool
+cp -v inputs/oripool/filtered/ex4_5rgf_denovo_0134.pdb inputs/selepool
 ```
 
-Every design that is outputted by `rfd_chain` will contain information that allows them to be evolved by `evo_rfd_chain`. Notably, information such as the original contigs, the fixed residues, the ligand names, the Rosetta constraints, and various selection metrics are all included in the footer of each PDB (try `cat inputs/f0_partial/ex4_5rgf_denovo_0142.pdb` to display the contents of our selected design to see for yourself).
+Every design that is outputted by `rfd_chain` will contain information that allows them to be evolved by `evo_rfd_chain`. Notably, information such as the original contigs, the fixed residues, the ligand names, the Rosetta constraints, and various selection metrics are all included in the footer of each PDB (try `cat inputs/selepool/ex4_5rgf_denovo_0134.pdb` to display the contents of our selected design to see for yourself).
 
 We can now run our evolution system on our candidate design. Here, we specify metrics that we might be interested in selecting for in the context of this newer scaffold.
 ```bash
 evo_rfd_chain \
-    min:ddg min:cst_rmsd min:fixedres_reu max:hbonds_to_lig_1C \
-    --indir inputs/f0_partial \
+    min:fixedres_perc_loop min:rog_ala val:dsasa=0.85 \
+    --indir inputs/selepool \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
-    --model_type soluble_mpnn --sc_context \
+    --model_type soluble_mpnn --rosetta_lig_nbr \
     --model_ckpt ActiveSite \
     --select_met min:ddg \
-    --poolsize 200 --poolperc 5 \
+    --poolsize 200 --poolperc 10 \
     --tlim 8h --stop_at_capacity \
-    --partial --timesteps 2 \
+    --ss_to_contigs --ss_trim 2 --vary_linkers 1 \
+    --helix_cap 20 --reset_perc 50 \
     --outdir outputs/evopool
 ```
 
-Here, we are telling `evo_rfd_chain` to select designs within `inputs/f0_partial` based on three metrics: `ddg`, `cst_rmsd`, `fixedres_reu`, and `hbonds_to_focus_1C`. We want to minimize `ddg`, `cst_rmsd`, and `fixedres_reu` while maximizing `hbonds_to_focus_1C`. See [Built-In Metrics](#built-in-metrics) for details on metrics.
+Here, we are telling `evo_rfd_chain` to select designs within `inputs/selepool` based on three metrics: `fixedres_perc_loop`, `rog_ala`, and `dsasa`. We want to minimize `fixedres_perc_loop` and `rog_ala` while keeping `dsasa` close to `0.85`. `fixedres_perc_loop` measures the percent loop composition around fixed residues, `rog_ala` measures the (approximate) radius of gyration of the protein scaffold, and `dsasa` gives us the percent burial of our ligand. See [Built-In Metrics](#built-in-metrics) for details on metrics.
 
 `--poolsize 200` specifies the maximum number of designs in the output directory, where the design evolution takes place. All designs from the input directory will be copied into the output directory before design evolution begins. If the number of designs in the output directory exceed the poolsize, the worst ones based on the specified metrics will be archived.
 
-`--poolperc 5` specifies the percent of your current poolsize that will be randomly selected as candidates for diversification. Once candidates are randomly selected, the best one (according to your specified metrics) on that list will be selected for diversification. For example, if your current pool has 200 designs, `--poolperc 5` means that 10 designs (5% of 200) will be randomly selected from your current pool, and the top-ranking design of that list of 10 is selected for design. Tune this number higher if you want a stronger bias for top-ranking designs. A value of 100 means that the top design has a 100% chance of being selected. A value of 0 means that the input design is selected randomly in an unbiased fashion (the candidate pool has to have at least one design at minimum).
+`--poolperc 10` specifies the percent of your current poolsize that will be randomly selected as candidates for diversification. Once candidates are randomly selected, the best one (according to your specified metrics) on that list will be selected for diversification. For example, if your current pool has 50 designs, `--poolperc 10` means that 5 designs (10% of 50) from your current pool will be randomly selected as candidates for redesign; the top-ranking design of that list of candidates is then selected for redesign. Tune this number higher if you want a stronger bias for top-ranking designs. A value of 100 means that the top design has a 100% chance of being selected. A value of 0 means that the input design is selected randomly from the pool in an unbiased fashion (the candidate list has to have at least one design at minimum).
 
 `--tlim 8h` specifies the time limit of your run. This example has this command running for 8 hours maximum.
 
 `--stop_at_capacity` tells `evo_rfd_chain` to stop running when the pool size reaches maximum capacity (whic is 200 in this example due to `--poolsize 200`). Without this flag, `evo_rfd_chain` will continue until the time limit is hit, and the worst-ranking designs will be archived as needed to keep the poolsize equal or under the limit.
 
-Note that `--select_met min:ddg` *option* operates during the MPNN-FastRelax phase to optimize for minimal ddg for a *single* design. This is not to be confused with the `min:ddg` *argument* which will select for lower ddg values *between* designs in the design pool.
+Because of `--ss_to_contigs`, `--ss_trim 2`, and `--vary_linkers 1`, we are doing ss-based rediffusion and varying the loop linker lengths to allow for insertion and deletion. However, this on its own is more suited for more minor backbone optimization rather than more drastic backbone resampling.
 
-As `evo_rfd_chain` progresses, the file `ranked.txt` and `ranked_metrics.txt` will spawn in the output directory. The `ranked.txt` file provides an ordered ranked list (from best to worst) of the current pool. The `ranked_metrics.txt` file reports the metrics being used for design evolution.
+To promote more drastic scaffold remodeling with `evo_rfd_chain`, we added the options `--helix_cap 20` and `--reset_perc 50`. With `--helix_cap 20`, we force helices longer than 20 to be rediffused by RFdiffusion. In addition, `--reset_perc 50` specifies the percent chance in which all residues, except for the fixed residues and the stretch of ss residues attached to them, will be rediffused by RFdiffusion.
+
+As `evo_rfd_chain` progresses, the files `ranked.txt` and `ranked_metrics.txt` will spawn in the output directory. The `ranked.txt` file provides an ordered ranked list (from best to worst) of the current pool. The `ranked_metrics.txt` file reports the metrics being used for design evolution.
+
+A copy of my own run of the same command is included at `inputs/premade_evopool`.
+
+### 4d - Evolving Designs (Minor Rediffusion)
+
+[WORK IN PROGRESS]
 
 ## Built-In Metrics
 
