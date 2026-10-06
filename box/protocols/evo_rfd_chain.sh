@@ -20,7 +20,11 @@ Parameters:
                             E.g. val:dsasa=0.7
 
 Options:
+  --inpdb [str]             Input rfd_chain designs (can specify multiple)
+                            REQUIRED if not invoking --indir
   --indir [str]             Input directory of (rfd_chain) designs
+                            Overrides --inpdb
+                            REQUIRED if not invoking --inpdb
   --outdir [str]            Output directory for design pool
   --poolsize [int/str]      Determines the design pool size. The design pool is
                             where designs will be aggregated and continuously
@@ -80,9 +84,9 @@ val_opts=(
     tlim                ss_trim             vary_linkers        natbias
     backrub             timesteps           threads             temperature
     relax_repeats       redes_dist          model_type          design_cycles
-    poolperc            gen0perc            nterm_trim
+    poolperc            gen0perc            nterm_trim          inpdb
     cterm_trim          ca_stdev            nterm_add           cterm_add
-    helix_cap           reset_perc          loop_cut
+    helix_cap           reset_perc          loop_cut            nbr_resfile_cmd
     rog_cut             famiperc            select_met          model_ckpt
 )
 bool_opts=(
@@ -93,7 +97,8 @@ bool_opts=(
     auto_update         stop_at_capacity    persistent          rosetta_lig_nbr
 )
 
-indir="REQUIRED"
+inpdb=""
+indir=""
 outdir="./evolved"
 poolsize="ALL"
 poolperc="10"
@@ -123,6 +128,7 @@ helix_cap=""
 reset_perc="0"
 select_met=""
 model_ckpt=""
+nbr_resfile_cmd=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -153,22 +159,31 @@ done
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # }}}
 
-# Check input directory then remove it from all_opts
-if [[ ! -d $indir ]] ; then
-    echo "$indir is not a directory!" && exit
-elif [[ $(echo $indir/*.pdb | sed '/*/d' | wc -w) == 0 ]] ; then
-    echo "$indir doesn't contain any PDBs!" && exit
-fi
-all_opts=($(
-    echo "${all_opts[@]}" | sed 's|--|\n--|g' | sed '/^--indir /d'
-))
-
 # Initialize
-shopt -s nullglob
 echo "Executing command:" "$0" "$@"
 mets="${args[@]:1}"
-outdir="${outdir%/}" ; mkdir -p $outdir
 tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EXIT
+
+if [[ -n $indir ]] ; then
+    echo "Taking designs from --indir $indir as inputs..."
+    [[ $(echo $indir/*.pdb | sed '/*/d' | wc -w) == 0 ]] && {
+        echo "$indir doesn't contain any PDBs!" && exit
+    }
+elif [[ -n $inpdb ]] ; then
+    echo "Taking designs from --inpdb $inpdb as inputs..."
+    ls $inpdb >/dev/null || exit
+    indir="$tmpdir/indir" ; mkdir -p $indir
+    echo "Copying input PDBs into temporary input directory..."
+    cp -v $inpdb $indir
+else
+    echo "Need to specify either --inpdb or --indir." && exit
+fi
+
+all_opts=($(echo "${all_opts[@]}" | sed 's|--|\n--|g' | sed '/^--inpdb /d'))
+all_opts=($(echo "${all_opts[@]}" | sed 's|--|\n--|g' | sed '/^--indir /d'))
+
+shopt -s nullglob
+outdir="${outdir%/}" ; mkdir -p $outdir
 
 # Check time limit
 tlim_s=$(gawk -v tlim="$tlim" 'BEGIN {

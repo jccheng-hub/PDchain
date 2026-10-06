@@ -139,6 +139,8 @@ LigandMPNN + PyRosetta options:
   --relax                   Use relax as a refinement
   --rosetta_lig_nbr         Use RosettaDesign on residues within --nbr_dist of
                             ligands. Cysteines are prohibited.
+  --nbr_resfile_cmd [str]   Resfile command for ligand neighbors when invoking
+                            --rosetta_lig_nbr
   --fix_bb                  Fix backbones
   --fix_chi                 Fix chi angles
   --skip_mpnn               Skip MPNN
@@ -169,7 +171,7 @@ val_opts=(
     ap_stdev            backrub             nterm_trim          cterm_trim
     nterm_add           cterm_add           helix_cap           reset_perc
     nbr_dist            select_met          noise_scale         model_ckpt
-    inpaint_seq         inpaint_str
+    inpaint_seq         inpaint_str         nbr_resfile_cmd
 )
 
 bool_opts=(
@@ -222,6 +224,7 @@ nbr_dist=""
 select_met=""
 noise_scale="0.5"
 model_ckpt=""
+nbr_resfile_cmd=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

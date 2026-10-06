@@ -65,7 +65,10 @@ PyRosetta options:
   --ignore_metals           Do not set up metal-binding constraints
   --renumber_chain          Renumber each chain for the output pdb
   --rosetta_lig_nbr         Apply RosettaDesign to residues around ligand. Uses
-                            --nbr_dist for neighbor detection.       
+                            --nbr_dist for neighbor detection and
+                            --nbr_resfile_cmd for resfile command
+  --nbr_resfile_cmd [str]   Resfile command for ligand neighbors when invoking
+                            --rosetta_lig_nbr
   --keep_script             Keep the PyRosetta script used
   --skip_refine             Skip Rosetta refinement
 EOF
@@ -87,7 +90,7 @@ val_opts=(
     fix_stdev           fixedres            lig_stdev           ligname 
     model_type          outdir              redesres            nbr_dist
     relax_repeats       resfile             suffix              temperature         
-    threads
+    threads             nbr_resfile_cmd
 )
 
 bool_opts=(
@@ -115,6 +118,7 @@ resfile=""
 suffix=""
 temperature="0.1"
 threads="1"
+nbr_resfile_cmd="ALLAAxc"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -568,13 +572,12 @@ EOF
         )
         echo "The following residues were within ${nbr_dist} angstroms of $ligname: $nbrres"
         echo "List of fixed residues to be repacked with Rosetta: ${fixedres}"
-        echo "List of residues to be designed with Rosetta: ${finres}"
+        echo "List of residues to be designed (--nbr_resfile_cmd $nbr_resfile_cmd) with Rosetta: ${finres}"
         echo "All other residues will be fixed."
-        echo "Cysteines are prohibited in this mode."
         local resfile="$tmpdir/rosetta_lig_nbr.res"
         echo -e "NATRO\nSTART\n" > $resfile
         [[ -n $finres ]] && echo $finres | sed 's| |\n|g' |
-        awk '{ch=substr($1,1,1); ri=substr($1,2); printf "%s %s ALLAAxc\n", ri, ch}' >> $resfile
+        awk '{ch=substr($1,1,1); ri=substr($1,2); printf "%s %s '"$nbr_resfile_cmd"'\n", ri, ch}' >> $resfile
         [[ -n $fixedres ]] && echo $fixedres | sed 's| |\n|g' |
         awk '{ch=substr($1,1,1); ri=substr($1,2); printf "%s %s NATAA\n", ri, ch}' >> $resfile
     }

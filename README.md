@@ -419,16 +419,16 @@ The following snippet was used to generate this original pool. Running it yourse
 
 ```bash
 # Generate inverse rotamers if we have less than 200
-[[ $(echo inputs/oripool/invrots/*.pdb | wc -w) -lt 200 ]] && {
+[[ $(echo inputs/invrots/*.pdb | wc -w) -lt 200 ]] && {
     gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
         --numrots 200 \
         --parallel 1 \
-        --outdir inputs/oripool/invrots
+        --outdir inputs/invrots
 }
 
 # Generate initial pool of designs
 rfd_chain \
-    --indir inputs/oripool/invrots \
+    --indir inputs/invrots \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 200 \
@@ -452,7 +452,7 @@ To avoid having to parse through a large batch of designs by hand, you can lever
 filter_pool min:fc_compact min:fc_dev min:rog_ala \
     --indir inputs/oripool \
     --perc 5 \
-    --outdir inputs/oripool/filtered
+    --outdir inputs/filtered
 ```
 
 Here, we are instructing `filter_pool` to rank designs in `inputs/oripool` based on three metrics: `fc_compact`, `fc_dev`, and `rog_ala`. In this case, we are aiming for lower values of each with the `min` prefix. The `max` and `val` prefix are also available (run `filter_pool --help` for more details). Lower values of `fc_compact` and `fc_dev` correlate with pocket formation around the ligand, and lower values of `rog_ala` correlate with the compactness and globularity of the overall protein scaffold. See [Built-In Metrics](#built-in-metrics) for more info on metrics.
@@ -468,18 +468,12 @@ The command `filter_pool` ranks designs with a relativistic reverse-elimination 
 
 Open up the outputs in pymol for a sanity check.
 ```bash
-pymol inputs/oripool/filtered/*.pdb
+pymol inputs/filtered/*.pdb
 ```
 
 ### 4c - Evolving Designs (Major Rediffusion)
 
-The scaffold `inputs/oripool/filtered/ex4_5rgf_denovo_0134.pdb` seems promising. The ligand is a bit too buried, but the scaffold wraps around it nicely without being unreasonably loopy. There are a couple others in this batch that might also work, but I will stick with this one for the following section.
-
-We will first create a new directory where we will store only the designs we seek to diversify and evolve. In this example, we are storing just a single design in this new directory, but you can store multiple candidates if you'd like if you don't mind a more heterogenous starting pool.
-```bash
-mkdir -p inputs/selepool
-cp -v inputs/oripool/filtered/ex4_5rgf_denovo_0134.pdb inputs/selepool
-```
+The scaffold `inputs/filtered/ex4_5rgf_denovo_0134.pdb` seems promising. The ligand is a bit too buried, but the scaffold wraps around it nicely without being unreasonably loopy. There are a couple others in this batch that might also work, but I will stick with this one for the following section.
 
 Every design that is outputted by `rfd_chain` will contain information that allows them to be evolved by `evo_rfd_chain`. Notably, information such as the original contigs, the fixed residues, the ligand names, the Rosetta constraints, and various selection metrics are all included in the footer of each PDB (try `cat inputs/selepool/ex4_5rgf_denovo_0134.pdb` to display the contents of our selected design to see for yourself).
 
@@ -487,7 +481,7 @@ We can now run our evolution system on our candidate design. Here, we specify me
 ```bash
 evo_rfd_chain \
     min:fixedres_perc_loop min:rog_ala val:dsasa=0.85 \
-    --indir inputs/selepool \
+    --inpdb inputs/filtered/ex4_5rgf_denovo_0134.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --model_type soluble_mpnn --rosetta_lig_nbr \
@@ -497,10 +491,12 @@ evo_rfd_chain \
     --tlim 8h --stop_at_capacity \
     --ss_to_contigs --ss_trim 2 --vary_linkers 1 \
     --helix_cap 20 --reset_perc 50 \
-    --outdir outputs/evopool
+    --outdir outputs/evopool_4c
 ```
 
 Here, we are telling `evo_rfd_chain` to select designs within `inputs/selepool` based on three metrics: `fixedres_perc_loop`, `rog_ala`, and `dsasa`. We want to minimize `fixedres_perc_loop` and `rog_ala` while keeping `dsasa` close to `0.85`. `fixedres_perc_loop` measures the percent loop composition around fixed residues, `rog_ala` measures the (approximate) radius of gyration of the protein scaffold, and `dsasa` gives us the percent burial of our ligand. See [Built-In Metrics](#built-in-metrics) for details on metrics.
+
+`--inpdb` can specify input designs directly for `evo_rfd_chain`. Alternatively, you can use `--indir` to specify an input directory if you want to evolve all designs from that input directory.
 
 `--poolsize 200` specifies the maximum number of designs in the output directory, where the design evolution takes place. All designs from the input directory will be copied into the output directory before design evolution begins. If the number of designs in the output directory exceed the poolsize, the worst ones based on the specified metrics will be archived.
 
@@ -508,7 +504,7 @@ Here, we are telling `evo_rfd_chain` to select designs within `inputs/selepool` 
 
 `--tlim 8h` specifies the time limit of your run. This example has this command running for 8 hours maximum.
 
-`--stop_at_capacity` tells `evo_rfd_chain` to stop running when the pool size reaches maximum capacity (whic is 200 in this example due to `--poolsize 200`). Without this flag, `evo_rfd_chain` will continue until the time limit is hit, and the worst-ranking designs will be archived as needed to keep the poolsize equal or under the limit.
+`--stop_at_capacity` tells `evo_rfd_chain` to stop running when the pool size reaches maximum capacity (which is 200 in this example due to `--poolsize 200`). Without this flag, `evo_rfd_chain` will continue until the time limit is hit, and the worst-ranking designs will be archived as needed to keep the poolsize equal or under the limit.
 
 Because of `--ss_to_contigs`, `--ss_trim 2`, and `--vary_linkers 1`, we are doing ss-based rediffusion and varying the loop linker lengths to allow for insertion and deletion. However, this on its own is more suited for more minor backbone optimization rather than more drastic backbone resampling.
 
@@ -516,9 +512,37 @@ To promote more drastic scaffold remodeling with `evo_rfd_chain`, we added the o
 
 As `evo_rfd_chain` progresses, the files `ranked.txt` and `ranked_metrics.txt` will spawn in the output directory. The `ranked.txt` file provides an ordered ranked list (from best to worst) of the current pool. The `ranked_metrics.txt` file reports the metrics being used for design evolution.
 
-A copy of my own run of the same command is included at `inputs/premade_evopool`.
+A copy of the resulting pool from my own design evolution run is included at `inputs/evopool_4c`. Note that your own results may vary from my own due to the randomness of diversification.
 
 ### 4d - Evolving Designs (Minor Rediffusion)
+
+Once you have an agreeable scaffold, you can continue sampling and optimizing in the context of that scaffold with lighter diversification strategy. The results of my own run (stored at `inputs/evopool_4c`) ranked `ex4_5rgf_denovo_0134_gen3_aywpxz.pdb` in the top 10. It had a reasonably deep pocket without being excessively buried, and we will be using this in the following example.
+
+Note that our evolved scaffold has differed quite a bit from the original.
+```bash
+pymol inputs/filtered/ex4_5rgf_denovo_0134.pdb inputs/evopool_4c/ex4_5rgf_denovo_0134_gen3_aywpxz.pdb
+```
+
+Because we don't actually want to introduce any major changes to our new scaffold, we can tone down our diversification approach. For example, we can restrict our approach to just partial diffusion + MPNN-FastRelax.
+```bash
+evo_rfd_chain \
+    min:ddg min:fixedres_reu \
+    min:fin_reu_per_res min:fixedres_perc_loop \
+    --inpdb inputs/evopool_4c/ex4_5rgf_denovo_0134_gen3_aywpxz.pdb \
+    --idealize --relax --ca_stdev 1 \
+    --design_cycles 3 \
+    --model_type soluble_mpnn --rosetta_lig_nbr \
+    --model_ckpt ActiveSite \
+    --select_met min:ddg \
+    --poolsize 200 --poolperc 10 \
+    --tlim 8h --stop_at_capacity \
+    --partial --timesteps 3 \
+    --outdir outputs/evopool_4d
+```
+
+Not only did we change our diversification approach (with `--partial --timesteps 3` instead of `--ss_to_contigs --ss_trim 2 ...`), we also changed the metrics that we are selecting for. Back when we were using a more drastic diversification strategy that involved rediffusing entire chunks of the protein, our selection strategy was geared towards scaffold quality (e.g. `fixedres_perc_loop`, `rog_ala`) and suitable pocket formation (e.g. `dsasa`). Because our current diversification strategy is far less drastic on the backbone, we can afford to focus more on sequence-specific metrics such as `ddg` and `fixedres_reu`.
+
+A copy of the resulting pool for this partial diffusion evolution run is located at `inputs/evopool_4d`. As usual, the designs are ordered based on their relative rankings in the `ranked.txt` file (better designs at the top of the list).
 
 [WORK IN PROGRESS]
 
