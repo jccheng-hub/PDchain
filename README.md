@@ -398,24 +398,22 @@ The main benefit to `--select_met` is that it can direct MPNN-FastRelax to selec
 
 The command `evo_rfd_chain` was written to address these limitations. It will take an input batch of designs, generate a pool of designs by diversifying those inputs, then select the "best" in that pool based on specified metrics for further diversification. The output design will then get added into the same pool of designs before the next round of selection and diversification begins.
 
+The remainder of this section will walk through a complete example of ligand binder / enzyme design and subsequent design evolution. Because every command after the first will require the outputs of the previous command as inputs, this repository also provides all outputs from my own run of these commands. These outputs are stored in the `inputs` directory, and they also act as inputs for the subsequent commands. If you want to emulate the entire process (which may take a couple overnight computation runs) with your own outputs *only*, you'll want to adjust the input paths of these snippets accordingly.
+
 ### 4a - Generating Initial Design Pool
-
-An initial design pool is provided at `inputs/oripool`. This pool was generated from the ligand-binding enzyme design example (Kemp eliminase). This pool has 200 initial designs that have not been vetted beyond the original `rfd_chain` command that generated them. The hope is that this batch will contain at least some workable starting point for design evolution.
-
-The following snippet was used to generate this original pool. Running it yourself is optional (`inputs/oripool` already has the outputs). Feel free to move onto the next section after reviewing the snippet.
-
+The following command will generate a set of inverse rotamers (identical to the ligand binder / enzyme design example).
 ```bash
-# Generate inverse rotamers if we have less than 200
-[[ $(echo inputs/invrots/*.pdb | wc -w) -lt 200 ]] && {
-    gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
-        --numrots 200 \
-        --parallel 1 \
-        --outdir outputs/invrots
-}
+gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
+    --numrots 200 \
+    --parallel 1 \
+    --outdir outputs/4a_invrots
+```
+A copy of my own outputs is located at `inputs/4a_invrots`.
 
-# Generate initial pool of designs
+The following command will take an input directory of inverse rotamers, then generate an initial design pool.
+```bash
 rfd_chain \
-    --indir outputs/invrots \
+    --indir inputs/4a_invrots \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 200 \
@@ -426,49 +424,48 @@ rfd_chain \
     --model_ckpt ActiveSite \
     --fixbbres A49-51 B126-128 --tot_range 160-200 \
     --persistent \
-    --outprefix outputs/oripool/ex4_5rgf_denovo
+    --outprefix outputs/4a_oripool/ex4_5rgf_denovo
 ```
+A copy of my own outputs is located at `inputs/4a_oripool`.
 
 ### 4b - Selecting Candidates for Evolution
-
-The directory `inputs/oripool` contains an initial batch of de novo designs, and many of these will not have desirable properties. For example, the ligand might be too exposed, the scaffold may be too elongated or loopy, etc.
+The directory `inputs/4a_oripool` contains an initial batch of de novo designs, and many of these will not have desirable properties. For example, the ligand might be too exposed, the scaffold may be too elongated or loopy, etc.
 
 To avoid having to parse through a large batch of designs by hand, you can leverage the `filter_pool` command to select designs based on your desired criteria.
 
 ```bash
 filter_pool min:fc_compact min:fc_dev min:rog_ala \
-    --indir inputs/oripool \
+    --indir inputs/4a_oripool \
     --perc 5 \
-    --outdir outputs/filtered
+    --outdir outputs/4b_filtered
 ```
 
-Here, we are instructing `filter_pool` to rank designs in `inputs/oripool` based on three metrics: `fc_compact`, `fc_dev`, and `rog_ala`. In this case, we are aiming for lower values of each with the `min` prefix. The `max` and `val` prefix are also available (run `filter_pool --help` for more details). Lower values of `fc_compact` and `fc_dev` correlate with pocket formation around the ligand, and lower values of `rog_ala` correlate with the compactness and globularity of the overall protein scaffold. See [Built-In Metrics](#built-in-metrics) for more info on metrics.
+Open up the outputs in pymol for a sanity check.
+```bash
+pymol outputs/4b_filtered/*.pdb
+```
+
+Here, we are instructing `filter_pool` to rank designs in `inputs/4a_oripool` based on three metrics: `fc_compact`, `fc_dev`, and `rog_ala`. In this case, we are aiming for lower values of each with the `min` prefix. The `max` and `val` prefix are also available (run `filter_pool --help` for more details). Lower values of `fc_compact` and `fc_dev` correlate with pocket formation around the ligand, and lower values of `rog_ala` correlate with the compactness and globularity of the overall protein scaffold. See [Built-In Metrics](#built-in-metrics) for more info on metrics.
 
 The choice of metrics for `filter_pool` may not be immediately obvious *a priori*. You might need to experiment with various metrics to see which combination selects for more reasonable scaffolds depending on your active site. Generally, the three used up here is a good start for ligand binders.
 
 Keep in mind that selecting for more metrics doesn't necessarily correlate with better outputs, especially for this small batch of 200 designs. The algorithm works by finding designs that are *least offensive* across all listed metrics, and trying to be inoffensive for a large number of metrics all at once will yield designs that do inadequately on everything.
 
-`--perc 5` specifies that we want to output the top 5% of designs, which will be stored in `inputs/oripool/filtered` in this case.
+`--perc 5` specifies that we want to output the top 5% of designs, which will be stored in `outputs/4b_filtered` in this case.
 
 > [!Note]
 The command `filter_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `filter_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `fc_compact`, `fc_dev`, and `rog_ala`. The algorithm then starts eliminating the worst designs on each metric. During each elimination round, (at most) three designs are eliminated: the design with the worst `fc_compact`, the design with the worst `fc_dev`, and the design with the worst `rog_ala`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
 
-Open up the outputs in pymol for a sanity check.
-```bash
-pymol outputs/filtered/*.pdb
-```
-
 ### 4c - Evolving Designs (Major Rediffusion)
+The scaffold `inputs/4b_filtered/ex4_5rgf_denovo_0134.pdb` seems promising. The ligand is a bit too buried, but the scaffold wraps around it nicely without being unreasonably loopy. There are a couple others in this batch that might also work, but I will stick with this one for the following section.
 
-The scaffold `inputs/filtered/ex4_5rgf_denovo_0134.pdb` seems promising. The ligand is a bit too buried, but the scaffold wraps around it nicely without being unreasonably loopy. There are a couple others in this batch that might also work, but I will stick with this one for the following section.
-
-Every design that is outputted by `rfd_chain` will contain information that allows them to be evolved by `evo_rfd_chain`. Notably, information such as the original contigs, the fixed residues, the ligand names, the Rosetta constraints, and various selection metrics are all included in the footer of each PDB (try `cat inputs/selepool/ex4_5rgf_denovo_0134.pdb` to display the contents of our selected design to see for yourself).
+Every design that is outputted by `rfd_chain` will contain information that allows them to be evolved by `evo_rfd_chain`. Notably, information such as the original contigs, the fixed residues, the ligand names, the Rosetta constraints, and various selection metrics are all included in the footer of each PDB (try `cat inputs/4b_filtered/ex4_5rgf_denovo_0134.pdb` to display the contents of our selected design to see for yourself).
 
 We can now run our evolution system on our candidate design. Here, we specify metrics that we might be interested in selecting for in the context of this newer scaffold.
 ```bash
 evo_rfd_chain \
     min:fixedres_perc_loop min:rog_ala val:dsasa=0.85 \
-    --inpdb inputs/filtered/ex4_5rgf_denovo_0134.pdb \
+    --inpdb inputs/4b_filtered/ex4_5rgf_denovo_0134.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --model_type soluble_mpnn --rosetta_lig_nbr \
@@ -478,7 +475,7 @@ evo_rfd_chain \
     --tlim 8h --stop_at_capacity \
     --ss_to_contigs --ss_trim 2 --vary_linkers 1 \
     --helix_cap 20 --reset_perc 50 \
-    --outdir outputs/evopool_4c
+    --outdir outputs/4c_evopool
 ```
 
 Here, we are telling `evo_rfd_chain` to select designs within `inputs/selepool` based on three metrics: `fixedres_perc_loop`, `rog_ala`, and `dsasa`. We want to minimize `fixedres_perc_loop` and `rog_ala` while keeping `dsasa` close to `0.85`. `fixedres_perc_loop` measures the percent loop composition around fixed residues, `rog_ala` measures the (approximate) radius of gyration of the protein scaffold, and `dsasa` gives us the percent burial of our ligand. See [Built-In Metrics](#built-in-metrics) for details on metrics.
@@ -499,15 +496,14 @@ To promote more drastic scaffold remodeling with `evo_rfd_chain`, we added the o
 
 As `evo_rfd_chain` progresses, the files `ranked.txt` and `ranked_metrics.txt` will spawn in the output directory. The `ranked.txt` file provides an ordered ranked list (from best to worst) of the current pool. The `ranked_metrics.txt` file reports the metrics being used for design evolution.
 
-A copy of the resulting pool from my own design evolution run is included at `inputs/evopool_4c`. Note that your own results may vary from my own due to the randomness of diversification.
+A copy of the resulting pool from my own design evolution run is included at `inputs/4c_evopool`. Note that your own results may vary from my own due to the randomness of diversification.
 
 ### 4d - Evolving Designs (Minor Rediffusion)
-
-Once you have an agreeable scaffold, you can continue sampling and optimizing in the context of that scaffold with lighter diversification strategy. The results of my own run (stored at `inputs/evopool_4c`) ranked `ex4_5rgf_denovo_0134_gen3_aywpxz.pdb` in the top 10. It had a reasonably deep pocket without being excessively buried, and we will be using this in the following example.
+Once you have an agreeable scaffold, you can continue sampling and optimizing in the context of that scaffold with lighter diversification strategy. The results of my own run (stored at `inputs/4c_evopool`) ranked `ex4_5rgf_denovo_0134_gen3_aywpxz.pdb` in the top 10. It had a reasonably deep pocket without being excessively buried, and we will be using this in the following example.
 
 Note that our evolved scaffold has differed quite a bit from the original.
 ```bash
-pymol inputs/filtered/ex4_5rgf_denovo_0134.pdb inputs/evopool_4c/ex4_5rgf_denovo_0134_gen3_aywpxz.pdb
+pymol inputs/4b_filtered/ex4_5rgf_denovo_0134.pdb inputs/4c_evopool/ex4_5rgf_denovo_0134_gen3_aywpxz.pdb
 ```
 
 Because we don't actually want to introduce any major changes to our new scaffold, we can tone down our diversification approach. For example, we can restrict our approach to just partial diffusion + MPNN-FastRelax.
@@ -515,7 +511,7 @@ Because we don't actually want to introduce any major changes to our new scaffol
 evo_rfd_chain \
     min:ddg min:fixedres_reu \
     min:fin_reu_per_res min:fixedres_perc_loop \
-    --inpdb inputs/evopool_4c/ex4_5rgf_denovo_0134_gen3_aywpxz.pdb \
+    --inpdb inputs/4c_evopool/ex4_5rgf_denovo_0134_gen3_aywpxz.pdb \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --model_type soluble_mpnn --rosetta_lig_nbr \
@@ -524,20 +520,20 @@ evo_rfd_chain \
     --poolsize 200 --poolperc 10 \
     --tlim 8h --stop_at_capacity \
     --partial --timesteps 3 \
-    --outdir outputs/evopool_4d
+    --outdir outputs/4d_evopool
 ```
 
 Not only did we change our diversification approach (with `--partial --timesteps 3` instead of `--ss_to_contigs --ss_trim 2 ...`), we also changed the metrics that we are selecting for. Back when we were using a more drastic diversification strategy that involved rediffusing entire chunks of the protein, our selection strategy was geared towards scaffold quality (e.g. `fixedres_perc_loop`, `rog_ala`) and suitable pocket formation (e.g. `dsasa`). Because our current diversification strategy is far less drastic on the backbone, we can afford to focus more on sequence-specific metrics such as `ddg` and `fixedres_reu`.
 
-A copy of the resulting pool for this partial diffusion evolution run is located at `inputs/evopool_4d`. As usual, the designs are ordered based on their relative rankings in the `ranked.txt` file (better designs at the top of the list). Copies of the top 3 are stored at `inputs/evopool_4d_top`.
+A copy of the resulting pool for this partial diffusion evolution run is located at `inputs/4d_evopool`. As usual, the designs are ordered based on their relative rankings in the `ranked.txt` file (better designs at the top of the list). Copies of the top 3 are stored at `inputs/4d_evopool_top`.
 
 ## Fold Validation Methods
 ### ESMFold and OmegaFold
 PDchain comes with a few different commands that can facilitate fold validation. The commands `esmfold_relax` and `omegafold_relax` will leverage ESMFold (server) and OmegaFold (local). Note that these two commands will only work with monomeric proteins.
 
-In the following example, we will take the 3 designs in `inputs/evopool_4d_top` and submit them to the ESMFold webserver, download the outputs, align to our original design with PyMOL, then refine with Rosetta.
+In the following example, we will take the 3 designs in `inputs/4d_evopool_top` and submit them to the ESMFold webserver, download the outputs, align to our original design with PyMOL, then refine with Rosetta.
 ```bash
-topdes=$(echo inputs/evopool_4d_top/*.pdb)
+topdes=$(echo inputs/4d_evopool_top/*.pdb)
 echo "Submitting the following to ESMFold: $topdes"
 esmfold_relax $topdes --outdir outputs/esmfold
 ```
@@ -546,8 +542,7 @@ When using `esmfold_relax`, the raw outputs from ESMFold will be stored in the d
 
 If the ESMFold server didn't time out on you, then you can try viewing the outputs in PyMOL.
 ```bash
-topdes=$(echo inputs/evopool_4d_top/*.pdb)
-pymol $topdes outputs/esmfold/*.pdb
+pymol inputs/4d_evopool_top/*.pdb outputs/esmfold/*.pdb
 ```
 
 Not all designed sequences will have their folds validated. Their CA-RMSDs are stored in the ESMFold PDBs, which you can view with `grep`.
@@ -560,14 +555,14 @@ The command `omegafold_relax` behaves identically to `esmfold_relax` except it u
 ### AlphaFold3 Server
 AlphaFold3 does not have a command-line interface (that I am aware of) for automated submission of jobs. However, PDchain contain commands that can facilitate the submission of jobs through the AF3 webserver. This is done with the `af3webtools` command.
 ```bash
-af3webtools prep inputs/evopool_4d_top/*.pdb --outdir outputs
+af3webtools prep inputs/4d_evopool_top/*.pdb --outdir outputs
 ```
 
 This should spawn a json file in the output directory. This json can then be uploaded to [alphafoldserver.com](#alphafoldserver.com) as job drafts, which can then be subsequently submitted so long as you have enough jobs left for the day.
 
 Should you download a batch of AF3-predicted structures from the AF3 server, they would be downloaded as a zip file. The command `af3webtools` will also facilitate the extraction of these models and the structural alignment to your designs.
 ```bash
-af3webtools unzip folds_[...].zip --refdir inputs/evopool_4d_top --outdir outputs
+af3webtools unzip folds_[...].zip --refdir inputs/4d_evopool_top --outdir outputs
 ```
 
 `--refdir` specifies the reference directory that contains the designs. For this to work, the name of the designs has to match what was submitted onto the AF3 server. If `af3webtools prep` was used to prepare the AF3 server json files from the same designs, then the names should already be consistent.
