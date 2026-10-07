@@ -387,7 +387,7 @@ Note that the order in which the residues are specified for `--fixbbres` matters
 > [!NOTE]
 RFdiffusion generates backbones around ligands with an auxillary potential (see RFdiffusion documentation for more details). However, even with this potential, RFdiffusion can produce backbones that clash with the input ligand. The command `rfd_chain` was therefore programmed to exclude backbones with excess clashes to ligand atoms. As a result, you may not see the same amount of design outputs as intended. For example, we have `--numdes 3` in the command above, but you may end up with just `ex3d_5grf_denovo_0002.pdb` in the outputs without the first and third designs because they failed the clash checker. If you want to guarantee the exact number of outputs as specified by `--numdes`, add the option `--persistent` to make RFdiffusion try again if it fails. If you want to turn off the clash checker entirely, you can set the threshold to an excessively high number like `--clash_cut 9999` so that every backbone RFdiffusion generates will always pass regardless of ligand clashes. This is not recommended, however, as MPNN may get an unreasonable input and Rosetta may have a hard time resolving those clashes.
 
-As mentioned in the example with de novo protein binder design, it is unlikely to get "reasonable" de novo designs from a small-scale computational run. Getting promising design candidates often require generating thousands of designs and screening through them. Sometimes, even the best designs from a large-scale batch might not meet all of your desired criteria. For example, they might be globular with ample secondary structure composition, but the binding pocket is completely buried/exposed. In these situations, it might be better to redesign these candidates to optimize for those desired properties rather than to repeatedly fish for new designs that meet all of your criteria all at once. See the section on `evo_rfd_chain` to see how one can evolve designs based on desirable metrics.
+As mentioned in the example with de novo protein binder design, it is unlikely to get "reasonable" de novo designs from a small-scale computational run. Getting promising design candidates often require generating thousands of designs and screening through them. Sometimes, even the best designs from a large-scale batch might not meet all of your desired criteria. For example, they might be globular with ample secondary structure composition, but the binding pocket is completely buried/exposed. In these situations, it might be better to redesign these candidates to optimize for those desired properties rather than to repeatedly fish for new designs that meet all of your criteria all at once. See the section on [Continuous Evolution of Designs](#continuous-evolution-of-designs) to see how one can evolve designs based on desirable metrics.
 
 ## 4 - Continuous Evolution of Designs
 Not every design output will possess properties you are looking for; this is especially true for de novo designs. Often times, you end up with designs that check some boxes but not others. In these situations, it may be worth attempting optimization of these designs by using them as starting points for cycles of diversification and selection.
@@ -398,7 +398,7 @@ The main benefit to `--select_met` is that it can direct MPNN-FastRelax to selec
 
 The command `evo_rfd_chain` was written to address these limitations. It will take an input batch of designs, generate a pool of designs by diversifying those inputs, then select the "best" in that pool based on specified metrics for further diversification. The output design will then get added into the same pool of designs before the next round of selection and diversification begins.
 
-The remainder of this section will walk through a complete example of ligand binder / enzyme design and subsequent design evolution. Because every command after the first will require the outputs of the previous command as inputs, this repository also provides all outputs from my own run of these commands. These outputs are stored in the `inputs` directory, and they also act as inputs for the subsequent commands. If you want to emulate the entire process (which may take a couple overnight computation runs) with your own outputs *only*, you'll want to adjust the input paths of these snippets accordingly.
+The remainder of this section will walk through a complete example of ligand binder / enzyme design and subsequent design evolution. Because every command after the first will require the outputs of the previous command as inputs, this repository also provides all outputs from my own run of these commands. These outputs are stored in the `inputs` directory, and they also act as inputs for the subsequent commands. If you want to emulate the entire process (which may take a couple overnight computation runs) with *only* your own outputs, you'll want to adjust the input paths of these code blocks accordingly.
 
 ### 4a - Generating Initial Design Pool
 The following command will generate a set of inverse rotamers (identical to the ligand binder / enzyme design example).
@@ -533,9 +533,7 @@ PDchain comes with a few different commands that can facilitate fold validation.
 
 In the following example, we will take the 3 designs in `inputs/4d_evopool_top` and submit them to the ESMFold webserver, download the outputs, align to our original design with PyMOL, then refine with Rosetta.
 ```bash
-topdes=$(echo inputs/4d_evopool_top/*.pdb)
-echo "Submitting the following to ESMFold: $topdes"
-esmfold_relax $topdes --outdir outputs/esmfold
+esmfold_relax inputs/4d_evopool_top/*.pdb --outdir outputs/esmfold
 ```
 
 When using `esmfold_relax`, the raw outputs from ESMFold will be stored in the directory specified by `--foldrepo`. By default, `--foldrepo` points to the PDchain root directory (e.g. `--foldrepo /Users/johncheng/Workspaces/PDchain/foldrepo`). Should you try to fold the same sequence again, `esmfold_relax` will pull the raw structure from `--foldrepo` instead of queuing the ESMFold webserver. Only up to 1000 structures are stored in `--foldrepo`, and the oldest ones will be deleted when this limit is exceeded.
@@ -567,7 +565,7 @@ af3webtools unzip folds_[...].zip --refdir inputs/4d_evopool_top --outdir output
 
 `--refdir` specifies the reference directory that contains the designs. For this to work, the name of the designs has to match what was submitted onto the AF3 server. If `af3webtools prep` was used to prepare the AF3 server json files from the same designs, then the names should already be consistent.
 
-This should spawn three directories: `af3_outputs`, `aln_pdbs`, and `aln_pses`. The `af3_outputs` directory stores the raw data from the zip file. The `aln_pdbs` directory stores the PDB files aligned to your designs. The `aln_pses` directory stores the pymol session files that superimpose each design with all 5 aligned AF3 models.
+This should spawn three directories: `af3_outputs`, `aln_pdbs`, and `aln_pses`. The `af3_outputs` directory stores the raw data from the zip file. The `aln_pdbs` directory stores the PDB files aligned to your designs. The `aln_pses` directory stores the pymol session files that each contain a design with all 5 aligned AF3 models.
 
 ## Directly Running RFdiffusion, LigandMPNN, and PyRosetta
 While PDchain provides wrapper commands for stringing together RFdiffusion, LigandMPNN, and PyRosetta, you can also directly access these programs individually.
