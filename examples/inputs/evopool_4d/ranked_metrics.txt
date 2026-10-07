@@ -1,0 +1,4 @@
+min:ddg
+min:fixedres_reu
+min:fin_reu_per_res
+min:fixedres_perc_loop

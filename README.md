@@ -22,10 +22,14 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
   - [Ligand Binder / Enzyme Redesign with Indels](#3c---ligand-binder--enzyme-redesign-with-indels)
   - [Ligand Binder / Enzyme De Novo Design](#3d---ligand-binder--enzyme-de-novo-design)
 - [Continuous Evolution of Designs](#4---continuous-evolution-of-designs)
-  - [Generate Initial Design Pool](#4a---generate-initial-design-pool)
+  - [Generating Initial Design Pool](#4a---generating-initial-design-pool)
   - [Selecting Candidates for Evolution](#4b---selecting-candidates-for-evolution)
-  - [Evolving Designs with Partial Diffusion](#4c---evolving-designs)
-  - [Evolving Designs with Indels](#4d---evolving-designs-with-indels)
+  - [Evolving Designs (Major Rediffusion)](#4c---evolving-designs-major-rediffusion)
+  - [Evolving Designs (Minor Rediffusion)](#4d---evolving-designs-minor-rediffusion)
+- [Fold Validation Methods](#fold-validation-methods)
+  - [ESMFold and OmegaFold](#esmfold-and-omegafold)
+  - [AlphaFold3 Server](#alphafold3-server)
+- [Directly Running RFdiffusion, LigandMPNN and PyRosetta](#directly-running-rfdiffusion-ligandmpnn-and-pyrosetta)
 - [Built-In Metrics](#built-in-metrics)
 ## Installation
 
@@ -408,7 +412,7 @@ The main benefit to `--select_met` is that it can direct MPNN-FastRelax to selec
 
 The command `evo_rfd_chain` was written to address these limitations. It will take an input batch of designs, generate a pool of designs by diversifying those inputs, then select the "best" in that pool based on specified metrics for further diversification. The output design will then get added into the same pool of designs before the next round of selection and diversification begins.
 
-### 4a - Generate Initial Design Pool
+### 4a - Generating Initial Design Pool
 
 An initial design pool is provided at `inputs/oripool`. This pool was generated from the ligand-binding enzyme design example (Kemp eliminase). This pool has 200 initial designs that have not been vetted beyond the original `rfd_chain` command that generated them. The hope is that this batch will contain at least some workable starting point for design evolution.
 
@@ -420,12 +424,12 @@ The following snippet was used to generate this original pool. Running it yourse
     gen_invrots inputs/5rgf_clean.pdb A50:N3 A127:N3 X1 \
         --numrots 200 \
         --parallel 1 \
-        --outdir inputs/invrots
+        --outdir outputs/invrots
 }
 
 # Generate initial pool of designs
 rfd_chain \
-    --indir inputs/invrots \
+    --indir outputs/invrots \
     --idealize --relax --ca_stdev 1 \
     --design_cycles 3 \
     --numdes 200 \
@@ -436,7 +440,7 @@ rfd_chain \
     --model_ckpt ActiveSite \
     --fixbbres A49-51 B126-128 --tot_range 160-200 \
     --persistent \
-    --outprefix inputs/oripool/ex4_5rgf_denovo
+    --outprefix outputs/oripool/ex4_5rgf_denovo
 ```
 
 ### 4b - Selecting Candidates for Evolution
@@ -449,7 +453,7 @@ To avoid having to parse through a large batch of designs by hand, you can lever
 filter_pool min:fc_compact min:fc_dev min:rog_ala \
     --indir inputs/oripool \
     --perc 5 \
-    --outdir inputs/filtered
+    --outdir outputs/filtered
 ```
 
 Here, we are instructing `filter_pool` to rank designs in `inputs/oripool` based on three metrics: `fc_compact`, `fc_dev`, and `rog_ala`. In this case, we are aiming for lower values of each with the `min` prefix. The `max` and `val` prefix are also available (run `filter_pool --help` for more details). Lower values of `fc_compact` and `fc_dev` correlate with pocket formation around the ligand, and lower values of `rog_ala` correlate with the compactness and globularity of the overall protein scaffold. See [Built-In Metrics](#built-in-metrics) for more info on metrics.
@@ -465,7 +469,7 @@ The command `filter_pool` ranks designs with a relativistic reverse-elimination 
 
 Open up the outputs in pymol for a sanity check.
 ```bash
-pymol inputs/filtered/*.pdb
+pymol outputs/filtered/*.pdb
 ```
 
 ### 4c - Evolving Designs (Major Rediffusion)
@@ -584,8 +588,94 @@ af3webtools unzip folds_[...].zip --refdir inputs/evopool_4d_top --outdir output
 
 This should spawn three directories: `af3_outputs`, `aln_pdbs`, and `aln_pses`. The `af3_outputs` directory stores the raw data from the zip file. The `aln_pdbs` directory stores the PDB files aligned to your designs. The `aln_pses` directory stores the pymol session files that superimpose each design with all 5 aligned AF3 models.
 
-## Built-In Metrics
+## Directly Running RFdiffusion, LigandMPNN, and PyRosetta
+While PDchain provides wrapper commands for stringing together RFdiffusion, LigandMPNN, and PyRosetta, you can also directly access these programs individually.
 
+For RFdiffusion and LigandMPNN, the only difference between how you would run them "normally" and how you would run them in PDchain is the script/command you call and how to call it. The main python script of each program is linked to a command that exists only in their respective environments.
+
+For example, the main script from RFdiffusion is `run_inference.py`; in PDchain, this script is linked to the `rfdiffusion` command, which is only executable from the `rfdiffusion` environment.
+
+In other words, rather than running...
+```bash
+python /path/to/RFdiffusion/scripts/run_inference.py ...
+```
+... you would instead run ...
+```bash
+pixi run -w PDchain -e rfdiffusion rfdiffusion ...
+```
+
+`pixi run -w PDchain` calls the PDchain workspace, and `-e rfdiffusion` calls the `rfdiffusion` *environment*. The last `rfdiffusion` is the actual *command* linked to `run_inference.py` from the original RFdiffusion repository.
+
+Here is a complete example for RFdiffusion meant to be run from the `examples` directory:
+```bash
+pixi run -w PDchain -e rfdiffusion rfdiffusion \
+    diffuser.T=15 \
+    'contigmap.contigs=[A1-50/10-20/A66-247]' \
+    inference.input_pdb="inputs/1a53_clean.pdb" \
+    inference.output_prefix="outputs/ex0a_1a53_remodel" \
+    inference.num_designs=1
+```
+
+Here is an example for LigandMPNN:
+```bash
+pixi run -w PDchain -e ligandmpnn ligandmpnn \
+    --pdb_path "inputs/1a53_clean.pdb" \
+    --out_folder "outputs" \
+    --model_type protein_mpnn \
+    --batch_size 1 \
+    --pack_side_chains 1 \
+    --number_of_packs_per_design 1 \
+    --pack_with_ligand_context 1 \
+    --temperature 0.1 \
+    --repack_everything 0 \
+    --ligand_mpnn_use_side_chain_context 1
+```
+
+The same idea applies for PyRosetta. Though since PyRosetta doesn't have a singular executable and instead requires python scripts, there isn't a specialized `pyrosetta` command. The `pyrosetta` environment still exists, of course, so you would instead run something like `pixi run -w PDchain -e pyrosetta python my_pyrosetta_script.py`. The following example has the python script (that imports pyrosetta) in the form of a heredoc, which also works as well.
+```bash
+pixi run -w PDchain -e pyrosetta python << 'EOF'
+from pathlib import Path
+import pyrosetta
+from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
+
+pyrosetta.init('-relax:default_repeats 1')
+
+xml_string = '''
+<ROSETTASCRIPTS>
+    <SCOREFXNS>
+        <ScoreFunction name="r15" weights="ref2015.wts"/>
+        <ScoreFunction name="r15_cst" weights="ref2015_cst.wts"/>
+    </SCOREFXNS>
+    <RESIDUE_SELECTORS>
+        <True name="FullPose"/>
+    </RESIDUE_SELECTORS>
+    <TASKOPERATIONS>
+        <ResfileCommandOperation name="relax_task" command="NATAA" residue_selector="FullPose"/>
+    </TASKOPERATIONS>
+    <MOVERS>
+        <AddConstraints name="add_csts">
+            <CoordinateConstraintGenerator name="ca_cst" sd="1" ca_only="1"/>
+        </AddConstraints>
+        <FastRelax name="relax" task_operations="relax_task" scorefxn="r15_cst"/>
+    </MOVERS>
+    <PROTOCOLS>
+        <Add mover_name="add_csts"/>
+        <Add mover_name="relax"/>
+    </PROTOCOLS>
+    <OUTPUT scorefxn="r15"/>
+</ROSETTASCRIPTS>
+'''
+xml = XmlObjects.create_from_string(xml_string).get_mover('ParsedProtocol')
+
+pose = pyrosetta.pose_from_pdb('inputs/1a53_clean.pdb')
+xml.apply(pose)
+
+Path('outputs').mkdir(parents=True, exist_ok=True)
+pose.dump_pdb('outputs/ex0c_1a53_rlx.pdb')
+EOF
+```
+
+## Built-In Metrics
 There are a number of built-in metrics that are available for use. Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated).
 |General Metrics|Description|
 |:---:|:---|
@@ -617,9 +707,7 @@ The following metrics are calculated with the poly-ala version of the design. Th
 |`fc_dev`|standard deviation of distances between focus midpoint and atoms of the 50 closest residues; lower ~ hollow cavity around ligands; works best for compact ligands|
 
 ## Acknowledgements
-
 PDchain was built on top of the following works:
-
 * RosettaCommons/RFdiffusion
 * YaoYinYing/RFdiffusion (mps- and cpu-compatible RFdiffusion)
 * YaoYinYing/SE3Transformer (mps- and cpu-compatible SE3Transformer)

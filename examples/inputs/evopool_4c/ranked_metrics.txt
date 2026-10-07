@@ -1,0 +1,3 @@
+min:fixedres_perc_loop
+min:rog_ala
+val:dsasa=0.85
