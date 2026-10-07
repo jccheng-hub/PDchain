@@ -18,6 +18,8 @@ jq = ">=1.8.1,<2"
 bc = ">=1.7.1,<2"
 wget = ">=1.25.0,<2"
 rsync = ">=3.4.1,<4"
+zip = ">=3.0,<4"
+unzip = ">=6.0,<7"
 
 [feature.pyrosetta.dependencies]
 python = "<3.11"

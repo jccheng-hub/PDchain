@@ -400,9 +400,6 @@ RFdiffusion generates backbones around ligands with an auxillary potential (see 
 As mentioned in the example with de novo protein binder design, it is unlikely to get "reasonable" de novo designs from a small-scale computational run. Getting promising design candidates often require generating thousands of designs and screening through them. Sometimes, even the best designs from a large-scale batch might not meet all of your desired criteria. For example, they might be globular with ample secondary structure composition, but the binding pocket is completely buried/exposed. In these situations, it might be better to redesign these candidates to optimize for those desired properties rather than to repeatedly fish for new designs that meet all of your criteria all at once. See the section on `evo_rfd_chain` to see how one can evolve designs based on desirable metrics.
 
 ## 4 - Continuous Evolution of Designs
-> [!NOTE]
-This section is under construction!
-
 Not every design output will possess properties you are looking for; this is especially true for de novo designs. Often times, you end up with designs that check some boxes but not others. In these situations, it may be worth attempting optimization of these designs by using them as starting points for cycles of diversification and selection.
 
 We did some version of this in the protein binding and ligand binding examples in which we used the `--select_met min:ddg` option to tune the MPNN-FastRelax protocol built into `rfd_chain`. As MPNN-FastRelax is applied through multiple cycles, it will only accept the new output if it improves the specified score. In this case, we instructed `rfd_chain` to select for lower values of `ddg`. This means that, at the end of each cycle of MPNN-FastRelax, the output is only accepted if it has lower `ddg` than the input.
@@ -542,9 +539,50 @@ evo_rfd_chain \
 
 Not only did we change our diversification approach (with `--partial --timesteps 3` instead of `--ss_to_contigs --ss_trim 2 ...`), we also changed the metrics that we are selecting for. Back when we were using a more drastic diversification strategy that involved rediffusing entire chunks of the protein, our selection strategy was geared towards scaffold quality (e.g. `fixedres_perc_loop`, `rog_ala`) and suitable pocket formation (e.g. `dsasa`). Because our current diversification strategy is far less drastic on the backbone, we can afford to focus more on sequence-specific metrics such as `ddg` and `fixedres_reu`.
 
-A copy of the resulting pool for this partial diffusion evolution run is located at `inputs/evopool_4d`. As usual, the designs are ordered based on their relative rankings in the `ranked.txt` file (better designs at the top of the list).
+A copy of the resulting pool for this partial diffusion evolution run is located at `inputs/evopool_4d`. As usual, the designs are ordered based on their relative rankings in the `ranked.txt` file (better designs at the top of the list). Copies of the top 3 are stored at `inputs/evopool_4d_top`.
 
-[WORK IN PROGRESS]
+## Fold Validation Methods
+### ESMFold and OmegaFold
+PDchain comes with a few different commands that can facilitate fold validation. The commands `esmfold_relax` and `omegafold_relax` will leverage ESMFold (server) and OmegaFold (local). Note that these two commands will only work with monomeric proteins.
+
+In the following example, we will take the 3 designs in `inputs/evopool_4d_top` and submit them to the ESMFold webserver, download the outputs, align to our original design with PyMOL, then refine with Rosetta.
+```bash
+topdes=$(echo inputs/evopool_4d_top/*.pdb)
+echo "Submitting the following to ESMFold: $topdes"
+esmfold_relax $topdes --outdir outputs/esmfold
+```
+
+When using `esmfold_relax`, the raw outputs from ESMFold will be stored in the directory specified by `--foldrepo`. By default, `--foldrepo` points to the PDchain root directory (e.g. `--foldrepo /Users/johncheng/Workspaces/PDchain/foldrepo`). Should you try to fold the same sequence again, `esmfold_relax` will pull the raw structure from `--foldrepo` instead of queuing the ESMFold webserver. Only up to 1000 structures are stored in `--foldrepo`, and the oldest ones will be deleted when this limit is exceeded.
+
+If the ESMFold server didn't time out on you, then you can try viewing the outputs in PyMOL.
+```bash
+topdes=$(echo inputs/evopool_4d_top/*.pdb)
+pymol $topdes outputs/esmfold/*.pdb
+```
+
+Not all designed sequences will have their folds validated. Their CA-RMSDs are stored in the ESMFold PDBs, which you can view with `grep`.
+```bash
+grep -H '^rmsd_ca ' outputs/esmfold/*.pdb
+```
+
+The command `omegafold_relax` behaves identically to `esmfold_relax` except it uses PDchain's local installation of OmegaFold instead.
+
+### AlphaFold3 Server
+AlphaFold3 does not have a command-line interface (that I am aware of) for automated submission of jobs. However, PDchain contain commands that can facilitate the submission of jobs through the AF3 webserver. This is done with the `af3webtools` command.
+```bash
+af3webtools prep inputs/evopool_4d_top/*.pdb --outdir outputs
+```
+
+This should spawn a json file in the output directory. This json can then be uploaded to [alphafoldserver.com](#alphafoldserver.com) as job drafts, which can then be subsequently submitted so long as you have enough jobs left for the day.
+
+Should you download a batch of AF3-predicted structures from the AF3 server, they would be downloaded as a zip file. The command `af3webtools` will also facilitate the extraction of these models and the structural alignment to your designs.
+```bash
+af3webtools unzip folds_[...].zip --refdir inputs/evopool_4d_top --outdir outputs
+```
+
+`--refdir` specifies the reference directory that contains the designs. For this to work, the name of the designs has to match what was submitted onto the AF3 server. If `af3webtools prep` was used to prepare the AF3 server json files from the same designs, then the names should already be consistent.
+
+This should spawn three directories: `af3_outputs`, `aln_pdbs`, and `aln_pses`. The `af3_outputs` directory stores the raw data from the zip file. The `aln_pdbs` directory stores the PDB files aligned to your designs. The `aln_pses` directory stores the pymol session files that superimpose each design with all 5 aligned AF3 models.
 
 ## Built-In Metrics
 
@@ -566,7 +604,7 @@ There are a number of built-in metrics that are available for use. Note that sec
 |`ddg`|ddg metric from Rosetta (complex only); lower is better|
 |`dsasa`|dsasa metric from Rosetta (complex only)|
 |`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
-|`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_focus_1X`)|
+|`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_lig_1X`)|
 
 The following metrics are calculated with the poly-ala version of the design. These are meant to be sequence-agnostic. The term "focus residues" here refer to ligands and fixed residues.
 |Poly-Ala Metrics|Description|
