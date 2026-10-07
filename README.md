@@ -181,7 +181,7 @@ rfd_chain \
     --fixedres B1-110 \
     --model_type protein_mpnn \
     --model_ckpt Complex_base \
-    --partial --timesteps 1 \
+    --partial --timesteps 3 \
     --outprefix outputs/ex2b_1brs_partial
 ```
 
@@ -189,7 +189,7 @@ rfd_chain \
 
 `--partial` turns on partial diffusion. Note that the output diffused structure will always match the input structure in length with partial diffusion.
 
-`--timesteps 1` specifies the number of timesteps for RFdiffusion. When using partial diffusion, this number is allowed to dip below 15. The higher number of timesteps, the greater the deviation from the original input structure.
+`--timesteps 3` specifies the number of timesteps for RFdiffusion. When using partial diffusion, this number is allowed to dip below 15. The higher number of timesteps, the greater the deviation from the original input structure.
 
 ### 2c - Protein Binder Redesign with Indels
 
@@ -310,11 +310,11 @@ rfd_chain \
     --lig_stdev 0.5 --ap_stdev 0.5 \
     --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
-    --partial --timesteps 1 \
+    --partial --timesteps 3 \
     --outprefix outputs/ex3b_5rgf_partial
 ```
 
-`--partial` enables partial diffusion, and `--timesteps 1` sets the number of noising/denoising steps to 1. Increase the value for `--timesteps` if you want more diversity from the original input.
+`--partial` enables partial diffusion, and `--timesteps 3` sets the number of noising/denoising steps to 3. Increase the value for `--timesteps` if you want more diversity from the original input.
 
 ### 3c - Ligand Binder / Enzyme Redesign with Indels
 
