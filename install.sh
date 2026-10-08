@@ -155,7 +155,7 @@ sed -E 's/^ {4}//' << EOF > $bindir/pdchain-info && chmod +x $bindir/pdchain-inf
     echo "List of available command-line tools:"
     echo "${cmdtools[*]}" | tr ' ' '\n' | sort | xargs -n4 printf "    %-19s %-19s %-19s %-s\n"
 EOF
-pixi shell-hook -m $pixiroot/pixi.toml >> $pixiroot/pdchain.sh
+pixi shell-hook -m $pixiroot/pixi.toml > $pixiroot/pdchain.sh
 
 echo "
 Run the following command to activate the PDchain default environment:
