@@ -54,7 +54,7 @@ Installation will take some time (~10-20 minutes) as it will download all of the
 
 ## Running PDchain Commands
 
-You can then enter a subshell with PDchain's default environment with *any* of the following lines:
+You can enter a *subshell* with PDchain's default environment with *any* of the following lines:
 ```bash
 pixi shell                                  # Must be in PDchain subdirectory
 pixi shell -w PDchain                       # Works anywhere if PDchain is a registered workspace name
@@ -62,18 +62,19 @@ pixi shell -m /path/to/PDchain/pixi.toml    # Works anywhere
 ```
 You can always exit out of your PDchain subshell with the command `exit`.
 
-If you want to activate PDchain's default environment in your current shell, run the following instead:
+If you want to incorporate PDchain's default environment in your *current shell*, run the following instead:
 ```bash
 source pdchain.sh    # pdchain.sh should have spawned in PDchain's root directory upon installation
 ```
 
-You can now directly access to a variety of command-line tools in the PDchain default environment. For example:
-```bash
-rfd_chain --help
-esmfold_relax --help
-```
+Generally, booting up a subshell is better for interactive use, and incorporating into current shell is better for scripting use.
 
-If you have chosen to `source pdchain.sh` to activate PDchain's default environment in your current shell, you can run `pdchain` to view all available commands.
+Once inside the PDchain default environment, you can now directly access to a variety of command-line tools in the PDchain default environment. For example:
+```bash
+pdchain-info            # Report available tools on PDchain
+rfd_chain --help        # Help documentation for rfd_chain
+esmfold_relax --help    # Help documentation for esmfold_relax
+```
 
 If you want to run PDchain commands without having to change/switch environments whatsoever, you can run *any* of the following lines:
 ```bash

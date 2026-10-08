@@ -141,25 +141,19 @@ cmdtools_f=$(
 echo "$cmdtools_f"
 
 # Print functions
-sed -E 's/^ {4}//' << EOF > $pixiroot/pdchain.sh
-    pdchain () {
+sed -E 's/^ {4}//' << EOF > $bindir/pdchain-info && chmod +x $bindir/pdchain-info
+    #!/usr/bin/env bash
     cat << 'EOF'
-    If you're activating this function, you should already be in the PDchain default
+    If you are running this command, you should already be in the PDchain default
     environment. In addition to the tools listed below, you will also have access to
     the open-source version of PyMOL. This default environment is what allows all
     the command-line tools in PDchain (which are all essentially bash scripts) to
     run. This also means that this command-line is now populated with GNU coreutils,
     GNU awk, GNU sed, etc., as those were used in the making of PDchain commands.
 
-    If you want to exit out of this environment, you'll have to restart the
-    terminal and not \`source pdchain.sh\`.
-    If you want to be able to freely enter and leave the PDchain default
-    environment, consider running \`pixi shell -w PDchain\` instead.
-
     EOF
     echo "List of available command-line tools:"
     echo "${cmdtools[*]}" | tr ' ' '\n' | sort | xargs -n4 printf "    %-19s %-19s %-19s %-s\n"
-    }
 EOF
 pixi shell-hook -m $pixiroot/pixi.toml >> $pixiroot/pdchain.sh
 
