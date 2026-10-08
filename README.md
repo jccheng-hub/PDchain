@@ -69,7 +69,7 @@ source pdchain.sh    # pdchain.sh should have spawned in PDchain's root director
 
 Generally, booting up a subshell is better for interactive use, and incorporating into current shell is better for scripting use.
 
-Once inside the PDchain default environment, you can now directly access to a variety of command-line tools in the PDchain default environment. For example:
+Once inside the PDchain default environment, you can now directly access a variety of command-line tools in the PDchain default environment. For example:
 ```bash
 pdchain-info            # Report available tools on PDchain
 rfd_chain --help        # Help documentation for rfd_chain
