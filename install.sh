@@ -151,6 +151,10 @@ sed -E 's/^ {4}//' << EOF > $bindir/pdchain-info && chmod +x $bindir/pdchain-inf
     run. This also means that this command-line is now populated with GNU coreutils,
     GNU awk, GNU sed, etc., as those were used in the making of PDchain commands.
 
+    Example usage, such as protein binder design, enzyme design, and continuous
+    design evolution are provided in the README.md, which is best viewed on the
+    github: https://github.com/jccheng-hub/PDchain.git
+
     EOF
     echo "List of available command-line tools:"
     echo "${cmdtools[*]}" | tr ' ' '\n' | sort | xargs -n4 printf "    %-19s %-19s %-19s %-s\n"
