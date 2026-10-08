@@ -192,17 +192,15 @@ rfd_chain \
     --fixedres B1-110 \
     --model_type protein_mpnn \
     --model_ckpt Complex_base \
-    --ss_to_contigs --vary_linkers 1 --ss_trim 2-3 \
+    --ss_to_contigs --ss_trim 1 --vary_linkers 1 \
     --outprefix outputs/ex2c_1brs_indel
 ```
 
 `--ss_to_contigs` will generate a contigs string based on the secondary structure of the input PDB. Loop residues will be masked from RFdiffusion.
 
+`--ss_trim 1` will allow helix/sheet residues neighboring loop residues to be treated as loop residues (which are then masked from RFdiffusion). Sheets are trimmed by the specified value, and helices are trimmed by twice the specified value.
+
 `--vary_linkers 1` will allow the loop regions to vary in length by 1 residue. So if a loop region was originally 5 residues long, that region can end up 4-6 residues long in the output design.
-
-`--ss_trim 2-3` will allow 2-3 helix/sheet residues neighboring loop residues to be masked from RFdiffusion. This gives RFdiffusion more wiggle room when filling in those masked regions.
-
-The indel diversification approach is more computationally expensive than partial diffusion because it requires a minimum of 15 timesteps during RFdiffusion, but the additional diversity it provides can be beneficial depending on the design goal.
 
 ### 2d - Protein Binder De Novo Design
 
@@ -318,17 +316,15 @@ rfd_chain \
     --lig_stdev 0.5 --ap_stdev 0.5 \
     --model_type soluble_mpnn --sc_context \
     --model_ckpt ActiveSite \
-    --ss_to_contigs --ss_trim 2-3 --vary_linkers 1 \
+    --ss_to_contigs --ss_trim 1 --vary_linkers 1 \
     --outprefix outputs/ex3c_5rgf_indel
 ```
 
 `--ss_to_contigs` will generate a contigs string based on the secondary structure of the input PDB. Loop residues will be masked from RFdiffusion.
 
+`--ss_trim 1` will allow helix/sheet residues neighboring loop residues to be treated as loop residues (which are masked from RFdiffusion). Sheets are trimmed by the specified value, and helices are trimmed by twice the specified value.
+
 `--vary_linkers 1` will allow the loop regions to vary in length by 1 residue. So if a loop region was originally 5 residues long, that region can end up 4-6 residues long in the output design.
-
-`--ss_trim 2-3` will allow 2-3 helix/sheet residues neighboring loop residues to be masked from RFdiffusion. This gives RFdiffusion more wiggle room when filling in those masked regions.
-
-The indel diversification approach is more computationally expensive than partial diffusion because it requires a minimum of 15 timesteps during RFdiffusion, but the additional diversity it provides can be beneficial depending on the design goal.
 
 ### 3d - Ligand Binder / Enzyme De Novo Design
 
