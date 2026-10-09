@@ -50,7 +50,7 @@ Installation will take some time (~10-20 minutes) as it will download all of the
 
 ## Running PDchain Commands
 
-You can enter a *subshell* with PDchain's default environment with *any* of the following lines:
+You can enter a *subshell* with PDchain's default environment with any of the following `pixi shell` commands:
 ```bash
 pixi shell                                  # Must be in PDchain subdirectory
 pixi shell -w PDchain                       # Works anywhere if PDchain is a registered workspace name
@@ -72,7 +72,7 @@ rfd_chain --help        # Help documentation for rfd_chain
 esmfold_relax --help    # Help documentation for esmfold_relax
 ```
 
-If you want to run PDchain commands without having to change/switch environments whatsoever, you can run *any* of the following lines:
+If you want to run PDchain commands without having to change/switch environments whatsoever, you can prefix your command with `pixi run`; any of the following approaches can work.
 ```bash
 pixi run rfd_chain --help                                  # Only works in PDchain subdirectory
 pixi run -w PDchain rfd_chain --help                       # Works anywhere if PDchain is a registered workspace name
