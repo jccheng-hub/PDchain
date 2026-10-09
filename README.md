@@ -79,13 +79,12 @@ pixi run -w PDchain rfd_chain --help                       # Works anywhere if P
 pixi run -m /path/to/PDchain/pixi.toml rfd_chain --help    # Works anywhere
 ```
 
-> [!TIP]
 If you don't mind using the free and open source version of PyMOL, it is available in PDchain's default environment. You can simply run `pymol` (if you're in the environment) or `pixi run -w PDchain pymol` (if you're outside the environment).
 
-## 1 - Unconditional Monomer Generation
 > [!IMPORTANT]
-All examples in this README are meant to be executed in PDchain's default environment from the `examples` directory. In other words, run `source pdchain.sh` (or `pixi shell -w PDchain`) and `cd examples` before attempting to run these example blocks of code.
+All example blocks of code in the remainder of this README are meant to be executed in PDchain's default environment from the `examples` directory. In other words, run `source pdchain.sh` (or `pixi shell -w PDchain`) and `cd examples` before attempting to run those example blocks of code.
 
+## 1 - Unconditional Monomer Generation
 ```bash
 rfd_chain 140-160 \
     --idealize --relax --ca_stdev 1 \
