@@ -77,27 +77,27 @@ optarg () {
 }
 
 val_opts=(
-    inpdb               ss_trim             nterm_trim          cterm_trim
-    vary_linkers        nterm_add           cterm_add           helix_cap
-    reset_perc          tot_range           gap_range
+    cterm_add           cterm_trim          gap_range           helix_cap
+    inpdb               nterm_add           nterm_trim          reset_perc
+    ss_trim             tot_range           vary_linkers        
 )
 
 bool_opts=(
-    random_order        ss_to_contigs       dec_only            inc_only
-    regap               fixed_seg_only      help
+    dec_only            fixed_seg_only      help                inc_only
+    random_order        regap               ss_to_contigs       
 )
 
-tot_range="180-220"
-gap_range="20-100"
-inpdb=""
-ss_trim="2"
-nterm_trim="1"
-cterm_trim="1"
-nterm_add="0"
 cterm_add="0"
-vary_linkers="0"
+cterm_trim="1"
+gap_range="20-100"
 helix_cap=""
+inpdb=""
+nterm_add="0"
+nterm_trim="1"
 reset_perc="0"
+ss_trim="2"
+tot_range="180-220"
+vary_linkers="0"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

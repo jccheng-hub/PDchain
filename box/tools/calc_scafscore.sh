@@ -61,12 +61,17 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(chri resn nbr_count)
-bool_opts=(help)
+val_opts=(
+    chri                nbr_count           resn                
+)
+
+bool_opts=(
+    help                                                        
+)
 
 chri=""
-resn=""
 nbr_count="50"
+resn=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

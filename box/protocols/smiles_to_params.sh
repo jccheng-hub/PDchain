@@ -26,8 +26,13 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(forcefield outdir)
-bool_opts=(help)
+val_opts=(
+    forcefield          outdir                                  
+)
+
+bool_opts=(
+    help                                                        
+)
 
 forcefield="UFF"
 outdir="."

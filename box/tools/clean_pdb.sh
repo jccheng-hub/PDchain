@@ -27,9 +27,14 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(keep_resn chains outdir suffix)
-bool_opts=(renumber help)
-pdb_list=(${args[@]:1})
+val_opts=(
+    chains              keep_resn           outdir              suffix
+)
+
+bool_opts=(
+    help                renumber                                
+)
+
 keep_resn=""
 outdir="."
 suffix="_clean"

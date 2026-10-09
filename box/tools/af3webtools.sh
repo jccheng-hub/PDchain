@@ -46,12 +46,17 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(outjson refdir outdir)
-bool_opts=(help)
+val_opts=(
+    outdir              outjson             refdir              
+)
 
-refdir="."
+bool_opts=(
+    help                                                        
+)
+
 outdir="."
 outjson="af3job_$(date +%y%m%d-%H%M%S).json"
+refdir="."
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

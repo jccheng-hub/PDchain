@@ -30,8 +30,13 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(model_type seed)
-bool_opts=(help)
+val_opts=(
+    model_type          seed                                    
+)
+
+bool_opts=(
+    help                                                        
+)
 
 model_type="protein_mpnn"
 seed=""

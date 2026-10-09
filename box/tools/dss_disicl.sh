@@ -33,10 +33,16 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(fixedres fixedrange)
-bool_opts=(append help)
-fixedres=""
+val_opts=(
+    fixedrange          fixedres                                
+)
+
+bool_opts=(
+    append              help                                    
+)
+
 fixedrange="3"
+fixedres=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

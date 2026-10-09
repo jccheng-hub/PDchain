@@ -32,12 +32,17 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(ca_stdev foldrepo outdir)
-bool_opts=(skip_refine help)
+val_opts=(
+    ca_stdev            foldrepo            outdir              
+)
+
+bool_opts=(
+    help                skip_refine                             
+)
 
 ca_stdev="1"
-outdir="."
 foldrepo=""
+outdir="."
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

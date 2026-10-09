@@ -160,71 +160,70 @@ optarg () {
 }
 
 val_opts=(
-    ca_stdev            
-    clash_cut           cstfile             design_cycles       fix_stdev
-    fixbbres            fixedres            indir               inpdb
-    lig_stdev           ligname             loop_cut 
-    model_type          natbias             numdes
-    outprefix           ppi_hotspots        tot_range           gap_range
-    redesres            relax_repeats       rog_cut             ss_trim
-    temperature         threads             timesteps           vary_linkers 
-    ap_stdev            backrub             nterm_trim          cterm_trim
-    nterm_add           cterm_add           helix_cap           reset_perc
-    nbr_dist            select_met          noise_scale         model_ckpt
-    inpaint_seq         inpaint_str         nbr_resfile_cmd
+    ap_stdev            backrub             ca_stdev            clash_cut
+    cstfile             cterm_add           cterm_trim          design_cycles
+    fix_stdev           fixbbres            fixedres            gap_range
+    helix_cap           indir               inpaint_seq         inpaint_str
+    inpdb               lig_stdev           ligname             loop_cut
+    model_ckpt          model_type          natbias             nbr_dist
+    nbr_resfile_cmd     noise_scale         nterm_add           nterm_trim
+    numdes              outprefix           ppi_hotspots        redesres
+    relax_repeats       reset_perc          rog_cut             select_met
+    ss_trim             temperature         threads             timesteps
+    tot_range           vary_linkers                            
 )
 
 bool_opts=(
-    disallow_cys        dec_only            ss_to_contigs       fixed_seg_only
-    fix_bb              fix_chi             idealize            inc_only            
-    monomer_ROG         partial             random_order        persistent
-    randsuffix          regap               relax         
-    sc_context          skip_mpnn           skip_refine         ignore_metals
-    rosetta_lig_nbr     help
+    dec_only            disallow_cys        fix_bb              fix_chi
+    fixed_seg_only      help                idealize            ignore_metals
+    inc_only            monomer_ROG         partial             persistent
+    random_order        randsuffix          regap               relax
+    rosetta_lig_nbr     sc_context          skip_mpnn           skip_refine
+    ss_to_contigs                                               
 )
 
-tot_range="180-220"
-gap_range="20-100"
-inpaint_seq=""
-inpaint_str=""
 ap_stdev=""
 backrub=""
 ca_stdev=""
 clash_cut=""
 cstfile=""
+cterm_add="0"
+cterm_trim="1"
 design_cycles="3"
 fix_stdev=""
 fixbbres=""
 fixedres=""
+gap_range="20-100"
+helix_cap=""
 indir=""
+inpaint_seq=""
+inpaint_str=""
 inpdb=""
 lig_stdev=""
 ligname=""
 loop_cut="9999"
+model_ckpt=""
 model_type="protein_mpnn"
 natbias=""
+nbr_dist=""
+nbr_resfile_cmd=""
+noise_scale="0.5"
+nterm_add="0"
+nterm_trim="1"
 numdes="1"
 outprefix="outputs/rfd_des"
 ppi_hotspots=""
 redesres=""
 relax_repeats="1"
+reset_perc="0"
 rog_cut="9999"
+select_met=""
 ss_trim="2"
-nterm_trim="1"
-cterm_trim="1"
-nterm_add="0"
-cterm_add="0"
 temperature="0.1"
 threads="1"
 timesteps="15"
+tot_range="180-220"
 vary_linkers="0"
-helix_cap=""
-reset_perc="0"
-nbr_dist=""
-select_met=""
-noise_scale="0.5"
-model_ckpt=""
-nbr_resfile_cmd=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

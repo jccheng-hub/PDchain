@@ -24,8 +24,14 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(outpml)
-bool_opts=(help)
+val_opts=(
+    outpml
+)
+
+bool_opts=(
+    help
+)
+
 outpml="lineage.pml"
 
 default_vals () {

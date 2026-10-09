@@ -34,11 +34,17 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(anchors targets ap_stdev)
-bool_opts=(help)
+val_opts=(
+    anchors             ap_stdev            targets             
+)
+
+bool_opts=(
+    help                                                        
+)
+
 anchors="REQUIRED"
-targets="REQUIRED"
 ap_stdev="0.5"
+targets="REQUIRED"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

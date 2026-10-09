@@ -30,12 +30,18 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(chri resn name crd_stdev)
-bool_opts=(hetatm help)
+val_opts=(
+    chri                crd_stdev           name                resn
+)
+
+bool_opts=(
+    help                hetatm                                  
+)
+
 chri=""
-resn=""
-name=""
 crd_stdev="0.5"
+name=""
+resn=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

@@ -44,13 +44,20 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(indir num perc outfile outdir)
-bool_opts=(inplace help)
+val_opts=(
+    indir               num                 outdir              outfile
+    perc                                                        
+)
+
+bool_opts=(
+    help                inplace                                 
+)
+
 indir="REQUIRED"
 num=""
-perc="10"
-outfile=""
 outdir="filtered"
+outfile=""
+perc="10"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

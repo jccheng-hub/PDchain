@@ -19,10 +19,16 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(oldcontigs newcontigs)
-bool_opts=(help)
-oldcontigs="REQUIRED"
+val_opts=(
+    newcontigs          oldcontigs 
+)
+
+bool_opts=(
+    help
+)
+
 newcontigs="REQUIRED"
+oldcontigs="REQUIRED"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

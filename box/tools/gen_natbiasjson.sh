@@ -34,11 +34,18 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(global_weight change_weight change_resn focus_set)
-global_weight="1.0"
-change_weight=""
+val_opts=(
+    change_resn         change_weight       focus_set           global_weight
+)
+
+bool_opts=(
+    help                                
+)
+
 change_resn=""
+change_weight=""
 focus_set=""
+global_weight="1.0"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

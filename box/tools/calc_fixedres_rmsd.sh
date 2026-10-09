@@ -33,8 +33,14 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(atom_names)
-bool_opts=(help)
+val_opts=(
+    atom_names
+)
+
+bool_opts=(
+    help
+)
+
 atom_names=""
 
 default_vals () {

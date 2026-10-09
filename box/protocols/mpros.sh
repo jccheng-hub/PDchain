@@ -86,19 +86,19 @@ optarg () {
 }
 
 val_opts=(
-    batch_size          biasjson            ca_stdev            cstfile             
-    fix_stdev           fixedres            lig_stdev           ligname 
-    model_type          outdir              redesres            nbr_dist
-    relax_repeats       resfile             suffix              temperature         
-    threads             nbr_resfile_cmd
+    batch_size          biasjson            ca_stdev            cstfile
+    fix_stdev           fixedres            lig_stdev           ligname
+    model_type          nbr_dist            nbr_resfile_cmd     outdir
+    redesres            relax_repeats       resfile             suffix
+    temperature         threads                                 
 )
 
 bool_opts=(
-    disallow_cys        design              fix_bb              fix_chi             
-    idealize            ignore_metals       keep_script         ncaa_pal
-    relax               renumber_chain      repack              sc_context
-    skip_mpnn           skip_refine         minimize            inplace
-    skip_mpnn_score     rosetta_lig_nbr     help
+    design              disallow_cys        fix_bb              fix_chi
+    help                idealize            ignore_metals       inplace
+    keep_script         minimize            ncaa_pal            relax
+    renumber_chain      repack              rosetta_lig_nbr     sc_context
+    skip_mpnn           skip_mpnn_score     skip_refine         
 )
 
 batch_size="1"
@@ -109,8 +109,9 @@ fix_stdev=""
 fixedres=""
 lig_stdev=""
 ligname=""
-nbr_dist="8"
 model_type="protein_mpnn"
+nbr_dist="8"
+nbr_resfile_cmd="ALLAAxc"
 outdir="."
 redesres=""
 relax_repeats="1"
@@ -118,7 +119,6 @@ resfile=""
 suffix=""
 temperature="0.1"
 threads="1"
-nbr_resfile_cmd="ALLAAxc"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

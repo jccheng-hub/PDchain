@@ -36,14 +36,20 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(ca_stdev foldrepo subbatch_size device outdir)
-bool_opts=(skip_refine help)
+val_opts=(
+    ca_stdev            device              foldrepo            outdir
+    subbatch_size                                               
+)
+
+bool_opts=(
+    help                skip_refine                             
+)
 
 ca_stdev="1"
-outdir="."
-foldrepo=""
-subbatch_size=""
 device=""
+foldrepo=""
+outdir="."
+subbatch_size=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

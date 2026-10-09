@@ -30,8 +30,13 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=()
-bool_opts=(help)
+val_opts=(
+
+)
+
+bool_opts=(
+    help
+)
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

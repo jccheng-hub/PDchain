@@ -53,18 +53,25 @@ optarg () {
     sed -n "1,/^$1 /s/^$1 //p" | sed 's/ \+$//'
 }
 
-val_opts=(numrots batchsize parallel keepres torsfile clashcut inter_ctol intra_ctol outdir)
-bool_opts=(keep_hydrogens help)
+val_opts=(
+    batchsize           clashcut            inter_ctol          intra_ctol
+    keepres             numrots             outdir              parallel
+    torsfile                                                    
+)
 
-numrots="1"
+bool_opts=(
+    help                keep_hydrogens                          
+)
+
 batchsize="1000"
-parallel="1"
-keepres=""
-torsfile=""
 clashcut="2.5"
 inter_ctol="0"
 intra_ctol="0"
+keepres=""
+numrots="1"
 outdir="./invrots"
+parallel="1"
+torsfile=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
