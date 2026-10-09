@@ -557,7 +557,7 @@ This should spawn a json file in the output directory. This json can then be upl
 
 Should you download a batch of AF3-predicted structures from the AF3 server, they would be downloaded as a zip file. The command `af3webtools` will also facilitate the extraction of these models and the structural alignment to your designs.
 ```bash
-af3webtools unzip folds_[...].zip --refdir inputs/4d_evopool_top --outdir outputs
+af3webtools unzip inputs/folds_2026_10_09_01_43.zip --refdir inputs/4d_evopool_top --outdir outputs
 ```
 
 `--refdir` specifies the reference directory that contains the designs. For this to work, the name of the designs has to match what was submitted onto the AF3 server. If `af3webtools prep` was used to prepare the AF3 server json files from the same designs, then the names should already be consistent.
