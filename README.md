@@ -648,35 +648,39 @@ EOF
 ```
 
 ## Built-In Metrics
-There are a number of built-in metrics that are available for use. Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated).
-|General Metrics|Description|
+There are a number of built-in metrics that are available for use. Here, they are categorized into sequence-agnostic and sequence-dependent metrics. The sequence-agnostic metrics are calculated with the poly-ala version of the design. Generally, sequence-agnostic metrics are best employed when diffusing in major chunks of the protein backbone (e.g. de novo or major rediffusion), and sequence-dependent metrics are best employed when the backbone undergoes minor changes (e.g. partial diffusion or fixed-backbone redesign).
+
+Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated).
+
+|Sequence-Agnostic (Poly-Ala) Metrics|Description|
 |:---:|:---|
 |`totres`|total number of residues|
-|`fin_reu`|total Rosetta Energy Units (REU); lower is better|
-|`fin_reu_per_res`| total REU divided by the number of residues; lower is better|
-|`protein_mpnn_score`| ProteinMPNN confidence score; higher is better; only scored with `--model_type protein_mpnn`|
-|`soluble_mpnn_score`| SolubleMPNN confidence score; higher is better only scored with `--model_type soluble_mpnn`|
-|`ligand_mpnn_score`| LigandMPNN confidence score; higher is better; only scored with `--model_type ligand_mpnn`|
 |`perc_helix`|helix composition of protein scaffold|
 |`perc_sheet`|sheet composition of protein scaffold|
 |`perc_loop`|loop composition of protein scaffold|
 |`fixedres_perc_helix`|helix composition of fixed residues +/- 3|
 |`fixedres_perc_sheet`|sheet composition of fixed residues +/- 3|
 |`fixedres_perc_loop`|loop composition of fixed residues +/- 3|
-|`ddg`|ddg metric from Rosetta (complex only); lower is better|
-|`dsasa`|dsasa metric from Rosetta (complex only)|
-|`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
-|`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_lig_1X`)|
-
-The following metrics are calculated with the poly-ala version of the design. These are meant to be sequence-agnostic. The term "focus residues" here refer to ligands and fixed residues.
-|Poly-Ala Metrics|Description|
-|:---:|:---|
 |`clash`|clashes between focus residues and poly-ala scaffold; lower is better|
 |`rog_ala`|approximate radius of gyration (heavy atoms only; all heavy atoms treated with equal weight); lower ~ compact and globular|
 |`mp_dev`|standard deviation of distances between scaffold midpoint and all scaffold atoms; lower ~ hollow and globluar|
 |`mp_fc_dst`|distance between the midpoint of focus residues and the midpoint of the rest of the poly-ala scaffold|
 |`fc_compact`|root mean squared distance between focus midpoint and atoms of the 50 closest residues; lower ~ compact backbone around ligands; works best for compact ligands|
 |`fc_dev`|standard deviation of distances between focus midpoint and atoms of the 50 closest residues; lower ~ hollow cavity around ligands; works best for compact ligands|
+
+Note that the term "focus residues" above refer to ligands and fixed residues.
+
+|Sequence-Dependent Metrics|Description|
+|:---:|:---|
+|`fin_reu`|total Rosetta Energy Units (REU); lower is better|
+|`fin_reu_per_res`| total REU divided by the number of residues; lower is better|
+|`protein_mpnn_score`| ProteinMPNN confidence score; higher is better; only scored with `--model_type protein_mpnn`|
+|`soluble_mpnn_score`| SolubleMPNN confidence score; higher is better only scored with `--model_type soluble_mpnn`|
+|`ligand_mpnn_score`| LigandMPNN confidence score; higher is better; only scored with `--model_type ligand_mpnn`|
+|`ddg`|ddg metric from Rosetta (complex only); lower is better|
+|`dsasa`|dsasa metric from Rosetta (complex only)|
+|`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
+|`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_lig_1X`)|
 
 ## Acknowledgements
 PDchain was built on top of the following works:
