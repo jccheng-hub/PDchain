@@ -3,6 +3,8 @@ Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN
 
 Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
+None of the command-line tools in PDchain were AI-generated.
+
 ## Table of Contents
 - [Installation](#installation)
 - [Running PDchain Commands](#running-pdchain-commands)
@@ -13,6 +15,7 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 - [Fold Validation Methods](#fold-validation-methods)
 - [Directly Running RFdiffusion, LigandMPNN and PyRosetta](#directly-running-rfdiffusion-ligandmpnn-and-pyrosetta)
 - [Built-In Metrics](#built-in-metrics)
+
 ## Installation
 > [!IMPORTANT]
 This repository's installation script will automatically pull PyRosetta as a dependency. While the original code in this repository is open-source, PyRosetta is not free for commercial use (free for academic, non-profit, and government institutions). Please ensure you are not violating PyRosetta's terms of service by having the appropriate license before running this repository's installation script.
