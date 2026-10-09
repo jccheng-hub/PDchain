@@ -549,7 +549,7 @@ AlphaFold3 does not have a command-line interface (that I am aware of) for autom
 af3webtools prep inputs/4d_evopool_top/*.pdb --outdir outputs
 ```
 
-This should spawn a json file in the output directory. This json can then be uploaded to [alphafoldserver.com](alphafoldserver.com) as job drafts, which can then be subsequently submitted so long as you have enough jobs left for the day.
+This should spawn a json file in the output directory. This json can then be uploaded to [alphafoldserver.com](https://alphafoldserver.com) as job drafts, which can then be subsequently submitted so long as you have enough jobs left for the day.
 
 Should you download a batch of AF3-predicted structures from the AF3 server, they would be downloaded as a zip file. The command `af3webtools` will also facilitate the extraction of these models and the structural alignment to your designs.
 ```bash
@@ -680,13 +680,13 @@ The following metrics are calculated with the poly-ala version of the design. Th
 
 ## Acknowledgements
 PDchain was built on top of the following works:
-* [RosettaCommons/RFdiffusion](github.com/RosettaCommons/RFdiffusion.git)
-* [YaoYinYing/RFdiffusion (mps- and cpu-compatible RFdiffusion)](github.com/YaoYinYing/RFdiffusion)
-* [YaoYinYing/SE3Transformer (mps- and cpu-compatible SE3Transformer)](github.com/YaoYinYing/SE3Transformer)
-* [dauparas/LigandMPNN](github.com/dauparas/LigandMPNN)
-* [RosettaCommons/rosetta](github.com/RosettaCommons/rosetta)
-* [facebookresearch/esm](github.com/facebookresearch/esm)
-* [HeliXonProtein/OmegaFold](github.com/HeliXonProtein/OmegaFold)
-* [schrodinger/pymol-open-source](github.com/schrodinger/pymol-open-source)
-* [rdkit/rdkit](github.com/rdkit/rdkit)
-* [matteoferla/rdkit-to-params](github.com/matteoferla/rdkit-to-params)
+* [RosettaCommons/RFdiffusion](https://github.com/RosettaCommons/RFdiffusion.git)
+* [YaoYinYing/RFdiffusion (mps- and cpu-compatible RFdiffusion)](https://github.com/YaoYinYing/RFdiffusion)
+* [YaoYinYing/SE3Transformer (mps- and cpu-compatible SE3Transformer)](https://github.com/YaoYinYing/SE3Transformer)
+* [dauparas/LigandMPNN](https://github.com/dauparas/LigandMPNN)
+* [RosettaCommons/rosetta](https://github.com/RosettaCommons/rosetta)
+* [facebookresearch/esm](https://github.com/facebookresearch/esm)
+* [HeliXonProtein/OmegaFold](https://github.com/HeliXonProtein/OmegaFold)
+* [schrodinger/pymol-open-source](https://github.com/schrodinger/pymol-open-source)
+* [rdkit/rdkit](https://github.com/rdkit/rdkit)
+* [matteoferla/rdkit-to-params](https://github.com/matteoferla/rdkit-to-params)
