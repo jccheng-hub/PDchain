@@ -650,7 +650,7 @@ EOF
 ## Built-In Metrics
 There are a number of built-in metrics that are available for use. Here, they are categorized into sequence-agnostic and sequence-dependent metrics. The sequence-agnostic metrics are calculated with the poly-ala version of the design. Generally, sequence-agnostic metrics are best employed when diffusing in major chunks of the protein backbone (e.g. de novo or major rediffusion), and sequence-dependent metrics are best employed when the backbone undergoes minor changes (e.g. partial diffusion or fixed-backbone redesign).
 
-Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated).
+Note that secondary structure determination from `rfd_chain` is done with the DISICL algorithm (dihedral-only; no h-bonding interactions calculated). Also, the term "focus residues" below refer to ligands and fixed residues.
 
 |Sequence-Agnostic (Poly-Ala) Metrics|Description|
 |:---:|:---|
@@ -667,8 +667,6 @@ Note that secondary structure determination from `rfd_chain` is done with the DI
 |`mp_fc_dst`|distance between the midpoint of focus residues and the midpoint of the rest of the poly-ala scaffold|
 |`fc_compact`|root mean squared distance between focus midpoint and atoms of the 50 closest residues; lower ~ compact backbone around ligands; works best for compact ligands|
 |`fc_dev`|standard deviation of distances between focus midpoint and atoms of the 50 closest residues; lower ~ hollow cavity around ligands; works best for compact ligands|
-
-Note that the term "focus residues" above refer to ligands and fixed residues.
 
 |Sequence-Dependent Metrics|Description|
 |:---:|:---|
