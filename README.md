@@ -680,13 +680,13 @@ The following metrics are calculated with the poly-ala version of the design. Th
 
 ## Acknowledgements
 PDchain was built on top of the following works:
-* [RosettaCommons/RFdiffusion](#https://github.com/RosettaCommons/RFdiffusion.git)
-* [YaoYinYing/RFdiffusion (mps- and cpu-compatible RFdiffusion)](#https://github.com/YaoYinYing/RFdiffusion)
-* [YaoYinYing/SE3Transformer (mps- and cpu-compatible SE3Transformer)](#https://github.com/YaoYinYing/SE3Transformer)
-* [dauparas/LigandMPNN](#https://github.com/dauparas/LigandMPNN)
-* [RosettaCommons/rosetta](#https://github.com/RosettaCommons/rosetta)
-* [facebookresearch/esm](#https://github.com/facebookresearch/esm)
-* [HeliXonProtein/OmegaFold](#https://github.com/HeliXonProtein/OmegaFold)
-* [schrodinger/pymol-open-source](#https://github.com/schrodinger/pymol-open-source)
-* [rdkit/rdkit](#https://github.com/rdkit/rdkit)
-* [matteoferla/rdkit-to-params](#https://github.com/matteoferla/rdkit-to-params)
+* [RosettaCommons/RFdiffusion](#github.com/RosettaCommons/RFdiffusion.git)
+* [YaoYinYing/RFdiffusion (mps- and cpu-compatible RFdiffusion)](#github.com/YaoYinYing/RFdiffusion)
+* [YaoYinYing/SE3Transformer (mps- and cpu-compatible SE3Transformer)](#github.com/YaoYinYing/SE3Transformer)
+* [dauparas/LigandMPNN](#github.com/dauparas/LigandMPNN)
+* [RosettaCommons/rosetta](#github.com/RosettaCommons/rosetta)
+* [facebookresearch/esm](#github.com/facebookresearch/esm)
+* [HeliXonProtein/OmegaFold](#github.com/HeliXonProtein/OmegaFold)
+* [schrodinger/pymol-open-source](#github.com/schrodinger/pymol-open-source)
+* [rdkit/rdkit](#github.com/rdkit/rdkit)
+* [matteoferla/rdkit-to-params](#github.com/matteoferla/rdkit-to-params)
