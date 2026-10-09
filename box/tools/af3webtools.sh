@@ -49,9 +49,9 @@ optarg () {
 val_opts=(outjson refdir outdir)
 bool_opts=(help)
 
-outjson="af3job_$(date +%y%m%d-%H%M%S).json"
 refdir="."
 outdir="."
+outjson="af3job_$(date +%y%m%d-%H%M%S).json"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -214,10 +214,10 @@ run_prep () {
     done | jq -s '.' > $outjson &&
     echo "Made $outjson"
 
-    total_jobs=$(jq 'length' $outjson)
-    batch_size=30
+    local total_jobs=$(jq 'length' $outjson)
+    local batch_size=30
     for ((i=0; i<$total_jobs; i+=batch_size)); do
-        batch_num=$(( i / batch_size + 1 ))
+        local batch_num=$(( i / batch_size + 1 ))
         jq ".[$i : $i+$batch_size]" ${outjson} > "${outjson%.*}_${batch_num}.json"
         echo "Created ${outjson%.*}_${batch_num}.json"
     done
@@ -294,6 +294,8 @@ EOF
 
 # Main
 if [[ $subcmd == prep ]] ; then
+    mkdir -p $outdir
+    outjson="${outdir%/}/$outjson"
     run_prep "$infiles" "$outjson"
 elif [[ $subcmd == unzip ]] ; then
     run_unzip "$infiles" "$refdir" "$outdir"
