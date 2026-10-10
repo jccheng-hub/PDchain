@@ -3,7 +3,7 @@ Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN
 
 Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
-None of the command-line tools in PDchain were AI-generated.
+None of the original code in this repository was AI-generated.
 
 ## Table of Contents
 - [Installation](#installation)
