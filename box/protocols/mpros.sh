@@ -34,6 +34,9 @@ LigandMPNN options:
   --batch_size [int]        Number of designs to generate
   --temperature [float]     Temperature for design
   --biasjson [str]          Json file for biasing design
+                            Equivalent to MPNN's "--bias_AA_per_residue"
+  --omitjson [str]          Json file for omitting residues during design
+                            Equivalent to MPNN's "--omit_AA_per_residue"
   --nbr_dist [float]        Distance in angstroms for neighbor detection.
                             When specifying a ligand with --ligname but not
                             using --model_type ligand_mpnn, residues within this
@@ -88,9 +91,9 @@ optarg () {
 val_opts=(
     batch_size          biasjson            ca_stdev            cstfile
     fix_stdev           fixedres            lig_stdev           ligname
-    model_type          nbr_dist            nbr_resfile_cmd     outdir
-    redesres            relax_repeats       resfile             suffix
-    temperature         threads                                 
+    model_type          nbr_dist            nbr_resfile_cmd     omitjson
+    outdir              redesres            relax_repeats       resfile
+    suffix              temperature         threads                                 
 )
 
 bool_opts=(
@@ -112,6 +115,7 @@ ligname=""
 model_type="protein_mpnn"
 nbr_dist="8"
 nbr_resfile_cmd="ALLAAxc"
+omitjson=""
 outdir="."
 redesres=""
 relax_repeats="1"
@@ -251,6 +255,11 @@ mpnn_opts=(
     biasjson=$(realpath $biasjson)
     echo "Using json for biasing residues $biasjson"
     mpnn_opts+=("--bias_AA_per_residue \"$biasjson\"")
+}
+[[ -n $omitjson ]] && {
+    omitjson=$(realpath $omitjson)
+    echo "Using json for omitting residues $omitjson"
+    mpnn_opts+=("--omit_AA_per_residue \"$omitjson\"")
 }
 [[ $disallow_cys == 1 ]] && {
     echo "Excluding cysteines from sequence design"
@@ -665,6 +674,20 @@ ls $step2/*.pdb &>/dev/null || {
 # Score outputs with LigandMPNN
 [[ $skip_mpnn_score == 0 ]] &&
 mpnn_score $step2/*.pdb --model_type $model_type
+
+# Run additional metrics
+for metscript in $pixiroot/box/addmets/* ; do
+    [[ -x "$metscript" ]] && {
+        for pdb in $step2/*.pdb ; do
+            echo "Running $(basename $metscript) on $(basename $pdb)..."
+            metout=$($metscript $pdb)
+            [[ $(echo $metout | wc -w) == 0 ]] && continue
+            mets=$(echo "$metout" | awk '{print$1}' | paste -sd ' ')
+            awk -i inplace '$1!~/^('"${mets// /|}"')$/' $pdb
+            echo "$metout" | tee -a $pdb
+        done
+    }
+done
 
 # Output
 for i_pdb in ${inpdb[@]} ; do

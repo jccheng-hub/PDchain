@@ -3,8 +3,8 @@ pixiroot="$PIXI_PROJECT_ROOT"
 pixitoml="$pixiroot/pixi.toml"
 pixirun="pixi run -m $pixitoml -e"
 [[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
 }
 
 usage () { cat << EOF
@@ -64,13 +64,13 @@ for opt in ${val_opts[@]} ; do
     [[ -n ${!opt} ]] && all_opts+=(--$opt ${!opt})
 done
 [[ $((${#args[@]}-1)) -lt 1 ]] && help="1"
-[[ $help == 1 ]] && { usage ; default_vals ; exit ;}
+[[ $help == 1 ]] && { usage ; default_vals ; exit 1 ;}
 # }}}
 
 ### BEGIN ###
 name=${args[1]}
 if [[ -f ${name} ]] ; then
-    echo "${name} already exists!" && exit 1
+    echo "${name} already exists!" >&2 ; exit 1
 else
     sed -n '0,/ BEGIN /p' $0 | sed '$d' > $name && chmod +x $name
 fi
