@@ -5,8 +5,9 @@ For these scripts to work, they must do the following:
  1. Be an executable file with a shebang
  2. Accept the input PDB as the first argument
  3. Output any number of metrics into the terminal in the following format:
-    metric1 metric1_value ...
-    metric2 metric2_value ...
+    metric1 metric1_value
+    metric2 metric2_value
+    ...
 
 For example, try the calc_molar_abs.sh in this directory on one of the clean
 PDBs provided at examples/inputs.
