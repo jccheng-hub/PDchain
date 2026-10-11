@@ -1,3 +1,0 @@
-min:fc_compact
-min:fc_dev
-min:rog_ala

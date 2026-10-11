@@ -1,1 +1,5 @@
-In this directory, you can run the example blocks of code provided in the README file.
+This directory is where you can run the example blocks of code from the README.
+Before running any example blocks of code, run the following command to extract
+the input files:
+
+unzip inputs.zip
