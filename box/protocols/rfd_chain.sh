@@ -406,7 +406,7 @@ rfd_chain () {
         local oldcontigs=$(sed -n "s/^contigs //p" $inpdb)
         local oldfixed=$(sed -n "s/^fixedres //p" $inpdb)
         local oldlig=$(sed -n "s/^ligname //p" $inpdb)
-        local oldcsts=$(awk '/>>> constraints >>>/ {f=1;next} /<<< constraints <<</ {f=0} f' $inpdb)
+        local oldcsts=$(sed -n 's/^#CST //p' $inpdb)
         [[ -z $fixedres && -n $oldfixed ]] && {
             echo "Using old fixedres residues found in input PDB: $oldfixed"
             local fixedres="$oldfixed"
@@ -770,13 +770,10 @@ EOF
         # Append constraints
         local bn=$(basename ${design%.*})
         [[ -s $tmpcst && $(grep '^#END_POSE_ENERGIES_TABLE' $design | wc -l) != 0 ]] && {
-            local tmpdat1=$(awk '{print} $1=="#END_POSE_ENERGIES_TABLE" {exit}' $design)
-            local tmpdat2=$(awk '$1=="#END_POSE_ENERGIES_TABLE" {x=1; next} x' $design)
-            echo "$tmpdat1" > $design
-            echo "### >>> constraints >>> ###" >> $design
-            cat $tmpcst                        >> $design
-            echo "### <<< constraints <<< ###" >> $design
-            echo "$tmpdat2" >> $design
+            local cstlines=$(sed 's/^/#CST /' $tmpcst)
+            awk -v block="$cstlines" -i inplace '
+                {print} $1=="#END_POSE_ENERGIES_TABLE" {print block}
+            ' $design
             calc_cst_rmsd $design --append ; grep -h '^cst_rmsd ' $design
         }
 
