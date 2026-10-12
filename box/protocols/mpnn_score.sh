@@ -125,14 +125,14 @@ tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EX
 gen_multi_injson $inpdbs > $tmpdir/inputs.json
 gen_multi_biasjson $inpdbs > $tmpdir/bias.json
 
-# Report the model and seed used
-echo -n "Running LigandMPNN with --model_type $model_type with "
-if [[ -z $seed ]] ; then
-    echo "a random seed for scoring."
-else
-    echo "--seed $seed for scoring."
-    mpnn_opts+=("--seed $seed")
-fi
+# # Report the model and seed used
+# echo -n "Running LigandMPNN with --model_type $model_type with "
+# if [[ -z $seed ]] ; then
+#     echo "a random seed for scoring."
+# else
+#     echo "--seed $seed for scoring."
+#     mpnn_opts+=("--seed $seed")
+# fi
 
 # Run MPNN
 eval "
@@ -141,7 +141,7 @@ eval "
         --bias_AA_per_residue_multi '$tmpdir/bias.json' \
         --model_type '$model_type' \
         --out_folder '$tmpdir' ${mpnn_opts[*]}
-"
+" >/dev/null
 
 # Get scores
 for inpdb in $inpdbs ; do
@@ -161,4 +161,4 @@ for inpdb in $inpdbs ; do
 done
 
 # Report
-grep -H "^${model_type}_score " $inpdbs
+grep -h "^${model_type}_score " $inpdbs

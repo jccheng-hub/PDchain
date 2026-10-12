@@ -461,5 +461,6 @@ gawk -i inplace -f <(echo "$gawk_script") ${inpdbs[@]}
 # Report
 awk '
 $1~/^('"${mets// /|}"')$/ {
-    f = FILENAME ; sub(/^.*\//, "", f) ; sub(/\..*$/, "", f) ; print f, $0
+    # f = FILENAME ; sub(/^.*\//, "", f) ; sub(/\..*$/, "", f) ; print f, $0
+    print $0
 }' ${inpdbs[@]}

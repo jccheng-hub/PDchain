@@ -332,8 +332,7 @@ get_newres () {
 calc_perc_loop () {
     local inpdb=($@)
     dss_disicl ${inpdb[0]} --append --fixedres ${inpdb[@]:1}
-    echo -n "$(basename ${inpdb%.*}) "
-    grep -h "^perc_loop " $inpdb | head -n1
+    grep -h "^perc_loop " $inpdb
 }
 
 collapse_contigs () {
@@ -768,6 +767,50 @@ EOF
         local design="$step2/$(basename ${diffused%.*})_0001.pdb"
         [[ -s $design ]] || continue
     
+        # Append constraints
+        local bn=$(basename ${design%.*})
+        [[ -s $tmpcst && $(grep '^#END_POSE_ENERGIES_TABLE' $design | wc -l) != 0 ]] && {
+            local tmpdat1=$(awk '{print} $1=="#END_POSE_ENERGIES_TABLE" {exit}' $design)
+            local tmpdat2=$(awk '$1=="#END_POSE_ENERGIES_TABLE" {x=1; next} x' $design)
+            echo "$tmpdat1" > $design
+            echo "### >>> constraints >>> ###" >> $design
+            cat $tmpcst                        >> $design
+            echo "### <<< constraints <<< ###" >> $design
+            echo "$tmpdat2" >> $design
+            calc_cst_rmsd $design --append ; grep -h '^cst_rmsd ' $design
+        }
+
+        # Append metadata
+        if [[ -n $oldcontigs ]] ; then
+            local contigs_f=$(update_contigs --oldcontigs $oldcontigs --newcontigs $contigs)
+        else
+            local contigs_f="$contigs"
+        fi
+        echo "contigs $contigs_f" | tee -a $design
+        [[ -n $inpdb ]] && echo "inpdb $(basename ${inpdb%.*})" | tee -a $design
+        [[ -n $fixednew ]] && echo "fixedres $fixednew" | tee -a $design
+        [[ -n $ligname ]] && echo "ligname ${ligname[*]}" | tee -a $design
+
+        # Calculate default metrics
+        calc_perc_loop $design $fixednew
+        calc_scafscore $design ${scafscore_opts[@]}
+
+        # Calculate additional metrics
+        [[ -n $addmets ]] && {
+            local bn_addmet
+            for bn_addmet in $addmets ; do
+                local metscript="$pixiroot/box/addmets/$bn_addmet"
+                [[ -x "$metscript" ]] && {
+                    echo "Running $(basename $metscript) on $(basename $design)..."
+                    local metout=$($metscript $design)
+                    [[ $(echo $metout | wc -w) == 0 ]] && continue
+                    local mets=$(echo "$metout" | awk '{print$1}' | paste -sd ' ')
+                    awk -i inplace '$1!~/^('"${mets// /|}"')$/' $design
+                    echo "$metout" | tee -a $design
+                }
+            done
+        }
+
         # Check for selection metric
         local metpass="0"
         unset metarr
@@ -856,39 +899,7 @@ EOF
         fi
     done
     echo "$topdes" > $design
-    
-    local design=($step2/Diffused*.pdb)
-    [[ -s $design ]] || {
-        echo "Something went wrong with MPNN-FastRelax. Exiting." && return
-    }
-    
-    # Record constraints
-    [[ -s $tmpcst ]] && {
-        echo "### >>> constraints >>> ###"
-        cat $tmpcst
-        echo "### <<< constraints <<< ###"
-    } >> $design
-    [[ -s $tmpcst ]] && calc_cst_rmsd $design --append
-   
-    # Output
-    [[ -n $oldcontigs ]] && {
-        local contigs=$(update_contigs --oldcontigs $oldcontigs --newcontigs $contigs)
-    }
-    local bn=$(basename ${design%.*})
-    calc_perc_loop $design $fixednew
-    calc_scafscore $design ${scafscore_opts[@]}
-    echo "contigs $contigs" | tee -a $design | sed "s|^|$bn |"
-    [[ -n $inpdb ]] && {
-        echo "inpdb $(basename ${inpdb%.*})" | tee -a $design | sed "s|^|$bn |"
-    }
-    [[ -n $fixednew ]] && {
-        echo "fixedres $fixednew" | tee -a $design | sed "s|^|$bn |"
-    }
-    [[ -n $ligname ]] && {
-        echo "ligname ${ligname[*]}" | tee -a $design | sed "s|^|$bn |"
-    }
-
-    grep "^ATOM" $design &>/dev/null && cp $design ${outprefix}.pdb
+    grep "^ATOM" $design >/dev/null && cp $design ${outprefix}.pdb
 }
 # <<< rfd_chain () <<< }}}
 
