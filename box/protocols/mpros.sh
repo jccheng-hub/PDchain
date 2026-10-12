@@ -21,6 +21,9 @@ General options:
   --redesres [str]          List of residues to design in chain+resi format
                             Will fix all other residues
                             E.g. A11 A13-18 A27
+  --addmets [str]           Name of metric scripts in box/addmets to run at the
+                            end for evalulating additional metrics.
+                            E.g. --addmets calc_molar_abs.sh
   --outdir [str]            Path to output directory
   --inplace                 Have output PDB replace input PDB
                             Forces --batch_size 1
@@ -89,11 +92,11 @@ optarg () {
 }
 
 val_opts=(
-    batch_size          biasjson            ca_stdev            cstfile
-    fix_stdev           fixedres            lig_stdev           ligname
-    model_type          nbr_dist            nbr_resfile_cmd     omitjson
-    outdir              redesres            relax_repeats       resfile
-    suffix              temperature         threads                                 
+    addmets             batch_size          biasjson            ca_stdev
+    cstfile             fix_stdev           fixedres            lig_stdev
+    ligname             model_type          nbr_dist            nbr_resfile_cmd
+    omitjson            outdir              redesres            relax_repeats
+    resfile             suffix              temperature         threads
 )
 
 bool_opts=(
@@ -104,6 +107,7 @@ bool_opts=(
     skip_mpnn           skip_mpnn_score     skip_refine         
 )
 
+addmets=""
 batch_size="1"
 biasjson=""
 ca_stdev=""
@@ -676,18 +680,21 @@ ls $step2/*.pdb &>/dev/null || {
 mpnn_score $step2/*.pdb --model_type $model_type
 
 # Run additional metrics
-for metscript in $pixiroot/box/addmets/* ; do
-    [[ -x "$metscript" ]] && {
-        for pdb in $step2/*.pdb ; do
-            echo "Running $(basename $metscript) on $(basename $pdb)..."
-            metout=$($metscript $pdb)
-            [[ $(echo $metout | wc -w) == 0 ]] && continue
-            mets=$(echo "$metout" | awk '{print$1}' | paste -sd ' ')
-            awk -i inplace '$1!~/^('"${mets// /|}"')$/' $pdb
-            echo "$metout" | tee -a $pdb
-        done
-    }
-done
+[[ -n $addmets ]] && {
+    for bn_addmet in $addmets ; do
+        metscript="$pixiroot/box/addmets/$bn_addmet"
+        [[ -x "$metscript" ]] && {
+            for pdb in $step2/*.pdb ; do
+                echo "Running $(basename $metscript) on $(basename $pdb)..."
+                metout=$($metscript $pdb)
+                [[ $(echo $metout | wc -w) == 0 ]] && continue
+                mets=$(echo "$metout" | awk '{print$1}' | paste -sd ' ')
+                awk -i inplace '$1!~/^('"${mets// /|}"')$/' $pdb
+                echo "$metout" | tee -a $pdb
+            done
+        }
+    done
+}
 
 # Output
 for i_pdb in ${inpdb[@]} ; do

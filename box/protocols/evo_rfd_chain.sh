@@ -80,14 +80,15 @@ optarg () {
 }
 
 val_opts=(
-    backrub             ca_stdev            clash_cut           cterm_add
-    cterm_trim          design_cycles       famiperc            gen0perc
-    helix_cap           indir               inpdb               loop_cut
-    model_ckpt          model_type          natbias             nbr_resfile_cmd
-    nterm_add           nterm_trim          outdir              poolperc
-    poolsize            redes_dist          relax_repeats       reset_perc
-    rog_cut             select_met          ss_trim             temperature
-    threads             timesteps           tlim                vary_linkers
+    addmets             backrub             ca_stdev            clash_cut
+    cterm_add           cterm_trim          design_cycles       famiperc
+    gen0perc            helix_cap           indir               inpdb
+    loop_cut            model_ckpt          model_type          natbias
+    nbr_resfile_cmd     nterm_add           nterm_trim          outdir
+    poolperc            poolsize            redes_dist          relax_repeats
+    reset_perc          rog_cut             select_met          ss_trim
+    temperature         threads             timesteps           tlim
+    vary_linkers                                                
 )
 
 bool_opts=(
@@ -98,6 +99,7 @@ bool_opts=(
     rosetta_lig_nbr     sc_context          skip_diffusion      stop_at_capacity
 )
 
+addmets=""
 backrub=""
 ca_stdev=""
 clash_cut=""
@@ -118,7 +120,7 @@ nterm_add="0"
 nterm_trim="1"
 outdir="./evolved"
 poolperc="10"
-poolsize="ALL"
+poolsize="200"
 redes_dist=""
 relax_repeats="1"
 reset_perc="0"

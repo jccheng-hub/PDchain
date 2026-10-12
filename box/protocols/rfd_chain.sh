@@ -160,17 +160,17 @@ optarg () {
 }
 
 val_opts=(
-    ap_stdev            backrub             ca_stdev            clash_cut
-    cstfile             cterm_add           cterm_trim          design_cycles
-    fix_stdev           fixbbres            fixedres            gap_range
-    helix_cap           indir               inpaint_seq         inpaint_str
-    inpdb               lig_stdev           ligname             loop_cut
-    model_ckpt          model_type          natbias             nbr_dist
-    nbr_resfile_cmd     noise_scale         nterm_add           nterm_trim
-    numdes              outprefix           ppi_hotspots        redesres
-    relax_repeats       reset_perc          rog_cut             select_met
-    ss_trim             temperature         threads             timesteps
-    tot_range           vary_linkers                            
+    addmets             ap_stdev            backrub             ca_stdev
+    clash_cut           cstfile             cterm_add           cterm_trim
+    design_cycles       fix_stdev           fixbbres            fixedres
+    gap_range           helix_cap           indir               inpaint_seq
+    inpaint_str         inpdb               lig_stdev           ligname
+    loop_cut            model_ckpt          model_type          natbias
+    nbr_dist            nbr_resfile_cmd     noise_scale         nterm_add
+    nterm_trim          numdes              outprefix           ppi_hotspots
+    redesres            relax_repeats       reset_perc          rog_cut
+    select_met          ss_trim             temperature         threads
+    timesteps           tot_range           vary_linkers        
 )
 
 bool_opts=(
@@ -182,6 +182,7 @@ bool_opts=(
     ss_to_contigs                                               
 )
 
+addmets=""
 ap_stdev=""
 backrub=""
 ca_stdev=""

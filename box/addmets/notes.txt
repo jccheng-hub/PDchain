@@ -1,8 +1,9 @@
 This directory is for including custom scripts that can evalulate a PDB and
-output specified metrics. These trigger at the end of mpros.
+output specified metrics. These trigger at the end of mpros if you apply the
+--addmets option.
 
 For these scripts to work, they must do the following:
- 1. Be an executable file with a shebang
+ 1. Be an executable file
  2. Accept the input PDB as the first argument
  3. Output any number of metrics into the terminal in the following format:
     metric1 metric1_value
@@ -13,3 +14,9 @@ For example, try the calc_molar_abs.sh in this directory on one of the clean
 PDBs provided at examples/inputs.
 
 ./calc_molar_abs.sh $PIXI_PROJECT_ROOT/examples/inputs/1a53_clean.pdb
+
+For these scripts to be applied during mpros, rfd_chain, or evo_rfd_chain,
+add the option --addmets. For example:
+
+# Run from the examples directory
+mpros inputs/1a53_clean.pdb --relax --ca_stdev 1 --addmets calc_molar_abs.sh
