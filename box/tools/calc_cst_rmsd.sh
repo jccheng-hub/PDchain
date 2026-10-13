@@ -80,22 +80,20 @@ awk $inplace_flag '
         crd[$6 $5][$3][1] = $7
         crd[$6 $5][$3][2] = $8
         crd[$6 $5][$3][3] = $9
+        next
     }
     
-    $0 ~ /^### >>> constraints >>> ###/ { cstblock = 1 ; next }
-    $0 ~ /^### <<< constraints <<< ###/ { cstblock = 0 ; next }
-    
-    cstblock && $1~/^AtomPair$/ {
-        act = calc_dist(crd[$3][$2], crd[$5][$4])
-        ide = $7
+    $1 == "#CST" && $2~/^AtomPair$/ {
+        act = calc_dist(crd[$4][$3], crd[$6][$5])
+        ide = $8
         sum += (ide - act) * (ide - act)
-        n++
+        n++ ; next
     }
     
-    cstblock && $1~/^CoordinateConstraint$/ {
-        arr[1] = $6 ; arr[2] = $7 ; arr[3] = $8
-        sum += calc_dist_sq(arr, crd[$3][$2])
-        n++
+    $1 == "#CST" && $2~/^CoordinateConstraint$/ {
+        arr[1] = $7 ; arr[2] = $8 ; arr[3] = $9
+        sum += calc_dist_sq(arr, crd[$4][$3])
+        n++ ; next
     }
     
     ENDFILE {
