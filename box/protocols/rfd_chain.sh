@@ -382,14 +382,6 @@ contigs=${args[@]:1}
 outdir=$(realpath $outprefix | xargs dirname)
 tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EXIT
 
-# Clean input PDB if it is provided
-[[ -n $inpdb ]] && {
-    echo "Cleaning input PDB..."
-    clean_pdb $inpdb --keep_resn $ligname --outdir $tmpdir
-    inpdb_ori="$inpdb"
-    inpdb="$tmpdir/$(basename ${inpdb%.*}).pdb"
-    mv ${inpdb%.pdb}_clean.pdb $inpdb
-}
 
 # >>> rfd_chain () >>> {{{
 rfd_chain () {
@@ -401,6 +393,15 @@ rfd_chain () {
     local fixbbres=$fixbbres
     local contigs_opts=()
     local all_opts=(${all_opts[@]})
+
+    # Clean input PDB if it is provided
+    [[ -n $inpdb ]] && {
+        echo "Cleaning input PDB..."
+        clean_pdb $inpdb --keep_resn $ligname --outdir $tmpdir
+        local inpdb_ori="$inpdb"
+        local inpdb="$tmpdir/$(basename ${inpdb%.*}).pdb"
+        mv ${inpdb%.pdb}_clean.pdb $inpdb
+    }
 
     # Generate fixbbres if not provided
     [[ -z $fixbbres && -n $contigs && $contigs != SKIP ]] && {
@@ -478,13 +479,13 @@ rfd_chain () {
                 next
             }
         ' $inpdb)
-        echo "$tmpdat" > $inpdb
+        echo "$tmpdat" > ${inpdb%.pdb}_fusion.pdb
     }
     
     # Prepare options for RFdiffusion
     local rfd_opts=()
     local rfd_opts=("denoiser.noise_scale_ca=$noise_scale" "denoiser.noise_scale_frame=$noise_scale")
-    [[ -n $inpdb ]] && local rfd_opts+=("inference.input_pdb=$inpdb")
+    [[ -n $inpdb ]] && local rfd_opts+=("inference.input_pdb=${inpdb%.pdb}_fusion.pdb")
     
     if [[ $partial == 1 ]] ; then
         local rfd_opts+=("diffuser.partial_T=$timesteps")

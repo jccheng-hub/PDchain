@@ -11,7 +11,7 @@ None of the original code in this repository was AI-generated.
 - [Unconditional Monomer Generation](#1---unconditional-monomer-generation)
 - [Protein Binder Design](#2---protein-binder-design)
 - [Ligand Binder / Enzyme Design](#3---ligand-binder--enzyme-design)
-- [Continuous Evolution of Designs](#4---continuous-evolution-of-designs)
+- [Continuous Evolution of Designs](#5---continuous-evolution-of-designs)
 - [Fold Validation Methods](#fold-validation-methods)
 - [Directly Running RFdiffusion, LigandMPNN and PyRosetta](#directly-running-rfdiffusion-ligandmpnn-and-pyrosetta)
 - [Built-In Metrics](#built-in-metrics)
@@ -223,7 +223,25 @@ Here, we provided the contigs `86-95/0 B1-110` to specify that we want to genera
 
 De novo design often requires generating thousands of designs and computationally screening through them to get something "reasonable". If we compare the designs to the original control, we are likely to see designs that actually perform worse on many desirable metrics. For example, if we were to check the ddg of the outputs compared to control, (e.g. with `grep -H '^ddg ' outputs/ex2*.pdb`), we are likely to see the control outperform most if not all of the de novo designs. While barnase-barstar is an incredibly tight complex (so the bar [HA!] is pretty high here), large scale generation and screening will still often be necessary to have high confidence in your designs.
 
-Because we are unlikely to get excellent designs right away, it is often necessary to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better. This is the main reason why the *in silico* continuous evolution system in PDchain was built. See the section on [Contnuous Evolution of Designs](#4---continuous-evolution-of-designs) for more details.
+Because we are unlikely to get excellent designs right away, it is often necessary to take an agreeable-but-not-excellent de novo design and diversify around that with indels and partial diffusion to get something better. This is the main reason why the *in silico* continuous evolution system in PDchain was built. See the section on [Contnuous Evolution of Designs](#5---continuous-evolution-of-designs) for more details.
+
+### 2e - Cyclic Peptide De Novo Design
+
+The following command will generate a *cyclic* peptide to bind a target protein. It's the same idea as the protein binder example but just with the additional option `--cyclize_chain A`.
+```bash
+rfd_chain 18-22/0 B1-110 \
+    --inpdb inputs/1brs_af3mod0.pdb \
+    --idealize --relax --ca_stdev 1 \
+    --design_cycles 3 \
+    --numdes 3 \
+    --select_met min:ddg \
+    --fixedres B1-110 \
+    --model_type protein_mpnn \
+    --model_ckpt Complex_base \
+    --ppi_hotspots B27 B38 B54-59 B82-85 B101-104 \
+    --cyclize_chain A \
+    --outprefix outputs/ex2e_1brs_cycpep
+```
 
 ## 3 - Ligand Binder / Enzyme Design
 The following example takes a protein complexed with a ligand (in this case, a Kemp eliminase complexed with its transition-state analog) and refines it with Rosetta (without any sequence or backbone design). This command is meant to generate a computational control to serve as a reference point for later design runs.
@@ -381,7 +399,7 @@ Note that the order in which the residues are specified for `--fixbbres` matters
 > [!NOTE]
 RFdiffusion generates backbones around ligands with an auxillary potential (see RFdiffusion documentation for more details). However, even with this potential, RFdiffusion can produce backbones that clash with the input ligand. The command `rfd_chain` was therefore programmed to exclude backbones with excess clashes to ligand atoms. As a result, you may not see the same amount of design outputs as intended. For example, we have `--numdes 3` in the command above, but you may end up with just `ex3d_5grf_denovo_0002.pdb` in the outputs without the first and third designs because they failed the clash checker. If you want to guarantee the exact number of outputs as specified by `--numdes`, add the option `--persistent` to make RFdiffusion try again if it fails. If you want to turn off the clash checker entirely, you can set the threshold to an excessively high number like `--clash_cut 9999` so that every backbone RFdiffusion generates will always pass regardless of ligand clashes. This is not recommended, however, as MPNN may get an unreasonable input and Rosetta may have a hard time resolving those clashes.
 
-As mentioned in the example with de novo protein binder design, it is unlikely to get "reasonable" de novo designs from a small-scale computational run. Getting promising design candidates often require generating thousands of designs and screening through them. Sometimes, even the best designs from a large-scale batch might not meet all of your desired criteria. For example, they might be globular with ample secondary structure composition, but the binding pocket is completely buried/exposed. In these situations, it might be better to redesign these candidates to optimize for those desired properties rather than to repeatedly fish for new designs that meet all of your criteria all at once. See the section on [Continuous Evolution of Designs](#4---continuous-evolution-of-designs) to see how one can evolve designs based on desirable metrics.
+As mentioned in the example with de novo protein binder design, it is unlikely to get "reasonable" de novo designs from a small-scale computational run. Getting promising design candidates often require generating thousands of designs and screening through them. Sometimes, even the best designs from a large-scale batch might not meet all of your desired criteria. For example, they might be globular with ample secondary structure composition, but the binding pocket is completely buried/exposed. In these situations, it might be better to redesign these candidates to optimize for those desired properties rather than to repeatedly fish for new designs that meet all of your criteria all at once. See the section on [Continuous Evolution of Designs](#5---continuous-evolution-of-designs) to see how one can evolve designs based on desirable metrics.
 
 ## 4 - Continuous Evolution of Designs
 Not every design output will possess properties you are looking for; this is especially true for de novo designs. Often times, you end up with designs that check some boxes but not others. In these situations, it may be worth attempting optimization of these designs by using them as starting points for cycles of diversification and selection.
