@@ -44,12 +44,9 @@ If you have an Apple Silicon Mac or a CUDA-compatible Linux/WSL and you want to 
 cp box/tomls/gpu/pixi.* . && pixi run install && pixi workspace register --name PDchain
 ```
 
-The `pixi workspace reigster --name PDchain` command will register `PDchain` as the workspace name. This allows you to use the `-w PDchain` option for various pixi commands. More on this in the [Running PDchain Commands](#running-pdchain-commands) section.
+The `pixi workspace register --name PDchain` command will register `PDchain` as the workspace name. This allows you to use the `-w PDchain` option for various pixi commands. More on this in the [Running PDchain Commands](#running-pdchain-commands) section.
 
 Installation will take some time (~10-20 minutes) as it will download all of the weights for RFdiffusion and LigandMPNN in addition to PyRosetta.
-
-> [!NOTE]
-The CUDA version listed in the pixi.toml file for the Linux GPU installation of RFdiffusion is 11.8. Some newer GPUs from NVIDIA are incompatible with CUDA 11.8 and requires newer versions of CUDA. If this is the case, then the installation may fail despite having a CUDA-compatible GPU. I'm not entirely sure how to get around this (though I would be surprised if there wasn't a way around this), but you can attempt to fix the pixi.toml file to run on a newer version of CUDA. This may require additional adjustments like changing the python/pytorch/dgl versions, shifting to installation from pypi instead of conda-forge, changing the available channels, etc.
 
 ## Running PDchain Commands
 
