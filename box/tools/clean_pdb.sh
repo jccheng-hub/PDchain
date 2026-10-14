@@ -75,6 +75,13 @@ mkdir -p $outdir
 # >>> clean_pdb () >>> {{{
 clean_pdb () {
     local pdb=$1
+
+    [[ -z $keep_resn ]] && {
+        local keep_resn=$(
+            awk '$1=="HETATM" && $4!="HOH" {print $4}' $pdb | sort -u | paste -sd ' '
+        )
+    }
+
     awk '
     "'"$chains"'" != "" && $5 !~ /^('"${chains// /|}"')$/ {next}
 

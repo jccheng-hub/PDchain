@@ -397,7 +397,7 @@ rfd_chain () {
     # Clean input PDB if it is provided
     [[ -n $inpdb ]] && {
         echo "Cleaning input PDB..."
-        clean_pdb $inpdb --keep_resn $ligname --outdir $tmpdir
+        clean_pdb $inpdb --outdir $tmpdir
         local inpdb_ori="$inpdb"
         local inpdb="$tmpdir/$(basename ${inpdb%.*}).pdb"
         mv ${inpdb%.pdb}_clean.pdb $inpdb
@@ -453,7 +453,7 @@ rfd_chain () {
             local all_opts+=("--cyclize_chain $cyclize_chain")
         }
     }
-    
+
     # Generate contigs if one isn't provided
     [[ -z $contigs ]] && {
         echo "No contigs were provided. Generating contigs..."
@@ -774,7 +774,7 @@ EOF
             $1=="AtomPair" { $3 = a[$3]!="" ? a[$3] : $3 ; $5 = a[$5]!="" ? a[$5] : $5 }
             { print }
         ' $tmpcst
-    
+        
         echo "Adding a total of $(wc -l < $tmpcst) constraints as a cstfile..."
         local mpnn_opts=("--cstfile $tmpcst" ${mpnn_opts[@]})
     }
