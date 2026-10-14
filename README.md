@@ -241,6 +241,8 @@ rfd_chain 18-22/0 B1-110 \
     --outprefix outputs/ex2e_1brs_cycpep
 ```
 
+Note that running PDchain's version of RFdiffusion will always assign the de novo backbone as chain A in the final protein complex. Should your input PDB have the *target* protein on chain A, that chain A of your input PDB will be shifted to chain B while the new chain A is reserved for the de novo backbone. Because the chain you specify with this option refers to the chain of the eventual complex, you will always want to specify `--cyclize_chain A` when generating de novo cyclic peptides  *regardless of the chain ID of the target protein* in the input PDB.
+
 ## 3 - Ligand Binder / Enzyme Design
 The following example takes a protein complexed with a ligand (in this case, a Kemp eliminase complexed with its transition-state analog) and refines it with Rosetta (without any sequence or backbone design). This command is meant to generate a computational control to serve as a reference point for later design runs.
 
