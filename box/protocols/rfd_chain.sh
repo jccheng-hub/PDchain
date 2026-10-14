@@ -386,6 +386,7 @@ tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EX
 [[ -n $inpdb ]] && {
     echo "Cleaning input PDB..."
     clean_pdb $inpdb --keep_resn $ligname --outdir $tmpdir
+    inpdb_ori="$inpdb"
     inpdb="$tmpdir/$(basename ${inpdb%.*}).pdb"
     mv ${inpdb%.pdb}_clean.pdb $inpdb
 }
@@ -424,25 +425,31 @@ rfd_chain () {
     
     # Get data from previous runs
     [[ -n $inpdb ]] && {
-        local oldcontigs=$(sed -n "s/^contigs //p" $inpdb)
-        local oldfixed=$(sed -n "s/^fixedres //p" $inpdb)
-        local oldlig=$(sed -n "s/^ligname //p" $inpdb)
-        local oldcsts=$(sed -n 's/^#CST //p' $inpdb)
+        local oldcontigs=$(sed -n "s/^contigs //p" $inpdb_ori)
+        local oldfixed=$(sed -n "s/^fixedres //p" $inpdb_ori)
+        local oldlig=$(sed -n "s/^ligname //p" $inpdb_ori)
+        local oldcsts=$(sed -n 's/^#CST //p' $inpdb_ori)
+        local oldcyc=$(sed -n 's/^cyclize_chain //p' $inpdb_ori)
         [[ -z $fixedres && -n $oldfixed ]] && {
-            echo "Using old fixedres residues found in input PDB: $oldfixed"
+            echo "Using fixedres residues found in input PDB: $oldfixed"
             local fixedres="$oldfixed"
             local all_opts+=("--fixedres $fixedres")
         }
         [[ -z $fixbbres && -n $oldcontigs ]] && {
-            echo "Using old contigs found in input PDB for fixbbres: $oldcontigs"
+            echo "Using contigs found in input PDB for fixbbres: $oldcontigs"
             local oldfixbb=$(echo $oldcontigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')
             local fixbbres=$(get_newres "$oldcontigs" $oldfixbb | cut -d: -f2 | paste -sd ' ')
             local contigs_opts+=("--ss_to_contigs")
         }
         [[ -z $ligname && -n $oldlig ]] && {
-            echo "Using old ligands found in input PDB: $oldlig"
+            echo "Using ligands found in input PDB: $oldlig"
             local ligname=($oldlig)
             local all_opts+=("--ligname ${ligname[*]}")
+        }
+        [[ -z $cyclize_chain && -n $oldcyc ]] && {
+            echo "Cyclizing chain $oldcyc due to input PDB data"
+            local cyclize_chain="$oldcyc"
+            local all_opts+=("--cyclize_chain $cyclize_chain")
         }
     }
     
@@ -857,6 +864,7 @@ EOF
         [[ -n $inpdb ]] && echo "inpdb $(basename ${inpdb%.*})" | tee -a $design
         [[ -n $fixednew ]] && echo "fixedres $fixednew" | tee -a $design
         [[ -n $ligname ]] && echo "ligname ${ligname[*]}" | tee -a $design
+        [[ -n $cyclize_chain ]] && echo "cyclize_chain $cyclize_chain" | tee -a $design
 
         # Calculate default metrics
         calc_perc_loop $design $fixednew
