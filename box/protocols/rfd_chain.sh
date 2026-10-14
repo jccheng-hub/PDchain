@@ -32,6 +32,10 @@ General options:
                             E.g. --outprefix ./outputs/rfd_des
   --randsuffix              Generate a random string for the suffix
   --persistent              If a design fails to generate, keep trying.
+  --cyclize_chain [str]     Specify chain for cyclization (e.g. cyclic peptides)
+                            Affects RFdiffusion and Rosetta
+                            Note that the RFdiffusion in PDchain will always put
+                            chain A as the de novo backbone.
   --help                    Display this help and exit
 
 Contigs options:
@@ -160,17 +164,18 @@ optarg () {
 }
 
 val_opts=(
-    addmets             ap_stdev            backrub             ca_stdev
-    clash_cut           cstfile             cterm_add           cterm_trim
-    design_cycles       fix_stdev           fixbbres            fixedres
-    gap_range           helix_cap           indir               inpaint_seq
-    inpaint_str         inpdb               lig_stdev           ligname
-    loop_cut            model_ckpt          model_type          natbias
-    nbr_dist            nbr_resfile_cmd     noise_scale         nterm_add
-    nterm_trim          numdes              outprefix           ppi_hotspots
-    redesres            relax_repeats       reset_perc          rog_cut
-    select_met          ss_trim             temperature         threads
-    timesteps           tot_range           vary_linkers        
+    addmets             ap_stdev            backrub             biasjson
+    ca_stdev            clash_cut           cstfile             cterm_add
+    cterm_trim          cyclize_chain       design_cycles       fix_stdev
+    fixbbres            fixedres            gap_range           helix_cap
+    indir               inpaint_seq         inpaint_str         inpdb
+    lig_stdev           ligname             loop_cut            model_ckpt
+    model_type          natbias             nbr_dist            nbr_resfile_cmd
+    noise_scale         nterm_add           nterm_trim          numdes
+    omitjson            outprefix           ppi_hotspots        redesres
+    relax_repeats       reset_perc          rog_cut             select_met
+    ss_trim             temperature         threads             timesteps
+    tot_range           vary_linkers                            
 )
 
 bool_opts=(
@@ -185,11 +190,13 @@ bool_opts=(
 addmets=""
 ap_stdev=""
 backrub=""
+biasjson=""
 ca_stdev=""
 clash_cut=""
 cstfile=""
 cterm_add="0"
 cterm_trim="1"
+cyclize_chain=""
 design_cycles="3"
 fix_stdev=""
 fixbbres=""
@@ -212,6 +219,7 @@ noise_scale="0.5"
 nterm_add="0"
 nterm_trim="1"
 numdes="1"
+omitjson=""
 outprefix="outputs/rfd_des"
 ppi_hotspots=""
 redesres=""
@@ -329,6 +337,11 @@ get_newres () {
     '
 }
 
+get_newres_awk_array () {
+    get_newres $@ | sed 's/:/ /' |
+    awk '{printf "nres[\"%s\"]=\"%s\"\n", $1, $2}' | paste -sd ';'
+}
+
 calc_perc_loop () {
     local inpdb=($@)
     dss_disicl ${inpdb[0]} --append --fixedres ${inpdb[@]:1}
@@ -368,6 +381,14 @@ mkdir -p $(dirname $outprefix)
 contigs=${args[@]:1}
 outdir=$(realpath $outprefix | xargs dirname)
 tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EXIT
+
+# Clean input PDB if it is provided
+[[ -n $inpdb ]] && {
+    echo "Cleaning input PDB..."
+    clean_pdb $inpdb --keep_resn $ligname --outdir $tmpdir
+    inpdb="$tmpdir/$(basename ${inpdb%.*}).pdb"
+    mv ${inpdb%.pdb}_clean.pdb $inpdb
+}
 
 # >>> rfd_chain () >>> {{{
 rfd_chain () {
@@ -441,22 +462,22 @@ rfd_chain () {
     
     # Generate fused ligands input PDB if ligands are provided
     [[ -n $inpdb ]] && {
-        local inpdb_tmp="$tmpdir/$(basename $inpdb)"
         local ligstr=${ligname[*]}
-        awk '
+        local tmpdat=$(awk '
             $NF=="H" { next }
             $1=="ATOM" { print $0 ; next }
             $1=="HETATM" && $4~/^'"${ligstr// /|}"'$/ {
                 print substr($0, 1, 17) "LIG X   1" substr($0, 27)
                 next
             }
-        ' $inpdb > $inpdb_tmp
+        ' $inpdb)
+        echo "$tmpdat" > $inpdb
     }
     
     # Prepare options for RFdiffusion
     local rfd_opts=()
     local rfd_opts=("denoiser.noise_scale_ca=$noise_scale" "denoiser.noise_scale_frame=$noise_scale")
-    [[ -n $inpdb ]] && local rfd_opts+=("inference.input_pdb=$inpdb_tmp")
+    [[ -n $inpdb ]] && local rfd_opts+=("inference.input_pdb=$inpdb")
     
     if [[ $partial == 1 ]] ; then
         local rfd_opts+=("diffuser.partial_T=$timesteps")
@@ -467,6 +488,7 @@ rfd_chain () {
     local ligname=(${ligname[@]})
     local contigs_fixbb=$(sed -e 's|/| |g' -e 's| |\n|g' <<< "$contigs" | grep '^[A-Z]' | paste -sd ' ')
 
+    # Ligand potential
     [[ -n $ligname && $partial == 0 ]] && {
         echo "Adding substrate_contacts guiding potential"
         local rfd_opts+=(
@@ -476,12 +498,14 @@ rfd_chain () {
         )
     }
     
+    # Monomer ROG potential
     [[ $monomer_ROG == 1 && $partial == 0 ]] && {
         echo "Adding monomer_ROG guiding potential"
         local rfd_opts+=("'potentials.guiding_potentials=[\"type:monomer_ROG,weight:1,min_dist:10\"]'")
         local rfd_opts+=("potentials.guide_scale=2 potentials.guide_decay=\"quadratic\"")
     }
     
+    # Hotspot residues
     [[ -n $ppi_hotspots ]] && {
         echo "Adding hotspot residues"
         local ppi_hotspots=$(expand_res_range $ppi_hotspots)
@@ -504,6 +528,13 @@ rfd_chain () {
         local rfd_opts+=("'contigmap.inpaint_str=[${inpaint_str// //}]'")
     }
 
+    # Cyclize chain
+    [[ -n $cyclize_chain ]] && {
+        echo "Cyclizing chain $cyclize_chain for RFdiffusion"
+        local rfd_opts+=("inference.cyclic=True" "inference.cyc_chains='$cyclize_chain'")
+    }
+
+    # Input check
     [[ -n $inpdb && ! -e $inpdb ]] && {
         echo "Input PDB does not exist..."
         return
@@ -722,6 +753,7 @@ EOF
     
     # Update cstfile with new residue numbering
     [[ -s $tmpcst ]] && {
+        echo "Updating cstfile with new residue numbering"
         local garr=$(get_newres "$contigs" $fixedres | awk -F ':' -v dq='"' '{
             ch1 = substr($1,1,1) ; ch2 = substr($2,1,1)
             sub(/^[A-Z]/,"",$1)  ; sub(/^[A-Z]/,"",$2)
@@ -741,12 +773,50 @@ EOF
     
     # Update fixedres
     [[ -n $fixedres ]] && {
+        echo "Updating fixed residues with new residue numbering"
         local fixednew=$(get_newres "$contigs" $fixedres | cut -d: -f2 | paste -sd ' ')
         local mpnn_opts=("--fixedres $fixednew" ${mpnn_opts[@]})
     }
     
+    # Update biasjson and omitjson
+    [[ -n $biasjson ]] && {
+        echo "Updating biasjson with new residue numbering"
+        local nres_array=$(get_newres_awk_array "$contigs")
+        local jsonstr=$(
+            jq '.' $biasjson |
+            awk '
+                BEGIN { '"$nres_array"' }
+                $1~/[A-Z][0-9]/ {
+                    chri = $1 ; gsub(/[^A-Z0-9]/, "", chri)
+                    if (chri in nres) sub(chri, nres[chri], $0)
+                } 1
+            '
+        )
+        local biasjson="$tmpdir/bias.json"
+        echo "$jsonstr" > $biasjson
+        local mpnn_opts=("--biasjson $biasjson" ${mpnn_opts[@]})
+    }
+    [[ -n $omitjson ]] && {
+        echo "Updating omitjson with new residue numbering"
+        local nres_array=$(get_newres_awk_array "$contigs")
+        local jsonstr=$(
+            jq '.' $omitjson |
+            awk '
+                BEGIN { '"$nres_array"' }
+                $1~/[A-Z][0-9]/ {
+                    chri = $1 ; gsub(/[^A-Z0-9]/, "", chri)
+                    if (chri in nres) sub(chri, nres[chri], $0)
+                } 1
+            '
+        )
+        local omitjson="$tmpdir/omit.json"
+        echo "$jsonstr" > $omitjson
+        local mpnn_opts=("--omitjson $omitjson" ${mpnn_opts[@]})
+    }
+
     # Add native biasjson
-    [[ -n $natbias ]] && {
+    [[ -n $natbias && -z $biasjson ]] && {
+        echo "Adding biasjson with new residue numbering"
         local biasjson="$tmpdir/natbias.json"
         local newres=$(get_newres "$contigs" | cut -d: -f2 | paste -sd ' ')
         gen_natbiasjson ${diffused[0]} \

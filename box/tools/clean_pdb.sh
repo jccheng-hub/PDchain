@@ -35,6 +35,7 @@ bool_opts=(
     help                renumber                                
 )
 
+chains=""
 keep_resn=""
 outdir="."
 suffix="_clean"
@@ -114,8 +115,20 @@ clean_pdb () {
 }
 # <<< clean_pdbs () <<< }}}
 
+all_clean=()
 for inpdb in $inpdbs ; do
     cleaned="${outdir%/}/$(basename ${inpdb%.*})${suffix}.pdb"
     clean_pdb $inpdb > $cleaned
-    [[ -s $cleaned ]] && echo "Cleaned: $cleaned"
+    all_clean+=($cleaned)
 done
+
+clean_list=$(echo ${all_clean[@]} | sed 's/ /\n/g' | sed -E "s/^|$/'/g" | paste -sd ',')
+python << EOF
+from pymol import cmd
+clean_list = [$clean_list]
+for cleanpdb in clean_list:
+    cmd.load(cleanpdb, 'clean')
+    cmd.save(cleanpdb)
+    cmd.delete('all')
+    print(f'Cleaned {cleanpdb}')
+EOF

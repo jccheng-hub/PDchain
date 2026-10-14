@@ -90,10 +90,10 @@ optarg () {
 
 val_opts=(
     batch_size          biasjson            ca_stdev            cstfile
-    fix_stdev           fixedres            lig_stdev           ligname
-    model_type          nbr_dist            nbr_resfile_cmd     omitjson
-    outdir              redesres            relax_repeats       resfile
-    suffix              temperature         threads             
+    cyclize_chain       fix_stdev           fixedres            lig_stdev
+    ligname             model_type          nbr_dist            nbr_resfile_cmd
+    omitjson            outdir              redesres            relax_repeats
+    resfile             suffix              temperature         threads
 )
 
 bool_opts=(
@@ -108,6 +108,7 @@ batch_size="1"
 biasjson=""
 ca_stdev=""
 cstfile=""
+cyclize_chain=""
 fix_stdev=""
 fixedres=""
 lig_stdev=""
@@ -371,6 +372,7 @@ run_pyrosetta () {
             <True name="FullPose"/>
              Index name="FixedRes" resnums='{fixedres}'/>
              ResidueName name="Ligs" residue_name3="{ligands}"/>
+             Chain name="chain_to_cyclize" chains="$cyclize_chain"/>
         </RESIDUE_SELECTORS>
         <PACKER_PALETTES>
             <DefaultPackerPalette name="pakpal"/>
@@ -403,11 +405,13 @@ run_pyrosetta () {
              Idealize name="idealize"/>
             <MinMover name="minimize" movemap_factory="mmf" scorefxn="r15_cst"/>
              FastDesign name="fastdes" task_operations="icr,maintask" packer_palette="pakpal" movemap_factory="mmf" scorefxn="r15_cst"/>
+             PeptideCyclizeMover name="cyclize_chain" residue_selector="chain_to_cyclize"/>
         </MOVERS>
         <PROTOCOLS>
             <Add metrics="total_reu" labels="ori_reu"/>
             <Add mover_name="add_vroot"/>
             <Add mover_name="setup_metals"/>
+             Add mover_name="cyclize_chain"/>
              Add mover_name="add_csts"/>
              Add mover_name="idealize"/>
              Add mover_name="fastdes"/>
@@ -562,6 +566,14 @@ EOF
         echo 's| (Add metrics="sasa_metric")|<\1|'          >> $sed_script
         echo 's| (Add metrics="fixed_reu")|<\1|'            >> $sed_script
         echo "s|COMMA_LIST_FIXEDRES|$invfixed|"             >> $sed_script
+    }
+
+    # Cyclize chain (for cyclic peptide design)
+    [[ -n $cyclize_chain ]] && {
+        echo "Cyclizing chain $cyclize_chain"
+        echo 's| (Chain name="chain_to_cyclize")|<\1|'             >> $sed_script
+        echo 's| (PeptideCyclizeMover name="cyclize_chain")|<\1|'  >> $sed_script
+        echo 's| (Add mover_name="cyclize_chain"/>)|<\1|'          >> $sed_script
     }
 
     # Idealize

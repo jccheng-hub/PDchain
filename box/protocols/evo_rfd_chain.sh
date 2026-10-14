@@ -80,15 +80,15 @@ optarg () {
 }
 
 val_opts=(
-    addmets             backrub             ca_stdev            clash_cut
-    cterm_add           cterm_trim          design_cycles       famiperc
-    gen0perc            helix_cap           indir               inpdb
-    loop_cut            model_ckpt          model_type          natbias
-    nbr_resfile_cmd     nterm_add           nterm_trim          outdir
-    poolperc            poolsize            redes_dist          relax_repeats
-    reset_perc          rog_cut             select_met          ss_trim
-    temperature         threads             timesteps           tlim
-    vary_linkers                                                
+    addmets             backrub             biasjson            ca_stdev
+    clash_cut           cterm_add           cterm_trim          design_cycles
+    famiperc            gen0perc            helix_cap           indir
+    inpdb               loop_cut            model_ckpt          model_type
+    natbias             nbr_resfile_cmd     nterm_add           nterm_trim
+    omitjson            outdir              poolperc            poolsize
+    redes_dist          relax_repeats       reset_perc          rog_cut
+    select_met          ss_trim             temperature         threads
+    timesteps           tlim                vary_linkers        
 )
 
 bool_opts=(
@@ -101,6 +101,7 @@ bool_opts=(
 
 addmets=""
 backrub=""
+biasjson=""
 ca_stdev=""
 clash_cut=""
 cterm_add="0"
@@ -118,6 +119,7 @@ natbias=""
 nbr_resfile_cmd=""
 nterm_add="0"
 nterm_trim="1"
+omitjson=""
 outdir="./evolved"
 poolperc="10"
 poolsize="200"
