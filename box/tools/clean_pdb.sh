@@ -96,23 +96,19 @@ clean_pdb () {
     }
 
     END {
+        atid = 0 ; resi = 0
         for (j=1;j<=i;j++) {
             delete a ; split(lin[j], a)
             if (pass[a[5]a[6]] == 1) {
+                atid++
+                atid = sprintf("%5d", atid)
+                lin[j] = substr(lin[j],1,6) atid substr(lin[j], 12)
                 if ('$renumber') {
-                    if (ch=="" || ch!=a[5]) { d = a[6] - 1 ; x = 0 ; ch = a[5] ; s+=resi }
-
-                    # Check for insertion numbers
-                    if (a[6]~/[A-Z]/) {
-                        if (x_id!=a[6]) { x_id=a[6]; x++ }
+                    if (ch ri == "" || ch ri != a[5] a[6]) {
+                        ch = a[5] ; ri = a[6] ; resi++
+                        resi = sprintf("%4d", resi)
                     }
-
-                    sub(/[A-Z]/,"",a[6])
-                    resi = sprintf("%4d", a[6] - d + x + s)
                     lin[j] = substr(lin[j],1,22) resi " " substr(lin[j],28)
-
-                    # s will make it so that resi never overlaps
-                    # x will account for insertion numbers (e.g. CDR loops)
                 }
                 print lin[j]
             }
@@ -122,20 +118,8 @@ clean_pdb () {
 }
 # <<< clean_pdbs () <<< }}}
 
-all_clean=()
 for inpdb in $inpdbs ; do
     cleaned="${outdir%/}/$(basename ${inpdb%.*})${suffix}.pdb"
     clean_pdb $inpdb > $cleaned
-    all_clean+=($cleaned)
+    echo "Clean pdb: $cleaned"
 done
-
-clean_list=$(echo ${all_clean[@]} | sed 's/ /\n/g' | sed -E "s/^|$/'/g" | paste -sd ',')
-python << EOF
-from pymol import cmd
-clean_list = [$clean_list]
-for cleanpdb in clean_list:
-    cmd.load(cleanpdb, 'clean')
-    cmd.save(cleanpdb)
-    cmd.delete('all')
-    print(f'Cleaned {cleanpdb}')
-EOF

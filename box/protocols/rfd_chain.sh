@@ -561,6 +561,7 @@ rfd_chain () {
         echo "Input pdb detected and contigs set to SKIP. Skipping diffusion."
         clean_pdb $inpdb --renumber --outdir $step1 &&
         mv $step1/$(basename ${inpdb%.pdb})_clean.pdb $step1/Diffused_0.pdb
+        awk -i inplace '$1!="HETATM"' $step1/Diffused_0.pdb
         local contigs=$(gen_contigs $fixbbres --inpdb $inpdb --ss_trim 100 --ss_to_contigs --vary_linkers 0)
     else
         eval "
@@ -688,7 +689,7 @@ EOF
         local fixednew=$(get_newres "$contigs" $fixedres | cut -d: -f2 | paste -sd ' ')
         local scafscore_opts+=("--chri $fixednew")
     fi
-    
+
     # Calculate scafscore
     local diffused=($step1/Diffused_*.pdb)
     calc_perc_loop $diffused

@@ -353,14 +353,14 @@ run_pyrosetta () {
     from pyrosetta.rosetta.protocols.rosetta_scripts import XmlObjects
     
     pyrosetta.init('ROSETTA_CMD_OPTIONS')
-    inpdbs  = [INPDB_PYLIST]
-    outpdbs = [OUTPDB_PYLIST]
+    inpdbs   = [INPDB_PYLIST]
+    outpdbs  = [OUTPDB_PYLIST]
     fixedres = 'COMMA_LIST_FIXEDRES'
-    ligands = 'COMMA_LIST_LIGANDS'
-    ncaas   = 'COMMA_LIST_NCAAS'
-    resfcmd = 'RESFILE_CMD'
-    resfile = 'PATH_TO_RESFILE'
-    cstfile = 'PATH_TO_CSTFILE'
+    ligres   = 'COMMA_LIST_LIGRES'
+    ncaas    = 'COMMA_LIST_NCAAS'
+    resfcmd  = 'RESFILE_CMD'
+    resfile  = 'PATH_TO_RESFILE'
+    cstfile  = 'PATH_TO_CSTFILE'
     
     xml_string = f'''
     <ROSETTASCRIPTS>
@@ -371,7 +371,7 @@ run_pyrosetta () {
         <RESIDUE_SELECTORS>
             <True name="FullPose"/>
              Index name="FixedRes" resnums='{fixedres}'/>
-             ResidueName name="Ligs" residue_name3="{ligands}"/>
+             Index name="Ligs" resnums='{ligres}'/>
              Chain name="chain_to_cyclize" chains="$cyclize_chain"/>
         </RESIDUE_SELECTORS>
         <PACKER_PALETTES>
@@ -380,10 +380,12 @@ run_pyrosetta () {
         </PACKER_PALETTES>
         <TASKOPERATIONS>
             <IncludeCurrent name="icr"/>
+            <ResfileCommandOperation name="rpktask" residue_selector="FullPose" command="NATAA"/>
              ResfileCommandOperation name="maintask" residue_selector="FullPose" command="{resfcmd}"/>
              ReadResfile name="maintask" filename="{resfile}"/>
         </TASKOPERATIONS>
         <MOVE_MAP_FACTORIES>
+            <MoveMapFactory name="fixbb" bb="0" chi="1"/>
             <MoveMapFactory name="mmf" bb="$((1-fix_bb))" chi="$((1-fix_chi))"/>
         </MOVE_MAP_FACTORIES>
         <SIMPLE_METRICS>
@@ -391,6 +393,7 @@ run_pyrosetta () {
              TotalEnergyMetric name="fixed_reu" scoretype="total_score" residue_selector="FixedRes" scorefxn="r15"/>
              SasaMetric name="sasa_metric" residue_selector="FixedRes" sasa_metric_mode="all_sasa"/>
              HbondMetric name="hbond_metric" output_as_pdb_nums="true" residue_selector="Ligs"/>
+             RMSDMetric name="rmsd_metric" reference_name="pose2" residue_selector="FixedRes" rmsd_type="rmsd_all"/>
         </SIMPLE_METRICS>
         <FILTERS>
              DSasa name="dsasa" lower_threshold="0" upper_threshold="9999"/>
@@ -405,7 +408,12 @@ run_pyrosetta () {
              Idealize name="idealize"/>
             <MinMover name="minimize" movemap_factory="mmf" scorefxn="r15_cst"/>
              FastDesign name="fastdes" task_operations="icr,maintask" packer_palette="pakpal" movemap_factory="mmf" scorefxn="r15_cst"/>
+             FastDesign name="fastrpk" task_operations="rpktask" packer_palette="pakpal" movemap_factory="fixbb" scorefxn="r15"/>
              PeptideCyclizeMover name="cyclize_chain" residue_selector="chain_to_cyclize"/>
+             DeleteRegionMover name="delete_ligs" residue_selector="Ligs"/>
+             SavePoseMover name="save_pose1" restore_pose="0" reference_name="pose1"/>
+             SavePoseMover name="save_pose2" restore_pose="0" reference_name="pose2"/>
+             SavePoseMover name="restore_pose1" restore_pose="1" reference_name="pose1"/>
         </MOVERS>
         <PROTOCOLS>
             <Add metrics="total_reu" labels="ori_reu"/>
@@ -416,12 +424,18 @@ run_pyrosetta () {
              Add mover_name="idealize"/>
              Add mover_name="fastdes"/>
              Add mover_name="minimize"/>
+             Add mover_name="save_pose1"/>
+             Add mover_name="delete_ligs"/>
+             Add mover_name="fastrpk"/>
+             Add mover_name="save_pose2"/>
+             Add mover_name="restore_pose1"/>
             <Add metrics="total_reu" labels="fin_reu"/>
              Add metrics="fixed_reu" labels="fixedres_reu"/>
              Add metrics="sasa_metric" labels="fixedres_sasa"/>
              Add metrics="hbond_metric" labels="hbonds_to_lig"/>
              Add filter_name="dsasa"/>
              Add filter_name="ddg"/>
+             Add metrics="rmsd_metric" labels="noligrpk_rmsd"/>
         </PROTOCOLS>
         <OUTPUT scorefxn="r15"/>
     </ROSETTASCRIPTS>
@@ -458,7 +472,7 @@ EOF
     )
     [[ $extra_chis == 1 ]] && rosetta_opts+=("-ex1" "-ex2")
     [[ $renumber_chain == 1 ]] && rosetta_opts+=("-renumber_pdb" "-per_chain_renumbering")
-    
+
     # Add params from paramsdir
     local params=(${paramsdir%/}/*.params)
     [[ -n ${params[@]} ]] && {
@@ -536,13 +550,19 @@ EOF
 
     # Additional metrics for ligands
     [[ -n $ligname ]] && {
+        local ligres=$(
+            awk -v ligname="$ligname" '
+                BEGIN { n = split(ligname, a, " "); for (i=1; i<=n; i++) lig[a[i]] = 1 }
+                $1=="HETATM" && $4 in lig { print $6 $5 }
+            ' $inpdb | sort -u | paste -sd ' '
+        )
         echo "Including additional metrics for ligands."
-        echo 's| (ResidueName name="Ligs")|<\1|'            >> $sed_script
-        echo 's| (HbondMetric name="hbond_metric")|<\1|'    >> $sed_script
-        echo 's| (Add metrics="hbond_metric")|<\1|'         >> $sed_script
-        echo 's| (DSasa name="dsasa")|<\1|'                 >> $sed_script
-        echo 's| (Add filter_name="dsasa")|<\1|'            >> $sed_script
-        echo "s|COMMA_LIST_LIGANDS|${ligname// /,}|"        >> $sed_script
+        echo 's| (Index name="Ligs")|<\1|'               >> $sed_script
+        echo 's| (HbondMetric name="hbond_metric")|<\1|' >> $sed_script
+        echo 's| (Add metrics="hbond_metric")|<\1|'      >> $sed_script
+        echo 's| (DSasa name="dsasa")|<\1|'              >> $sed_script
+        echo 's| (Add filter_name="dsasa")|<\1|'         >> $sed_script
+        echo "s|COMMA_LIST_LIGRES|${ligres// /,}|"       >> $sed_script
     }
 
     # Addition metric for ppi
@@ -566,6 +586,22 @@ EOF
         echo 's| (Add metrics="sasa_metric")|<\1|'          >> $sed_script
         echo 's| (Add metrics="fixed_reu")|<\1|'            >> $sed_script
         echo "s|COMMA_LIST_FIXEDRES|$invfixed|"             >> $sed_script
+    }
+
+    # Additional metrics for fixed residues + ligands
+    [[ -n $fixedres && -n $ligname ]] && {
+        echo 's| (RMSDMetric name="rmsd_metric")|<\1|'        >> $sed_script
+        echo 's| (FastDesign name="fastrpk")|<\1|'            >> $sed_script
+        echo 's| (DeleteRegionMover name="delete_ligs")|<\1|' >> $sed_script
+        echo 's| (SavePoseMover name="save_pose1")|<\1|'      >> $sed_script
+        echo 's| (SavePoseMover name="save_pose2")|<\1|'      >> $sed_script
+        echo 's| (SavePoseMover name="restore_pose1")|<\1|'   >> $sed_script
+        echo 's| (Add mover_name="save_pose1")|<\1|'          >> $sed_script
+        echo 's| (Add mover_name="delete_ligs")|<\1|'         >> $sed_script
+        echo 's| (Add mover_name="fastrpk")|<\1|'             >> $sed_script
+        echo 's| (Add mover_name="save_pose2")|<\1|'          >> $sed_script
+        echo 's| (Add mover_name="restore_pose1")|<\1|'       >> $sed_script
+        echo 's| (Add metrics="rmsd_metric")|<\1|'            >> $sed_script
     }
 
     # Cyclize chain (for cyclic peptide design)
