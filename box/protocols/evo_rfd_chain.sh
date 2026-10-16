@@ -341,7 +341,7 @@ while [[ $SECONDS -lt $time_f ]] ; do
 
     # Run rfd_chain
     outbn=($(basename ${inpdb%.*} | sed -E 's|_([^_]+)_([^_]+)$| \1 \2|'))
-    oldgen=$(tr -cd '[0-9]' <<< "${outbn[1]}")
+    oldgen=$(tr -cd '0-9' <<< "${outbn[1]}")
     newgen=$(echo "$oldgen + 1" | bc)
     rfd_chain $contigs \
         --inpdb $inpdb \

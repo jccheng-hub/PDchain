@@ -849,10 +849,9 @@ EOF
         # Append constraints
         local bn=$(basename ${design%.*})
         [[ -s $tmpcst && $(grep '^#END_POSE_ENERGIES_TABLE' $design | wc -l) != 0 ]] && {
-            local cstlines=$(sed 's/^/#CST /' $tmpcst)
-            awk -v block="$cstlines" -i inplace '
-                {print} $1=="#END_POSE_ENERGIES_TABLE" {print block}
-            ' $design
+            local blockfile="$tmpdir/block.txt"
+            sed 's/^/#CST /' $tmpcst > $blockfile
+            sed -i "/^#END_POSE_ENERGIES_TABLE/r $blockfile" $design
             calc_cst_rmsd $design --append ; grep -h '^cst_rmsd ' $design
         }
 
@@ -983,7 +982,7 @@ EOF
 # Generate ids
 if [[ $randsuffix == 1 ]] ; then
     i=$(awk "BEGIN{print(($numdes + 1) * 6)}")
-    id=($(tr -cd 'a-z' </dev/urandom | head -c ${i} | fold -w 6))
+    id=($(tr -cd 'a-z' </dev/urandom | head -c ${i} 2>/dev/null | fold -w 6))
 else
     id=($(seq -w 0 9999))
 fi
