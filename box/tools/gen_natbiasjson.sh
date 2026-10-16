@@ -78,7 +78,7 @@ done
 
 # Useful functions
 calc    () { awk "BEGIN{print($@)}" ; }
-randstr () { tr -cd '0-9a-zA-Z' < /dev/urandom | head -c8 | xargs ;}
+randstr () { tr -cd '0-9a-zA-Z' </dev/urandom 2>/dev/null | head -c8 | xargs ;}
 
 inpdb=${args[1]}
 

@@ -982,7 +982,7 @@ EOF
 # Generate ids
 if [[ $randsuffix == 1 ]] ; then
     i=$(awk "BEGIN{print(($numdes + 1) * 6)}")
-    id=($(tr -cd 'a-z' </dev/urandom | head -c ${i} 2>/dev/null | fold -w 6))
+    id=($(tr -cd 'a-z' </dev/urandom 2>/dev/null | head -c ${i} | fold -w 6))
 else
     id=($(seq -w 0 9999))
 fi

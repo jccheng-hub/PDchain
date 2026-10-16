@@ -169,7 +169,7 @@ write_py_ss_invrot () {
     gawk -f $gawk_torslib \
     -v keepres=$keepres -v res_str="$res_str" \
     -v batchsize="$batchsize" -v keepH="$keep_hydrogens" -v outdir="$1" \
-    -v randseed=$(tr -cd '1-9' </dev/urandom | head -c8) -f - << 'EOF' $inpdb
+    -v randseed=$(tr -cd '1-9' </dev/urandom 2>/dev/null | head -c8) -f - << 'EOF' $inpdb
     BEGIN {
         srand(randseed)
     
