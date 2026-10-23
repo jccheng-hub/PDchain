@@ -656,14 +656,12 @@ rfd_chain () {
         [[ -n $ligname ]] && local add_ligand="or (inpdb and resn ${ligstr// /+})"
     
         # Pair fit
+        echo "Attempting to pair fit with PyMOL with the following: ${fit_str}"
         sed -E 's/^ {12}//' << EOF | python
             import glob
-            from pathlib import Path
             from pymol import cmd
-            diffused_list = glob.glob('$step1/Diffused*.pdb')
-            
+            diffused = '$diffused'
             cmd.load('$inpdb', 'inpdb')
-            diffused = diffused_list[0]
             cmd.load(diffused, 'diffused')
             pf = cmd.pair_fit($fit_str)
             cmd.create('obj01', 'diffused $add_ligand')
@@ -672,10 +670,11 @@ rfd_chain () {
             cmd.delete('obj01')
             with open(diffused, 'a') as f:
                 f.write(f'\npf_rmsd {pf:.4f}')
-            
-            bn = Path(diffused).stem
-            print(f'{bn} pf_rmsd {pf:.4f}')
 EOF
+        grep -h '^pf_rmsd ' $diffused || {
+            echo "Pair fitting failed... Maybe due to input PDB format?"
+            exit
+        }
     }
     
     # Get fixed residues for scafscore

@@ -165,9 +165,16 @@ pass=($indir/*.pdb)
 [[ -n $filt ]] && {
     filt=($(echo ${filt[@]} | sed 's| |\n|g' | sort -u))
     echo "The following designs were filtered out: ${filt[@]}"
-    pass=($(
+    newpass=($(
         echo ${pass[@]} ${filt[@]} | sed 's| |\n|g' | sort | uniq -u
     ))
+    if [[ ${#newpass} == 0 ]] ; then
+        echo "There are no designs left after filtering..."
+        echo "Defaulting to original input list."
+    else
+        unset pass
+        pass=(${newpass[@]})
+    fi
 }
 
 # Get metrics
@@ -240,7 +247,7 @@ gawk -v topnum=$topnum -v ranked="$tmpdir/ranked.txt" '
 ' $tmpdir/*.txt
 
 # Append the filtered to ranked list
-[[ -n $filt ]] && {
+[[ -n $filt && ${#newpass} != 0 ]] && {
     echo ${filt[@]} | sed 's| |\n|g' >> $tmpdir/ranked.txt
 }
 

@@ -396,6 +396,7 @@ run_pyrosetta () {
              RMSDMetric name="rmsd_metric" reference_name="pose2" residue_selector="FixedRes" rmsd_type="rmsd_all"/>
         </SIMPLE_METRICS>
         <FILTERS>
+            <NetCharge name="netcharge" min="-100" max="100"/>
              DSasa name="dsasa" lower_threshold="0" upper_threshold="9999"/>
              Ddg name="ddg" threshold="9999" repeats="5"/>
         </FILTERS>
@@ -433,6 +434,7 @@ run_pyrosetta () {
              Add metrics="fixed_reu" labels="fixedres_reu"/>
              Add metrics="sasa_metric" labels="fixedres_sasa"/>
              Add metrics="hbond_metric" labels="hbonds_to_lig"/>
+            <Add filter_name="netcharge"/>
              Add filter_name="dsasa"/>
              Add filter_name="ddg"/>
              Add metrics="rmsd_metric" labels="noligrpk_rmsd"/>
