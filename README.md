@@ -698,6 +698,7 @@ Note that secondary structure determination from `rfd_chain` is done with the DI
 |`ddg`|ddg metric from Rosetta (complex only); lower is better|
 |`dsasa`|dsasa metric from Rosetta (complex only)|
 |`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
+|`netcharge`|net charge metric from Rosetta|
 |`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_lig_1X`)|
 
 ## Acknowledgements

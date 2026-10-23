@@ -252,11 +252,41 @@ gawk -v topnum=$topnum -v ranked="$tmpdir/ranked.txt" '
 }
 
 # Output
+calc_pool_metrics () {
+    # Calculate metrics (avg, sd) for input rankfile's top designs
+    # $1: path to rankfile that lists the paths to all designs
+    local rankfile=$1 topnum=$topnum totnum=$totnum
+    local bnmet=$(
+        echo ${mets[@]} | sed 's/ /\n/g' |
+        sed -e 's/^.*://' -e 's/=.*$//' | paste -sd ' '
+    )
+    local topdes=$(head -n$totnum $rankfile | paste -sd ' ')
+    awk -v topnum="$topnum" '
+    $1 ~ /^('"${bnmet// /|}"')$/ && check[FILENAME][$1] == "" {
+        check[FILENAME][$1] = 1
+        s[$1]+=$2 ; n[$1]++
+
+        if (n_top[$1] >= topnum) next
+        s_top[$1]+=$2 ; n_top[$1]++
+    }
+
+    END {
+        print "metric avg_top avg_all"
+        for (met in s) {
+            if (n[met]=="" || n_top[met]=="") continue
+            print met, s_top[met] / n_top[met], s[met] / n[met]
+        }
+    }
+    ' $topdes
+}
+
 if [[ -n $outfile ]] ; then
-    mkdir -p $(dirname $outfile)
+    outfiledir=$(dirname $outfile)
+    mkdir -p $outfiledir
     sed 's|^.*/||' $tmpdir/ranked.txt > $outfile
     echo "Ranked list (best to worst) saved to $outfile"
-    echo "${mets[@]}" | sed 's/ /\n/g' > $(dirname $outfile)/ranked_metrics.txt
+    echo "${mets[@]}" | sed 's/ /\n/g' > $outfiledir/ranked_metrics.txt
+    calc_pool_metrics $tmpdir/ranked.txt > $outfiledir/ranked_avg.txt
 elif [[ $inplace == 1 ]] ; then
     tormv=($(gawk -v topnum=$topnum 'FNR > topnum' $tmpdir/ranked.txt))
     if [[ -n $tormv ]] ; then
@@ -274,6 +304,7 @@ elif [[ $inplace == 1 ]] ; then
     sed 's|^.*/||' $tmpdir/ranked.txt > $indir/ranked.txt
     echo "Ranked list (best to worst) saved to $indir/ranked.txt"
     echo "${mets[@]}" | sed 's/ /\n/g' > $indir/ranked_metrics.txt
+    calc_pool_metrics $tmpdir/ranked.txt > $indir/ranked_avg.txt
 else
     mkdir -p $outdir
     sed 's|^.*/||' $tmpdir/ranked.txt > $outdir/ranked.txt
@@ -281,4 +312,5 @@ else
     echo "Transferred top $topnum designs to $outdir"
     echo "Ranked list (best to worst) saved to $outdir/ranked.txt"
     echo "${mets[@]}" | sed 's/ /\n/g' > $outdir/ranked_metrics.txt
+    calc_pool_metrics $tmpdir/ranked.txt > $outdir/ranked_avg.txt
 fi
