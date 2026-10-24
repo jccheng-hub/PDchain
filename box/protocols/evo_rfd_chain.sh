@@ -325,7 +325,8 @@ while [[ $SECONDS -lt $time_f ]] ; do
     }
 
     # Filter and track metrics for top 10% of designs
-    num_eval=$(awk -v i=$poolsize"" 'BEGIN{printf "%.0f\n", (i * 0.1)}' | sed 's|^0$|1|')
+    cursize=$(echo $outdir/*.pdb | wc -w)
+    num_eval=$(awk -v i="$cursize" 'BEGIN{printf "%.0f\n", (i * 0.1)}' | sed 's|^0$|1|')
     filter_pool $mets --indir $outdir --num_eval $num_eval --num $poolsize --inplace
     trim_family "$outdir/ranked.txt" "$famisize" "$outdir"
 
