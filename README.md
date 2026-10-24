@@ -14,6 +14,8 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 - [Fold Validation Methods](#fold-validation-methods)
 - [Directly Running RFdiffusion, LigandMPNN and PyRosetta](#directly-running-rfdiffusion-ligandmpnn-and-pyrosetta)
 - [Built-In Metrics](#built-in-metrics)
+- [A note on AI usage](#a-note-on-ai-usage)
+- [Acknowledgements](#acknowledgements)
 
 ## Installation
 > [!IMPORTANT]
