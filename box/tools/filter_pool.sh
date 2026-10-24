@@ -266,7 +266,7 @@ calc_pool_metrics () {
         check[FILENAME][$1] = 1
         s[$1]+=$2 ; n[$1]++
 
-        if (n_top[$1] >= topnum) next
+        if (n_top[$1] >= topnum + 0) next
         s_top[$1]+=$2 ; n_top[$1]++
     }
 
