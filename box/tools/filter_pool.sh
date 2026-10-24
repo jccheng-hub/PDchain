@@ -24,6 +24,8 @@ Options:
   --indir [str]             Input directory of designs
   --perc [float]            Target top percent
   --num [int]               Target top number (overrides --perc)
+  --num_eval [int]          Target top number for metric evalulation
+                            Default to --perc or --num if not specified
   --outdir [str]            Path to output directory to store passed designs
   --outfile [str]           Path to output text file listing passed designs
                             If invoked, will not copy passed designs into output
@@ -45,8 +47,8 @@ optarg () {
 }
 
 val_opts=(
-    indir               num                 outdir              outfile
-    perc                                                        
+    indir               num                 num_eval            outdir
+    outfile             perc                                                        
 )
 
 bool_opts=(
@@ -55,6 +57,7 @@ bool_opts=(
 
 indir="REQUIRED"
 num=""
+num_eval=""
 outdir="filtered"
 outfile=""
 perc="10"
@@ -220,6 +223,7 @@ done
 totnum=${#pass[@]}
 topnum=$(awk 'BEGIN{printf "%.0f", ('"$perc * $totnum * 0.01"')}')
 [[ -n $num ]] && topnum=$num
+[[ -z $num_eval ]] && num_eval=$topnum
 echo "Threshold: $topnum / $totnum"
 
 gawk -v topnum=$topnum -v ranked="$tmpdir/ranked.txt" '
@@ -255,7 +259,7 @@ gawk -v topnum=$topnum -v ranked="$tmpdir/ranked.txt" '
 calc_pool_metrics () {
     # Calculate metrics (avg, sd) for input rankfile's top designs
     # $1: path to rankfile that lists the paths to all designs
-    local rankfile=$1 topnum=$topnum totnum=$totnum
+    local rankfile=$1 topnum=$num_eval totnum=$totnum
     local bnmet=$(
         echo ${mets[@]} | sed 's/ /\n/g' |
         sed -e 's/^.*://' -e 's/=.*$//' | paste -sd ' '

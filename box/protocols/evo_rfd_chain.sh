@@ -303,42 +303,6 @@ while [[ $SECONDS -lt $time_f ]] ; do
         echo "$inpdb does not exist." && continue
     fi
 
-    # # Prepare values for rog_cut and loop_cut (tolerate small increase in base value)
-    # unset extra_opts
-    # rog_cut_tol=$(awk '
-    #     $1=="rog_ala" && $2 { sum += $2 ; idx++ ; val[idx] = $2 }
-    #     END {
-    #         if (idx + 0 > 20) {
-    #             avg = sum / idx
-    #             for (i=1; i<=idx; i++) { ssq += ( val[i] - avg )^2 }
-    #             print sqrt(ssq / idx)
-    #         } else if (idx + 0 > 0) {
-    #             print 9999
-    #         } else {
-    #             print 0
-    #         }
-    #     }
-    # ' $outdir/*.pdb)
-    # loop_cut_tol=$(awk '
-    #     $1=="perc_loop" && $2 { sum += $2 ; idx++ ; val[idx] = $2 }
-    #     END {
-    #         if (idx + 0 > 20) {
-    #             avg = sum / idx
-    #             for (i=1; i<=idx; i++) { ssq += ( val[i] - avg )^2 }
-    #             print sqrt(ssq / idx)
-    #         } else if (idx + 0 > 0) {
-    #             print 9999
-    #         } else {
-    #             print 0
-    #         }
-    #     }
-    # ' $outdir/*.pdb)
-    # rog_cut_true=$(awk -v tol="$rog_cut_tol" '$1=="rog_ala" && $2 {print $2 + tol}' $inpdb)
-    # loop_cut_true=$(awk -v tol="$loop_cut_tol" '$1=="perc_loop" && $2 {print $2 + tol}' $inpdb)
-    # [[ -n $rog_cut_true ]] && extra_opts+=("--rog_cut $rog_cut_true")
-    # [[ -n $loop_cut_true ]] && extra_opts+=("--loop_cut $loop_cut_true")
-    # [[ -n $extra_opts ]] && echo "Appending the following options: ${extra_opts[@]}"
-
     # Run rfd_chain
     outbn=($(basename ${inpdb%.*} | sed -E 's|_([^_]+)_([^_]+)$| \1 \2|'))
     oldgen=$(tr -cd '0-9' <<< "${outbn[1]}")
@@ -360,8 +324,9 @@ while [[ $SECONDS -lt $time_f ]] ; do
         done
     }
 
-    # Filter
-    filter_pool $mets --indir $outdir --num $poolsize --inplace
+    # Filter and track metrics for top 10% of designs
+    num_eval=$(awk -v i=$poolsize"" 'BEGIN{printf "%.0f\n", (i * 0.1)}' | sed 's|^0$|1|')
+    filter_pool $mets --indir $outdir --num_eval $num_eval --num $poolsize --inplace
     trim_family "$outdir/ranked.txt" "$famisize" "$outdir"
 
     # If gen0perc is set and the gen0 pool is below threshold, then exit
