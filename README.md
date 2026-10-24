@@ -3,8 +3,6 @@ Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN
 
 Supported platforms: osx-arm64, linux-64, linux-aarch64.
 
-None of the original code in this repository was AI-generated.
-
 ## Table of Contents
 - [Installation](#installation)
 - [Running PDchain Commands](#running-pdchain-commands)
@@ -700,6 +698,9 @@ Note that secondary structure determination from `rfd_chain` is done with the DI
 |`cst_rmsd`|root mean squared deviations from specified constraints; lower is better|
 |`netcharge`|net charge metric from Rosetta|
 |`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_lig_1X`)|
+
+## A note on AI usage
+While AI was used by the author as a resource for picking up a range of programming techniques, none of the original scripts presented in this repository (e.g. scripts in box/protocols and box/tools) were AI-generated nor modified from AI-generated work.
 
 ## Acknowledgements
 PDchain was built on top of the following works:
