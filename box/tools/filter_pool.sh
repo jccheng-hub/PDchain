@@ -288,10 +288,16 @@ if [[ -n $outfile ]] ; then
     outfiledir=$(dirname $outfile)
     mkdir -p $outfiledir
     sed 's|^.*/||' $tmpdir/ranked.txt > $outfile
-    echo "Ranked list (best to worst) saved to $outfile"
     echo "${mets[@]}" | sed 's/ /\n/g' > $outfiledir/ranked_metrics.txt
-    calc_pool_metrics $tmpdir/ranked.txt > $outfiledir/ranked_avg.txt
+    tmpdat=$(calc_pool_metrics $tmpdir/ranked.txt)
+    echo "$tmpdat" > $outfiledir/ranked_avg.txt
+    echo "Ranked list (best to worst) saved to $outfile"
 elif [[ $inplace == 1 ]] ; then
+    sed 's|^.*/||' $tmpdir/ranked.txt > $indir/ranked.txt
+    echo "${mets[@]}" | sed 's/ /\n/g' > $indir/ranked_metrics.txt
+    tmpdat=$(calc_pool_metrics $tmpdir/ranked.txt)
+    echo "$tmpdat" > $indir/ranked_avg.txt
+
     tormv=($(gawk -v topnum=$topnum 'FNR > topnum' $tmpdir/ranked.txt))
     if [[ -n $tormv ]] ; then
         mkdir -p $indir/archive
@@ -305,16 +311,14 @@ elif [[ $inplace == 1 ]] ; then
     else
         echo "No designs were archived"
     fi
-    sed 's|^.*/||' $tmpdir/ranked.txt > $indir/ranked.txt
     echo "Ranked list (best to worst) saved to $indir/ranked.txt"
-    echo "${mets[@]}" | sed 's/ /\n/g' > $indir/ranked_metrics.txt
-    calc_pool_metrics $tmpdir/ranked.txt > $indir/ranked_avg.txt
 else
     mkdir -p $outdir
     sed 's|^.*/||' $tmpdir/ranked.txt > $outdir/ranked.txt
+    echo "${mets[@]}" | sed 's/ /\n/g' > $outdir/ranked_metrics.txt
+    tmpdat=$(calc_pool_metrics $tmpdir/ranked.txt)
+    echo "$tmpdat" > $outdir/ranked_avg.txt
     cp $(head -n $topnum $tmpdir/ranked.txt) $outdir
     echo "Transferred top $topnum designs to $outdir"
     echo "Ranked list (best to worst) saved to $outdir/ranked.txt"
-    echo "${mets[@]}" | sed 's/ /\n/g' > $outdir/ranked_metrics.txt
-    calc_pool_metrics $tmpdir/ranked.txt > $outdir/ranked_avg.txt
 fi
