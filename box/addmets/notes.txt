@@ -14,10 +14,9 @@ following requirements:
 For example, try the calc_molar_abs.sh in this directory on one of the clean
 PDBs provided at examples/inputs.
 
-./calc_molar_abs.sh $PIXI_PROJECT_ROOT/examples/inputs/1a53_clean.pdb
+./calc_molar_abs.sh inputs/1a53_clean.pdb
 
 For these scripts to be applied during rfd_chain or evo_rfd_chain, add the option
 --addmets. For example:
 
-# Run from the examples directory
 mpros inputs/1a53_clean.pdb --relax --ca_stdev 1 --addmets calc_molar_abs.sh

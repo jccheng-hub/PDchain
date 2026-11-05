@@ -255,14 +255,14 @@ for inpdb in $indir/*.pdb ; do
         cp -v $inpdb $outdir/${bnpdb}_gen0_orides.pdb
     }
 done
-filter_pool $mets --indir $outdir --num $poolsize --inplace
+rank_pool $mets --indir $outdir --num $poolsize --inplace
 
 # Start evolving
 while [[ $SECONDS -lt $time_f ]] ; do
 
     # Get ranked file
     rankfile="$tmpdir/ranked.txt"
-    filter_pool $mets --indir $outdir --num $poolsize --outfile $rankfile
+    rank_pool $mets --indir $outdir --num $poolsize --outfile $rankfile
 
     # Pull random subset of designs from pool, then choose best one from subset
     cursize=$(echo $outdir/*.pdb | wc -w)
@@ -324,10 +324,10 @@ while [[ $SECONDS -lt $time_f ]] ; do
         done
     }
 
-    # Filter and track metrics for top 10% of designs
+    # Filter and track metrics for top 1% of designs
     cursize=$(echo $outdir/*.pdb | wc -w)
-    num_eval=$(awk -v i="$cursize" 'BEGIN{printf "%.0f\n", (i * 0.1)}' | sed 's|^0$|1|')
-    filter_pool $mets --indir $outdir --num_eval $num_eval --num $poolsize --inplace
+    num_eval=$(awk -v i="$cursize" 'BEGIN{printf "%.0f\n", (i * 0.01)}' | sed 's|^0$|1|')
+    rank_pool $mets --indir $outdir --num_eval $num_eval --num $poolsize --inplace
     trim_family "$outdir/ranked.txt" "$famisize" "$outdir"
 
     # If gen0perc is set and the gen0 pool is below threshold, then exit

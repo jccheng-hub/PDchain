@@ -167,7 +167,7 @@ EOF
 # >>> write_py_ss_invrot () >>> {{{
 write_py_ss_invrot () {
     gawk -f $gawk_torslib \
-    -v keepres=$keepres -v res_str="$res_str" \
+    -v keepres="$keepres" -v res_str="$res_str" \
     -v batchsize="$batchsize" -v keepH="$keep_hydrogens" -v outdir="$1" \
     -v randseed=$(tr -cd '1-9' </dev/urandom 2>/dev/null | head -c8) -f - << 'EOF' $inpdb
     BEGIN {
@@ -329,16 +329,24 @@ detect_chain_clashes () {
         for (ch1 in x) for (ch2 in x) {
             if (ch1 > ch2) continue    # Avoid double-counting chains
             for (ri1 in x[ch1]) for (ri2 in x[ch2]) {
-                for (nm1 in x[ch1][ri1]) for (nm2 in x[ch2][ri2]) {
+                for (nm1 in x[ch1][ri1]) {
+                    for (nm2 in x[ch2][ri2]) {
     
-                    # Calculate distance
-                    dx = x[ch1][ri1][nm1] - x[ch2][ri2][nm2]
-                    dy = y[ch1][ri1][nm1] - y[ch2][ri2][nm2]
-                    dz = z[ch1][ri1][nm1] - z[ch2][ri2][nm2]
-                    d_sq = dx*dx + dy*dy + dz*dz
-    
-                    if (d_sq > clashcut_sq) continue
-                    if (ch1 != ch2) { inter_clashes++ } else { intra_clashes++ }
+                        # Calculate distance
+                        dx = x[ch1][ri1][nm1] - x[ch2][ri2][nm2]
+                        dy = y[ch1][ri1][nm1] - y[ch2][ri2][nm2]
+                        dz = z[ch1][ri1][nm1] - z[ch2][ri2][nm2]
+                        d_sq = dx*dx + dy*dy + dz*dz
+
+                        # If distance between any two atoms between two residues is > 5 * clash_cut
+                        # then break and quit comparing between the two residues
+                        if (d_sq > clashcut_sq * 25 ) breaksig = 1
+                        if (breaksig == 1) break
+
+                        if (d_sq > clashcut_sq) continue
+                        if (ch1 != ch2) { inter_clashes++ } else { intra_clashes++ }
+                    }
+                    if (breaksig == 1) { breaksig = 0 ; break }
                 }
             }
         }
@@ -363,26 +371,13 @@ EOF
 # >>> keepres to keepstr >>> {{{
 [[ -n $keepres ]] && keepstr=$(gawk -v keepres="$keepres" '
     BEGIN {
-        keepexp = expand_range(keepres)
-        n = split(keepexp, a)
+        n = split(keepres, a, " ")
         for (i=1; i<=n; i++) {
-            b = substr(a[i], 1, 1) "/" substr(a[i], 2) "/"
-            keepstr = keepstr ? keepstr " + " b : b
+            ch = substr(a[i], 1, 1)
+            ri = substr(a[i], 2)
+            if (i>1) { printf " + " }
+            printf "%s/%s/", ch, ri
         }
-        print keepstr
-    }
-    
-    function expand_range(res,    a, b, i, j, n, m, ch, range) {
-        n = split(res, a)
-        for (i=1; i<=n; i++) {
-            ch = a[i]; gsub(/[^A-Z]/, "", ch)
-            gsub(/[A-Z]/, "", a[i])
-            m = split(a[i], b, "-")
-            for (j=b[1]; j<=b[m]; j++) {
-                range = range == "" ? ch j : range " " ch j
-            }
-        }
-        return range
     }
 ')
 # <<< keepres to keepstr <<< }}}

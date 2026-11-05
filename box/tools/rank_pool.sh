@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 usage () { cat << EOF
-Usage: filter_pool METRIC... --indir [str]
-Filter designs in pool using specified metrics.
+Usage: rank_pool METRIC... --indir [str]
+Rank designs in pool using specified metrics.
 
 Ranking algorithm:
 1.  Make an ordered list of each metric
@@ -48,7 +48,7 @@ optarg () {
 
 val_opts=(
     indir               num                 num_eval            outdir
-    outfile             perc                                                        
+    outfile             perc
 )
 
 bool_opts=(
@@ -58,9 +58,9 @@ bool_opts=(
 indir="REQUIRED"
 num=""
 num_eval=""
-outdir="filtered"
+outdir="ranked"
 outfile=""
-perc="10"
+perc="1"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

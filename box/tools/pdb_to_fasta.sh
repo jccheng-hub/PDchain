@@ -70,7 +70,7 @@ pixirun="pixi run -m $pixitoml -e"
 
 pdb_to_fasta () {
     local inpdbs=$@
-    awk -v OFS=',' '
+    awk '
     BEGIN {
         olc["ALA"]="A" ; olc["ARG"]="R" ; olc["ASN"]="N" ; olc["ASP"]="D"
         olc["CYS"]="C" ; olc["GLU"]="E" ; olc["GLN"]="Q" ; olc["GLY"]="G"
@@ -79,7 +79,7 @@ pdb_to_fasta () {
         olc["THR"]="T" ; olc["TRP"]="W" ; olc["TYR"]="Y" ; olc["VAL"]="V"
     }
     
-    FNR == 1 { ch = $5 }
+    $1~/^(ATOM|HETATM)$/ && ch == "" { ch = $5 }
    
     $1~/^(ATOM|HETATM)$/ && $3=="CA" && $NF!="CA" {
         if (ch != $5) { seq = seq ":" ; ch = $5 }

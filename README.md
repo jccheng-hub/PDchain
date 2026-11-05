@@ -14,7 +14,7 @@ Supported platforms: osx-arm64, linux-64, linux-aarch64.
 - [Fold Validation Methods](#fold-validation-methods)
 - [Directly Running RFdiffusion, LigandMPNN and PyRosetta](#directly-running-rfdiffusion-ligandmpnn-and-pyrosetta)
 - [Built-In Metrics](#built-in-metrics)
-- [A note on AI usage](#a-note-on-ai-usage)
+- [Disclosure on AI usage](#disclosure-on-ai-usage)
 - [Acknowledgements](#acknowledgements)
 
 ## Installation
@@ -701,8 +701,8 @@ Note that secondary structure determination from `rfd_chain` is done with the DI
 |`netcharge`|net charge metric from Rosetta|
 |`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_lig_1X`)|
 
-## A note on AI usage
-While AI was used by the author as a resource for learning a range of programming techniques (many of which were leveraged when making this repository), none of the scripts in PDchain (e.g. scripts in `box/protocols` and `box/tools`) were AI-generated nor modified from AI-generated work.
+## Disclosure on AI usage
+AI was used by the author as a resource for learning a range of programming techniques (many of which were leveraged when making this repository). None of the scripts in PDchain (e.g. scripts in `box/protocols` and `box/tools`) were AI-generated nor modified from AI-generated work.
 
 ## Acknowledgements
 PDchain was built on top of the following works:
