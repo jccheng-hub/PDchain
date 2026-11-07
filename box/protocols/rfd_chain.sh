@@ -73,6 +73,7 @@ Contigs options:
 
 RFdiffusion options:
   --timesteps [int]         Number of timesteps for RFdiffusion
+                            Can specify range (e.g. --timesteps 1-3)
   --rog_cut [float]         Cutoff for poly-ala ROG metric. Lower values are
                             more compact and globular. For a 200-residue
                             protein, --rog_cut 16 is a good start. Adjust value
@@ -487,6 +488,13 @@ rfd_chain () {
     local rfd_opts=("denoiser.noise_scale_ca=$noise_scale" "denoiser.noise_scale_frame=$noise_scale")
     [[ -n $inpdb ]] && local rfd_opts+=("inference.input_pdb=${inpdb%.pdb}_fusion.pdb")
     
+    # Extract timesteps
+    local timesteps=$(
+        a=($(awk -v t="$timesteps" '
+            BEGIN {split(t, a, "-") ; a[2]=a[2]?a[2]:a[1] ; print a[1], a[2]}
+        '))
+        seq ${a[0]} ${a[1]} | shuf -n1
+    )
     if [[ $partial == 1 ]] ; then
         local rfd_opts+=("diffuser.partial_T=$timesteps")
     else

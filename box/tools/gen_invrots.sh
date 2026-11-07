@@ -426,8 +426,9 @@ EOF
     rm ${tormv[@]} &>/dev/null && echo "[$bnsub] Removed ${#tormv[@]} inverse rotamers from $batchdir"
 
     local outpdbs=($batchdir/*.pdb)
-    [[ ${#outpdbs[@]} -gt 0 ]] &&
-    mv ${outpdbs[@]} $groupdir && echo "[$bnsub] ${#outpdbs[@]} rotamers saved to $groupdir"
+    [[ ${#outpdbs[@]} -gt 0 ]] && {
+        mv ${outpdbs[@]} $groupdir && echo "[$bnsub] ${#outpdbs[@]} rotamers saved to $groupdir"
+    }
 }
 # <<< gen_invrots () <<< }}}
 
@@ -445,7 +446,12 @@ cycle_gen_invrots () {
         local tormv=($(sha256sum ${outrots[@]} 2>/dev/null | awk 'h[$1]++ {print$2}'))
         rm ${tormv[@]} &>/dev/null && echo "[$bnsub] Removed ${#tormv[@]} inverse rotamers from $groupdir"
 
+        local outrots=($groupdir/$(basename ${inpdb%.*})_??????.pdb)
         echo "[$bnsub] ${#outrots[@]} total rotamers in $groupdir"
+        [[ ${#outrots[@]} == 0 ]] && {
+            echo "[$bnsub] No rotamers were found in this batch. Consider tweaking --inter_ctol or --intra_ctol."
+            return
+        }
     done
 }
 

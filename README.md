@@ -702,7 +702,7 @@ Note that secondary structure determination from `rfd_chain` is done with the DI
 |`hbonds_to_lig_[resid]`|number of hbonds to `[resid]` calculated from Rosetta (protein-ligand complex only); follows the pdb numbering format (resi+chain) (e.g. `hbonds_to_lig_1X`)|
 
 ## Disclosure on AI usage
-AI was used by the author as a resource for learning a range of programming techniques (many of which were leveraged when making this repository). None of the scripts in PDchain (e.g. scripts in `box/protocols` and `box/tools`) were AI-generated nor modified from AI-generated work.
+AI was used by the author as a resource for learning a range of programming techniques (many of which were leveraged when making this repository). All of the scripts in PDchain (e.g. scripts in `box/protocols` and `box/tools`) were hand coded; none were AI generated nor modified from AI-generated work.
 
 ## Acknowledgements
 PDchain was built on top of the following works:
