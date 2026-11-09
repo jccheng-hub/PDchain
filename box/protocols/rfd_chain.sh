@@ -339,7 +339,7 @@ get_newres () {
 }
 
 get_newres_awk_array () {
-    get_newres $@ | sed 's/:/ /' |
+    get_newres "$@" | sed 's/:/ /' |
     awk '{printf "nres[\"%s\"]=\"%s\"\n", $1, $2}' | paste -sd ';'
 }
 
@@ -522,7 +522,7 @@ rfd_chain () {
     
     # Hotspot residues
     [[ -n $ppi_hotspots ]] && {
-        echo "Adding hotspot residues"
+        echo "Adding hotspot residues $ppi_hotspots"
         local ppi_hotspots=$(expand_res_range $ppi_hotspots)
         local rfd_opts+=("'ppi.hotspot_res=[${ppi_hotspots// /,}]'")
     }
@@ -535,11 +535,11 @@ rfd_chain () {
     
     # Inpainting
     [[ -n $inpaint_seq ]] && {
-        echo -n "Masking the following residues with --inpaint_seq: ${inpaint_seq}"
+        echo "Masking the following residues with --inpaint_seq: ${inpaint_seq}"
         local rfd_opts+=("'contigmap.inpaint_seq=[${inpaint_seq// //}]'")
     }
     [[ -n $inpaint_str ]] && {
-        echo -n "Masking the following structures with --inpaint_str: ${inpaint_str}"
+        echo "Masking the following structures with --inpaint_str: ${inpaint_str}"
         local rfd_opts+=("'contigmap.inpaint_str=[${inpaint_str// //}]'")
     }
 
@@ -582,9 +582,32 @@ rfd_chain () {
         "
     fi
     
+    # If inpaint_seq is used, fill in the glycines with the original sequence
+    [[ -n $inpaint_seq ]] && {
+        echo "Replacing inpainted glycines with their original AA..."
+        local nres_array=$(get_newres_awk_array "$contigs")
+        awk '
+        BEGIN {
+            '"$nres_array"'
+            for (chri in nres) { ores[nres[chri]] = chri }
+        }
+        NR == FNR {
+            if ($1=="ATOM" && $3=="CA") { resn[$5$6] = $4 }
+            next
+        }
+        NR > FNR {
+            if ($1=="ATOM" && ores[$5$6] in resn) {
+                sub("GLY", resn[ores[$5$6]], $0)
+            }
+            print $0
+        }
+        ' $inpdb $step1/Diffused_0.pdb > $step1/tmp.pdb
+        mv $step1/tmp.pdb $step1/Diffused_0.pdb
+    }
+
     # Rerun RFdiffusion if --backrub was enabled
     [[ -n $inpdb && -n $backrub ]] && {
-        echo -n "The option --backrub was enabled. "
+        echo "The option --backrub was enabled."
         echo "Running partial diffusion with $backrub timesteps..."
         if [[ -n $fixedres ]] ; then
             local newfixbb=$(get_newres "$contigs" $fixbbres | cut -d: -f2 | paste -sd ' ')
