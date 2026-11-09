@@ -1,7 +1,9 @@
 # PDchain
-Command-line tools for chaining protein design software (RFdiffusion, LigandMPNN, and PyRosetta) using a pixi workspace. Can iteratively optimize designs based on desired metrics with an *in silico* continuous evolution system.
+An accessible cross-platform pixi workspace with command-line tools for chaining protein design software (RFdiffusion, LigandMPNN, and PyRosetta). Can iteratively optimize designs based on desired metrics with an *in silico* continuous evolution system.
 
-Supported platforms: osx-arm64, linux-64, linux-aarch64.
+Supported platforms: osx-arm64, linux-64, linux-aarch64
+
+A GPU workspace setup is available for Macs and CUDA-compatible Linux (or Windows Subsystem for Linux) systems. For Linux or WSL systems without CUDA compatibility, CPU-only setups are also available.
 
 ## Table of Contents
 - [Installation](#installation)

@@ -188,7 +188,7 @@ all_opts=($(echo "${all_opts[@]}" | sed 's|--|\n--|g' | sed '/^--inpdb /d'))
 all_opts=($(echo "${all_opts[@]}" | sed 's|--|\n--|g' | sed '/^--indir /d'))
 
 shopt -s nullglob
-outdir="${outdir%/}" ; mkdir -p $outdir
+outdir="${outdir%/}" ; mkdir -p $outdir/archive
 
 # Check time limit
 tlim_s=$(gawk -v tlim="$tlim" 'BEGIN {

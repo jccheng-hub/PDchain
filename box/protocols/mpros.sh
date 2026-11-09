@@ -262,10 +262,12 @@ mpnn_opts=(
     echo "Using json for omitting residues $omitjson"
     mpnn_opts+=("--omit_AA_per_residue \"$omitjson\"")
 }
-[[ $disallow_cys == 1 ]] && {
+if [[ $disallow_cys == 1 ]] ; then
     echo "Excluding cysteines from sequence design"
     mpnn_opts+=("--omit_AA \"C\"")
-}
+else
+    echo "The option --disallow_cys was NOT used. You may get unwanted disulfide bonds in your designs!"
+fi
 
 # --- run_mpnn () --- # {{{
 run_mpnn () {
@@ -415,6 +417,7 @@ run_pyrosetta () {
              SavePoseMover name="save_pose1" restore_pose="0" reference_name="pose1"/>
              SavePoseMover name="save_pose2" restore_pose="0" reference_name="pose2"/>
              SavePoseMover name="restore_pose1" restore_pose="1" reference_name="pose1"/>
+             InterfaceAnalyzerMover name="analyze_ppi" pack_separated="1"/>
         </MOVERS>
         <PROTOCOLS>
             <Add metrics="total_reu" labels="ori_reu"/>
@@ -438,6 +441,7 @@ run_pyrosetta () {
              Add filter_name="dsasa"/>
              Add filter_name="ddg"/>
              Add metrics="rmsd_metric" labels="noligrpk_rmsd"/>
+             Add mover_name="analyze_ppi"/>
         </PROTOCOLS>
         <OUTPUT scorefxn="r15"/>
     </ROSETTASCRIPTS>
@@ -567,7 +571,14 @@ EOF
         echo "s|COMMA_LIST_LIGRES|${ligres// /,}|"       >> $sed_script
     }
 
-    # Addition metric for ppi
+    # Additional metric for ppi
+    [[ $(awk '$1=="ATOM" && $3=="CA" && !ch[$5] {ch[$5]++; n++} END {print n}' $inpdb) -gt 1 ]] && {
+        echo "Including metrics for ppi."
+        echo 's| (InterfaceAnalyzerMover name="analyze_ppi")|<\1|'  >> $sed_script
+        echo 's| (Add mover_name="analyze_ppi")|<\1|'               >> $sed_script
+    }
+
+    # Additional metric for multiple chains
     [[ $(awk '$1~/^ATOM|HETATM$/ && !ch[$5] {ch[$5]++; n++} END {print n}' $inpdb) -gt 1 ]] && {
         echo "Including metrics for multiple chains."
         echo 's| (Ddg name="ddg")|<\1|'                     >> $sed_script

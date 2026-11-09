@@ -383,7 +383,6 @@ contigs=${args[@]:1}
 outdir=$(realpath $outprefix | xargs dirname)
 tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EXIT
 
-
 # >>> rfd_chain () >>> {{{
 rfd_chain () {
     local contigs=$1 outprefix=$2
