@@ -551,14 +551,19 @@ gen_contigs_from_disicl () {
                 ss_str = substr(ss_str, 1, i-1) "X" substr(ss_str, i+1)
             }
         }
-
+        
         # Remake ss array from ss_str
         delete ss ; split(ss_str, ss, "")
-    
+
         # Make contigs
         c = 1    # index for contigs
         for (i=1; i<=NR; i++) {
-            if (ch[i-1] && ch[i-1]!=ch[i]) { ctg[c] = ctg[c] "/0" ; c++ ; count = 0 }
+            if (ch[i-1] && ch[i-1]!=ch[i]) {
+                if (!ctg[c]) { ctg[c] = block }
+                ctg[c] = ctg[c] "/0"
+                c++
+                count = 0
+            }
             if (ss[i-1] && ss[i-1]!=ss[i]) { count = 0 } ; count++
             if (ss[i]=="L") {
                 block = count "-" count
@@ -601,6 +606,7 @@ reslist=${args[@]:1}
 # Generate initial contigs
 if [[ $ss_to_contigs == 1 ]] ; then
     [[ -z $inpdb ]] && { echo "Requires --inpdb if invoking --ss_to_contigs"; exit ;}
+    gen_contigs_from_disicl $inpdb $reslist ; exit #DEBUG
     contigs=$(gen_contigs_from_disicl $inpdb $reslist)
 elif [[ -n $reslist ]] ; then
     contigs=$(gen_contigs_from_reslist $reslist)

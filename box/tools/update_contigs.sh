@@ -172,6 +172,8 @@ update_contigs () {
 
 if [[ $newcontigs == SKIP ]] ; then
     echo $oldcontigs
+elif [[ "$oldcontigs" == "$newcontigs" ]] ; then
+    echo $oldcontigs
 else
     update_contigs "$oldcontigs" "$newcontigs"
 fi

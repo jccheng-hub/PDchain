@@ -108,11 +108,17 @@ mets="mp_dst mp_dev rog_ala fc_dst fc_dev clash fc_compact mp_fc_dst nbr_count_u
 
 # >>> gawk_script >>> {{{
 gawk_script='
-    BEGIN {
+    BEGINFILE {
         nbr_count = '"$nbr_count"'
         if (!chri)    chri = "'"$chri"'"
         if (!resn)    resn = "'"$resn"'"
-    
+
+        if (chri == "" && resn == "") {
+            skip_extra_metrics = 1
+        } else {
+            skip_extra_metrics = 0
+        }
+
         if (chri != "" || resn != "") {
             chri = expand_range(chri)
             split(chri, a) ; for (i in a) foc_chri[a[i]] = 1
@@ -120,7 +126,7 @@ gawk_script='
         }
     }
     
-    $1~/^('"${mets// /|}"')$/ { next } 1
+    $1~/^('"${mets// /|}"')/ { next } 1
     
     $1!~/^(ATOM|HETATM)$/ || $NF == "H" { next }
     
@@ -156,25 +162,33 @@ gawk_script='
     
         rog_ala = calc_arog(nfc)  # Output ROG for poly-alanine
         print "rog_ala " rog_ala
-    
+
+        # Chain-specific base metrics
+        for (ch in nfc) {
+            copy_array(nfc[ch], nfc_i[ch])
+            rog_ala_i = calc_arog(nfc_i)
+            printf "rog_ala_%s %s\n", ch, rog_ala_i
+            delete nfc_i
+        }
+   
         # Additional metrics with focus residues
-        if (!(chri != "" || resn != "")) exit  # Exit if no focus residues were provided
+        if (skip_extra_metrics==0) {
+            midpoint(foc, mp_foc)  # Midpoint of focus residues
+            fc_dev = pdev(mp_foc, nfc, nbr_count)  # Mean midpoint deviation from focus midpoint
+            print "fc_dev " fc_dev
     
-        midpoint(foc, mp_foc)  # Midpoint of focus residues
-        fc_dev = pdev(mp_foc, nfc, nbr_count)  # Mean midpoint deviation from focus midpoint
-        print "fc_dev " fc_dev
+            clash = clash_count(foc, nfc)  # Number of clashes
+            print "clash " clash
     
-        clash = clash_count(foc, nfc)  # Number of clashes
-        print "clash " clash
+            fc_compact = calc_local_arog(foc, nfc, nbr_count)  # Compactness around focus atoms
+            print "fc_compact " fc_compact
     
-        fc_compact = calc_local_arog(foc, nfc, nbr_count)  # Compactness around focus atoms
-        print "fc_compact " fc_compact
+            mp_fc_dst = pdst(mp, foc)  # Mean distance between midpoint and focus atoms
+            print "mp_fc_dst " mp_fc_dst
     
-        mp_fc_dst = pdst(mp, foc)  # Mean distance between midpoint and focus atoms
-        print "mp_fc_dst " mp_fc_dst
-    
-        print "nbr_count_used " nbr_count  # Report nbr_count used for calculations
-        delete foc ; delete nfc
+            print "nbr_count_used " nbr_count  # Report nbr_count used for calculations
+            delete foc ; delete nfc
+        }
     }
     
     function copy_array(orig, copy,    k) {
@@ -460,7 +474,7 @@ gawk -i inplace -f <(echo "$gawk_script") ${inpdbs[@]}
 
 # Report
 awk '
-$1~/^('"${mets// /|}"')$/ {
+$1~/^('"${mets// /|}"')/ {
     # f = FILENAME ; sub(/^.*\//, "", f) ; sub(/\..*$/, "", f) ; print f, $0
     print $0
 }' ${inpdbs[@]}

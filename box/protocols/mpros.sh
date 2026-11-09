@@ -417,7 +417,7 @@ run_pyrosetta () {
              SavePoseMover name="save_pose1" restore_pose="0" reference_name="pose1"/>
              SavePoseMover name="save_pose2" restore_pose="0" reference_name="pose2"/>
              SavePoseMover name="restore_pose1" restore_pose="1" reference_name="pose1"/>
-             InterfaceAnalyzerMover name="analyze_ppi" pack_separated="1"/>
+             InterfaceAnalyzerMover name="analyze_ppi" interface="A_B" pack_separated="1"/>
         </MOVERS>
         <PROTOCOLS>
             <Add metrics="total_reu" labels="ori_reu"/>

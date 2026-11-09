@@ -297,7 +297,7 @@ get_newres () {
             }
 
             $1~/^(ATOM|HETATM)$/ && $3=="CA" && $NF!~/CA/ {
-                if (oldres && !($5 $6 in res_o)) next
+                if (oldres!="" && !($5 $6 in res_o)) next
                 print $5 $6 ":" $5 $6
             }
         ' $inpdb
@@ -314,7 +314,8 @@ get_newres () {
             print a[n]
         }' | paste -sd ' '
     )
-    sed -e 's|/|\n|g' -e 's/ /\n/g' <<< "$contigs" |
+
+    sed -e 's| \+| |' -e 's|/|\n|g' -e 's/ /\n/g' <<< "$contigs" |
     awk -v oldres="${*:2}" -F '-' '
         BEGIN {
             n = split(oldres, a, " ")
@@ -326,7 +327,7 @@ get_newres () {
             s = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             split(s, ch, "") ; ch_i = 1 ; resi = 1
         }
-        $1 == 0       { ch_i++ ; next }
+        $1 == 0 || $1 == "0" { ch_i++ ; next }
         $1 ~ /^[0-9]/ { resi += $1 ; next }
         $1 ~ /^[A-Z]/ {
             ch_o = substr($1, 1, 1)  ;  sub(/^[A-Z]/, "", $1)
@@ -426,11 +427,13 @@ rfd_chain () {
     
     # Get data from previous runs
     [[ -n $inpdb ]] && {
-        local oldcontigs=$(sed -n "s/^contigs //p" $inpdb_ori)
+        [[ -z $contigs ]] && local oldcontigs=$(sed -n "s/^contigs //p" $inpdb_ori)
         local oldfixed=$(sed -n "s/^fixedres //p" $inpdb_ori)
         local oldlig=$(sed -n "s/^ligname //p" $inpdb_ori)
         local oldcsts=$(sed -n 's/^#CST //p' $inpdb_ori)
         local oldcyc=$(sed -n 's/^cyclize_chain //p' $inpdb_ori)
+        local oldppi=$(sed -n 's/^ppi_hotspots //p' $inpdb_ori)
+
         [[ -z $fixedres && -n $oldfixed ]] && {
             echo "Using fixedres residues found in input PDB: $oldfixed"
             local fixedres="$oldfixed"
@@ -438,7 +441,9 @@ rfd_chain () {
         }
         [[ -z $fixbbres && -n $oldcontigs ]] && {
             echo "Using contigs found in input PDB for fixbbres: $oldcontigs"
-            local oldfixbb=$(echo $oldcontigs | sed 's|/|\n|g' | sed -n '/^[A-Z]/p' | paste -sd ' ')
+            local oldfixbb=$(
+                echo $oldcontigs | sed -E 's;(/| );\n;g' | sed -n '/^[A-Z]/p' | paste -sd ' '
+            )
             local fixbbres=$(get_newres "$oldcontigs" $oldfixbb | cut -d: -f2 | paste -sd ' ')
             local contigs_opts+=("--ss_to_contigs")
         }
@@ -451,6 +456,10 @@ rfd_chain () {
             echo "Cyclizing chain $oldcyc due to input PDB data"
             local cyclize_chain="$oldcyc"
             local all_opts+=("--cyclize_chain $cyclize_chain")
+        }
+        [[ -z $ppi_hotspots && -n $oldppi ]] && {
+            echo "Using hotspots found in input PDB: $oldppi"
+            local ppi_hotspots="$oldppi"
         }
     }
 
@@ -526,7 +535,7 @@ rfd_chain () {
         local ppi_hotspots=$(expand_res_range $ppi_hotspots)
         local rfd_opts+=("'ppi.hotspot_res=[${ppi_hotspots// /,}]'")
     }
-    
+
     # Model Checkpoint
     [[ -n $model_ckpt ]] && {
         echo "Using ${model_ckpt}_ckpt.pt model for RFdiffusion"
@@ -569,6 +578,12 @@ rfd_chain () {
         clean_pdb $inpdb --renumber --outdir $step1 &&
         mv $step1/$(basename ${inpdb%.pdb})_clean.pdb $step1/Diffused_0.pdb
         awk -i inplace '$1!="HETATM"' $step1/Diffused_0.pdb
+        [[ -z $fixbbres ]] && {
+            local fixbbres=$(awk '
+                $1=="ATOM" && !check[$5$6] { check[$5$6]++ }
+                END { for (chri in check) { print chri } }
+            ' $inpdb | sort -k1,1.1 -k1.2n | paste -sd ' ')
+        }
         local contigs=$(gen_contigs $fixbbres --inpdb $inpdb --ss_trim 100 --ss_to_contigs --vary_linkers 0)
     else
         eval "
@@ -684,7 +699,7 @@ rfd_chain () {
         # Add ligand
         local ligstr=${ligname[*]}
         [[ -n $ligname ]] && local add_ligand="or (inpdb and resn ${ligstr// /+})"
-    
+
         # Pair fit
         echo "Attempting to pair fit with PyMOL with the following: ${fit_str}"
         sed -E 's/^ {12}//' << EOF | python
@@ -811,9 +826,15 @@ EOF
     
     # Update fixedres
     [[ -n $fixedres ]] && {
-        echo "Updating fixed residues with new residue numbering"
         local fixednew=$(get_newres "$contigs" $fixedres | cut -d: -f2 | paste -sd ' ')
         local mpnn_opts=("--fixedres $fixednew" ${mpnn_opts[@]})
+        echo "Updated fixed residues with new residue numbering: $fixednew"
+    }
+
+    # Update hotspot residues
+    [[ -n $ppi_hotspots ]] && {
+        local ppi_hotspots_new=$(get_newres "$contigs" $ppi_hotspots | cut -d: -f2 | paste -sd ' ')
+        echo "Updated hotspot residues with new residue numbering: $ppi_hotspots_new"
     }
     
     # Update biasjson and omitjson
@@ -893,6 +914,7 @@ EOF
         echo "contigs $contigs_f" | tee -a $design
         [[ -n $inpdb ]] && echo "inpdb $(basename ${inpdb%.*})" | tee -a $design
         [[ -n $fixednew ]] && echo "fixedres $fixednew" | tee -a $design
+        [[ -n $ppi_hotspots_new ]] && echo "ppi_hotspots $ppi_hotspots_new" | tee -a $design
         [[ -n $ligname ]] && echo "ligname ${ligname[*]}" | tee -a $design
         [[ -n $cyclize_chain ]] && echo "cyclize_chain $cyclize_chain" | tee -a $design
 
