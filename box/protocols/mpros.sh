@@ -687,6 +687,8 @@ EOF
     # Calculate energy per res
     local outpdb
     for outpdb in $outdir/*.pdb ; do
+        # Replace slashes with underscores (prevents rank_pool from crashing)
+        sed -i -E '/^[a-z]/s|/|_|g' $outpdb
 
         # Report Rosetta metrics
         grep -h '^[a-z]' $outpdb | awk '$1!~/^(label|weights|pose)$/'
