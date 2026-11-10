@@ -585,7 +585,7 @@ gen_contigs_from_disicl () {
 # <<< gen_contigs_from_disicl () <<< }}}
 
 edit_linkers () {
-    local contigs=$@
+    local contigs="$@"
     echo $contigs | sed 's|/|\n|g' | sed 's/ /\n/g' |
     awk -v dev=$vary_linkers -v inc=$inc_only -v dec=$dec_only '
     BEGIN { srand() }
@@ -597,7 +597,7 @@ edit_linkers () {
         else if (coin < 0.5)  { n = a[1] + d }
         else if (coin >= 0.5) { n = a[1] - d }
         n = (n > 1) ? n : 1
-        if (rand() < 0.75) { print $0 } else { print n"-"n }
+        if (rand() < 0.5) { print $0 } else { print n"-"n }
     }' | paste -sd '/' | sed 's|/0/|/0 |'
 }
 

@@ -83,7 +83,9 @@ val_opts=(
     addmets             backrub             biasjson            ca_stdev
     clash_cut           cterm_add           cterm_trim          design_cycles
     famiperc            gen0perc            helix_cap           indir
-    inpdb               loop_cut            model_ckpt          model_type
+    inpaint_seq         inpaint_seq_ch      inpaint_str         inpaint_str_ch
+    inpdb               loop_cut
+    model_ckpt          model_type
     natbias             nbr_resfile_cmd     nterm_add           nterm_trim
     omitjson            outdir              poolperc            poolsize
     redes_dist          relax_repeats       reset_perc          rog_cut
@@ -94,7 +96,7 @@ val_opts=(
 bool_opts=(
     auto_update         dec_only            disallow_cys        fix_bb
     fix_chi             fixed_seg_only      help                idealize
-    ignore_metals       inc_only            inpaint_seq         monomer_ROG
+    ignore_metals       inc_only            monomer_ROG
     partial             persistent          ppi_mode            relax
     rosetta_lig_nbr     sc_context          skip_diffusion      stop_at_capacity
 )

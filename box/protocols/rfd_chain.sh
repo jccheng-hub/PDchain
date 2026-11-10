@@ -169,7 +169,8 @@ val_opts=(
     ca_stdev            clash_cut           cstfile             cterm_add
     cterm_trim          cyclize_chain       design_cycles       fix_stdev
     fixbbres            fixedres            gap_range           helix_cap
-    indir               inpaint_seq         inpaint_str         inpdb
+    indir               inpaint_seq         inpaint_seq_ch      inpaint_str
+    inpaint_str_ch      inpdb
     lig_stdev           ligname             loop_cut            model_ckpt
     model_type          natbias             nbr_dist            nbr_resfile_cmd
     noise_scale         nterm_add           nterm_trim          numdes
@@ -206,7 +207,9 @@ gap_range="20-100"
 helix_cap=""
 indir=""
 inpaint_seq=""
+inpaint_seq_ch=""
 inpaint_str=""
+inpaint_str_ch=""
 inpdb=""
 lig_stdev=""
 ligname=""
@@ -543,6 +546,20 @@ rfd_chain () {
     }
     
     # Inpainting
+    [[ -n $inpaint_seq_ch && -n $inpdb ]] && {
+        local inpaint_seq=$(
+            for ch in $inpaint_seq_ch ; do
+                awk -v ch="$ch" '$1~/ATOM/ && $3=="CA" && $5==ch { print $5 $6 }' $inpdb
+            done | paste -sd ' '
+        )
+    }
+    [[ -n $inpaint_str_ch && -n $inpdb ]] && {
+        local inpaint_str=$(
+            for ch in $inpaint_str_ch ; do
+                awk -v ch="$ch" '$1~/ATOM/ && $3=="CA" && $5==ch { print $5 $6 }' $inpdb
+            done | paste -sd ' '
+        )
+    }
     [[ -n $inpaint_seq ]] && {
         echo "Masking the following residues with --inpaint_seq: ${inpaint_seq}"
         local rfd_opts+=("'contigmap.inpaint_seq=[${inpaint_seq// //}]'")
@@ -597,29 +614,6 @@ rfd_chain () {
         "
     fi
     
-    # If inpaint_seq is used, fill in the glycines with the original sequence
-    [[ -n $inpaint_seq ]] && {
-        echo "Replacing inpainted glycines with their original AA..."
-        local nres_array=$(get_newres_awk_array "$contigs")
-        awk '
-        BEGIN {
-            '"$nres_array"'
-            for (chri in nres) { ores[nres[chri]] = chri }
-        }
-        NR == FNR {
-            if ($1=="ATOM" && $3=="CA") { resn[$5$6] = $4 }
-            next
-        }
-        NR > FNR {
-            if ($1=="ATOM" && ores[$5$6] in resn) {
-                sub("GLY", resn[ores[$5$6]], $0)
-            }
-            print $0
-        }
-        ' $inpdb $step1/Diffused_0.pdb > $step1/tmp.pdb
-        mv $step1/tmp.pdb $step1/Diffused_0.pdb
-    }
-
     # Rerun RFdiffusion if --backrub was enabled
     [[ -n $inpdb && -n $backrub ]] && {
         echo "The option --backrub was enabled."
@@ -652,6 +646,29 @@ rfd_chain () {
         mv $step1/ReDiffused_0.pdb $step1/Diffused_0.pdb
     }
     
+    # If inpaint_seq is used, fill in the glycines with the original sequence
+    [[ -n $inpaint_seq ]] && {
+        echo "Replacing inpainted glycines with their original AA..."
+        local nres_array=$(get_newres_awk_array "$contigs")
+        awk '
+        BEGIN {
+            '"$nres_array"'
+            for (chri in nres) { ores[nres[chri]] = chri }
+        }
+        NR == FNR {
+            if ($1=="ATOM" && $3=="CA") { resn[$5$6] = $4 }
+            next
+        }
+        NR > FNR {
+            if ($1=="ATOM" && ores[$5$6] in resn) {
+                sub("GLY", resn[ores[$5$6]], $0)
+            }
+            print $0
+        }
+        ' $inpdb $step1/Diffused_0.pdb > $step1/tmp.pdb
+        mv $step1/tmp.pdb $step1/Diffused_0.pdb
+    }
+
     local diffused=($step1/Diffused_*.pdb)
     [[ -s $diffused ]] || return
 
