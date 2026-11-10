@@ -606,7 +606,6 @@ reslist=${args[@]:1}
 # Generate initial contigs
 if [[ $ss_to_contigs == 1 ]] ; then
     [[ -z $inpdb ]] && { echo "Requires --inpdb if invoking --ss_to_contigs"; exit ;}
-    gen_contigs_from_disicl $inpdb $reslist ; exit #DEBUG
     contigs=$(gen_contigs_from_disicl $inpdb $reslist)
 elif [[ -n $reslist ]] ; then
     contigs=$(gen_contigs_from_reslist $reslist)
