@@ -167,7 +167,8 @@ optarg () {
 val_opts=(
     addmets             ap_stdev            backrub             biasjson
     ca_stdev            clash_cut           cstfile             cterm_add
-    cterm_trim          cyclize_chain       design_cycles       fix_stdev
+    cterm_trim          cyclize_chain       design_cycles
+    fix_ca_stdev        fix_stdev
     fixbbres            fixedres            gap_range           helix_cap
     indir               inpaint_seq         inpaint_seq_ch      inpaint_str
     inpaint_str_ch      inpdb
@@ -672,16 +673,10 @@ rfd_chain () {
     local diffused=($step1/Diffused_*.pdb)
     [[ -s $diffused ]] || return
 
-    # Prepare MPNN options
-    local mpnn_opts=(${all_opts[*]} "--repack")
-    
-    # If --idealize is used, then idealize diffused backbone, then take out idealize flag
+    # If --idealize is used, then idealize diffused backbone
     [[ $idealize == 1 ]] && {
         echo "Idealizing scaffold with Rosetta..."
         mpros $diffused --idealize --inplace --skip_mpnn --skip_mpnn_score >/dev/null
-        mpnn_opts=($(
-            sed 's/--/\n--/g' <<< "${mpnn_opts[@]}" | awk 'NF && $1!="--idealize"'
-        ))
     }
 
     # Align diffused output to original input PDB
@@ -789,6 +784,13 @@ EOF
         echo "No scaffolds passed filters. Exiting." && return
     }
     
+    # Prepare MPNN options ; add --repack, and remove all stdev except CA
+    local mpnn_opts=(${all_opts[*]} "--repack")
+    local mpnn_opts=($(
+        sed 's/--/\n--/g' <<< "${mpnn_opts[@]}" |
+        grep -v -E "^(--idealize|--fix_stdev|--fix_ca_stdev|--lig_stdev|--ap_stdev|--cstfile)( |$)"
+    ))
+
     # Generate cstfile
     local tmpcst="$tmpdir/constraints.cst"
     [[ -n $cstfile ]] && cp $cstfile $tmpcst
@@ -796,10 +798,16 @@ EOF
         echo "Using old constraints found in input PDB: $(wc -l <<< "$oldcsts") constraints"
         echo "$oldcsts" > $tmpcst
     }
-    [[ -n $inpdb && -n $fixedres && -n $fix_stdev ]] && {
+    if [[ -n $inpdb && -n $fixedres && -n $fix_stdev ]] ; then
         gen_coord_csts $inpdb --chri $fixedres --crd_stdev $fix_stdev >> $tmpcst
         echo "Generated coordinate constraints for $fixedres"
-    }
+    elif [[ -n $inpdb && -n $fixedres && -n $fix_ca_stdev ]] ; then
+        gen_coord_csts $inpdb \
+            --chri $fixedres \
+            --crd_stdev $fix_ca_stdev \
+            --name CA | awk '$2=="CA"' >> $tmpcst
+        echo "Generated CA coordinate constraints for $fixedres"
+    fi  
     [[ -n $inpdb && -n $ligname && -n $lig_stdev ]] && {
         gen_coord_csts $inpdb --resn ${ligname[*]} --crd_stdev $lig_stdev >> $tmpcst
         echo "Generated coordinate constraints for ${ligname[*]}"
@@ -840,7 +848,7 @@ EOF
         echo "Adding a total of $(wc -l < $tmpcst) constraints as a cstfile..."
         local mpnn_opts=("--cstfile $tmpcst" ${mpnn_opts[@]})
     }
-    
+
     # Update fixedres
     [[ -n $fixedres ]] && {
         local fixednew=$(get_newres "$contigs" $fixedres | cut -d: -f2 | paste -sd ' ')

@@ -445,10 +445,10 @@ A copy of my own outputs is located at `inputs/4a_oripool`.
 ### 4b - Selecting Candidates for Evolution
 The directory `inputs/4a_oripool` contains an initial batch of de novo designs, and many of these will not have desirable properties. For example, the ligand might be too exposed, the scaffold may be too elongated or loopy, etc.
 
-To avoid having to parse through a large batch of designs by hand, you can leverage the `filter_pool` command to select designs based on your desired criteria.
+To avoid having to parse through a large batch of designs by hand, you can leverage the `rank_pool` command to select designs based on your desired criteria.
 
 ```bash
-filter_pool min:fc_compact min:fc_dev min:rog_ala \
+rank_pool min:fc_compact min:fc_dev min:rog_ala \
     --indir inputs/4a_oripool \
     --perc 5 \
     --outdir outputs/4b_filtered
@@ -459,16 +459,16 @@ Open up the outputs in pymol for a sanity check.
 pymol outputs/4b_filtered/*.pdb
 ```
 
-Here, we are instructing `filter_pool` to rank designs in `inputs/4a_oripool` based on three metrics: `fc_compact`, `fc_dev`, and `rog_ala`. In this case, we are aiming for lower values of each with the `min` prefix. The `max` and `val` prefix are also available (run `filter_pool --help` for more details). Lower values of `fc_compact` and `fc_dev` correlate with pocket formation around the ligand, and lower values of `rog_ala` correlate with the compactness and globularity of the overall protein scaffold. See [Built-In Metrics](#built-in-metrics) for more info on metrics.
+Here, we are instructing `rank_pool` to rank designs in `inputs/4a_oripool` based on three metrics: `fc_compact`, `fc_dev`, and `rog_ala`. In this case, we are aiming for lower values of each with the `min` prefix. The `max` and `val` prefix are also available (run `rank_pool --help` for more details). Lower values of `fc_compact` and `fc_dev` correlate with pocket formation around the ligand, and lower values of `rog_ala` correlate with the compactness and globularity of the overall protein scaffold. See [Built-In Metrics](#built-in-metrics) for more info on metrics.
 
-The choice of metrics for `filter_pool` may not be immediately obvious *a priori*. You might need to experiment with various metrics to see which combination selects for more reasonable scaffolds depending on your active site. Generally, the three used up here is a good start for ligand binders.
+The choice of metrics for `rank_pool` may not be immediately obvious *a priori*. You might need to experiment with various metrics to see which combination selects for more reasonable scaffolds depending on your active site. Generally, the three used up here is a good start for ligand binders.
 
 Keep in mind that selecting for more metrics doesn't necessarily correlate with better outputs, especially for this small batch of 200 designs. The algorithm works by finding designs that are *least offensive* across all listed metrics, and trying to be inoffensive for a large number of metrics all at once will yield designs that do inadequately on everything.
 
 `--perc 5` specifies that we want to output the top 5% of designs, which will be stored in `outputs/4b_filtered` in this case.
 
 > [!Note]
-The command `filter_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `filter_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `fc_compact`, `fc_dev`, and `rog_ala`. The algorithm then starts eliminating the worst designs on each metric. During each elimination round, (at most) three designs are eliminated: the design with the worst `fc_compact`, the design with the worst `fc_dev`, and the design with the worst `rog_ala`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
+The command `rank_pool` ranks designs with a relativistic reverse-elimination approach. Essentially, every specified metric given to `rank_pool` will generate a list ordering the designs based on that metric. In this case, we will have ordered lists for for `fc_compact`, `fc_dev`, and `rog_ala`. The algorithm then starts eliminating the worst designs on each metric. During each elimination round, (at most) three designs are eliminated: the design with the worst `fc_compact`, the design with the worst `fc_dev`, and the design with the worst `rog_ala`. This process repeats itself until all designs are eliminated, and the one eliminated last is considered the best. This ranking approach will therefore highly rank designs that are well-rounded based on the specified metric relative to other designs in the pool.
 
 ### 4c - Evolving Designs (Major Rediffusion)
 The scaffold `inputs/4b_filtered/ex4_5rgf_denovo_0134.pdb` seems promising. The ligand is a bit too buried, but the scaffold wraps around it nicely without being unreasonably loopy. There are a couple others in this batch that might also work, but I will stick with this one for the following section.
@@ -685,6 +685,8 @@ Note that secondary structure determination from `rfd_chain` is done with the DI
 |`fixedres_perc_loop`|loop composition of fixed residues +/- 3|
 |`clash`|clashes between focus residues and poly-ala scaffold; lower is better|
 |`rog_ala`|approximate radius of gyration (heavy atoms only; all heavy atoms treated with equal weight); lower ~ compact and globular|
+|`rog_ala_A`|approximate radius of gyration (heavy atoms only; all heavy atoms treated with equal weight) for chain A; lower ~ compact and globular|
+|`rog_ala_B`|approximate radius of gyration (heavy atoms only; all heavy atoms treated with equal weight) for chain B; lower ~ compact and globular|
 |`mp_dev`|standard deviation of distances between scaffold midpoint and all scaffold atoms; lower ~ hollow and globluar|
 |`mp_fc_dst`|distance between the midpoint of focus residues and the midpoint of the rest of the poly-ala scaffold|
 |`fc_compact`|root mean squared distance between focus midpoint and atoms of the 50 closest residues; lower ~ compact backbone around ligands; works best for compact ligands|

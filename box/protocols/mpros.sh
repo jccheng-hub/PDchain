@@ -90,7 +90,8 @@ optarg () {
 
 val_opts=(
     batch_size          biasjson            ca_stdev            cstfile
-    cyclize_chain       fix_stdev           fixedres            lig_stdev
+    cyclize_chain       fix_ca_stdev        fix_stdev           fixedres
+    lig_stdev
     ligname             model_type          nbr_dist            nbr_resfile_cmd
     omitjson            outdir              redesres            relax_repeats
     resfile             suffix              temperature         threads
@@ -540,9 +541,27 @@ EOF
             [[ -n $fix_stdev && -n $fixedres ]] && {
                 gen_coord_csts $pdb --chri $fixedres --crd_stdev $fix_stdev >> $pdbcst
             }
+            [[ -n $fix_ca_stdev && -n $fixedres ]] && {
+                gen_coord_csts $inpdb \
+                    --chri $fixedres \
+                    --crd_stdev $fix_ca_stdev \
+                    --name CA | awk '$2=="CA"' >> $tmpcst
+            }
             [[ -n $lig_stdev && -n $ligname ]] && {
                 gen_coord_csts $pdb --resn $ligname --crd_stdev $lig_stdev >> $pdbcst
             }
+
+            # Remove additional constraints applied to the same atom or atompair
+            awk -i inpace '
+                $1=="CoordinateConstraint" && crd[$3][$2]++ { next }
+                $1=="AtomPair" && atm[$3][$2][$5][$4]++ {
+                    atm[$5][$4][$3][$2]++ ; next
+                }
+                $1=="AtomPair" && atm[$5][$4][$3][$2]++ {
+                    atm[$3][$2][$5][$4]++ ; next
+                }
+                { print }
+            ' $pdbcst
         done
     done
     
