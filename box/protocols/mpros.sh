@@ -552,7 +552,7 @@ EOF
             }
 
             # Remove additional constraints applied to the same atom or atompair
-            awk -i inpace '
+            awk -i inplace '
                 $1=="CoordinateConstraint" && crd[$3][$2]++ { next }
                 $1=="AtomPair" && atm[$3][$2][$5][$4]++ {
                     atm[$5][$4][$3][$2]++ ; next
