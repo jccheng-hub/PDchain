@@ -542,10 +542,10 @@ EOF
                 gen_coord_csts $pdb --chri $fixedres --crd_stdev $fix_stdev >> $pdbcst
             }
             [[ -n $fix_ca_stdev && -n $fixedres ]] && {
-                gen_coord_csts $inpdb \
+                gen_coord_csts $pdb \
                     --chri $fixedres \
-                    --crd_stdev $fix_ca_stdev \
-                    --name CA | awk '$2=="CA"' >> $tmpcst
+                    --name CA \
+                    --crd_stdev $fix_ca_stdev >> $pdbcst
             }
             [[ -n $lig_stdev && -n $ligname ]] && {
                 gen_coord_csts $pdb --resn $ligname --crd_stdev $lig_stdev >> $pdbcst

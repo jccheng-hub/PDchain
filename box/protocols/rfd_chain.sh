@@ -804,8 +804,8 @@ EOF
     elif [[ -n $inpdb && -n $fixedres && -n $fix_ca_stdev ]] ; then
         gen_coord_csts $inpdb \
             --chri $fixedres \
-            --crd_stdev $fix_ca_stdev \
-            --name CA | awk '$2=="CA"' >> $tmpcst
+            --name CA \
+            --crd_stdev $fix_ca_stdev >> $tmpcst
         echo "Generated CA coordinate constraints for $fixedres"
     fi  
     [[ -n $inpdb && -n $ligname && -n $lig_stdev ]] && {

@@ -11,6 +11,10 @@ Options:
                             E.g. --chri A31-33 A71
   --resn [str]              Residues to fix in resn format
                             E.g. --resn ZN BMH
+  --chain [str]             Chain IDs to fix
+                            E.g. --chain A
+  --resi [str]              Residue indices to fix
+                            E.g. --resi 4-10
   --name [str]              Atoms to fix with name
                             E.g. --name N CA C
   --crd_stdev [float]       Strength/deviation of constraint
@@ -31,17 +35,15 @@ optarg () {
 }
 
 val_opts=(
-    chri                crd_stdev           name                resn
+    chain               chri                crd_stdev           name
+    resi                resn
 )
 
 bool_opts=(
     help                hetatm                                  
 )
 
-chri=""
 crd_stdev="0.5"
-name=""
-resn=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -85,29 +87,45 @@ inpdb=${args[1]}
 
 awk -v crd_stdev="$crd_stdev" '
     BEGIN {
-        n = split("'"$chri"'", a, " ")
+        n = n_chri = split("'"$chri"'", a, " ")
         for (i=1; i<=n; i++) {
             ch = a[i] ; gsub(/[^A-Z]/, "", ch)
-
             m = split(a[i], b, "-")
             gsub(/[^0-9]/, "", b[1])
             b[2] = b[2] ? b[2] : b[1]
-
             for (ri=b[1]+0; ri<=b[2]+0; ri++) {
                 chri[ch ri] = 1
             }
         }
 
-        n = split("'"$resn"'", a, " ")
+        n = n_resi = split("'"$resi"'", a, " ")
+        for (i=1; i<=n; i++) {
+            m = split(a[i], b, "-")
+            b[2] = b[2] ? b[2] : b[1]
+            for (ri=b[1]+0; ri<=b[2]+0; ri++) {
+                resi[ri] = 1
+            }
+        }
+
+        n = n_chain = split("'"$chain"'", a, " ")
+        for (i=1; i<=n; i++) chain[a[i]] = 1
+
+        n = n_resn = split("'"$resn"'", a, " ")
         for (i=1; i<=n; i++) resn[a[i]] = 1
 
-        n = split("'"$name"'", a, " ")
+        n = n_name = split("'"$name"'", a, " ")
         for (i=1; i<=n; i++) name[a[i]] = 1
     }
 
     $1!~/^(ATOM|HETATM)$/ || $NF=="H" { next }
 
-    $5 $6 in chri || $4 in resn || $3 in name {
+    n_chri  > 0 && !($5 $6 in chri) { next }
+    n_chain > 0 && !($5 in chain)   { next }
+    n_resi  > 0 && !($6 in resi)    { next }
+    n_resn  > 0 && !($4 in resn)    { next }
+    n_name  > 0 && !($3 in name)    { next }
+
+    {
         printf "CoordinateConstraint %s %s CA 1 ", $3, $6 $5
         printf "%s %s %s HARMONIC 0 %s\n", $7, $8, $9, crd_stdev
     }
