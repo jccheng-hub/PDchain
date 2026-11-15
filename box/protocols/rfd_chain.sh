@@ -535,19 +535,8 @@ rfd_chain () {
         echo "Adding hotspot residues $ppi_hotspots"
         local ppi_hotspots=$(expand_res_range $ppi_hotspots)
         local rfd_opts+=("'ppi.hotspot_res=[${ppi_hotspots// /,}]'")
-
-        [[ -n $model_ckpt ]] && {
-            echo "The flag --ppi_hotspots was invoked without --model_ckpt. Assuming --model_ckpt Complex_base"
-            local model_ckpt="Complex_base"
-        }
     }
 
-    # Model Checkpoint
-    [[ -n $model_ckpt ]] && {
-        echo "Using ${model_ckpt}_ckpt.pt model for RFdiffusion"
-        local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/${model_ckpt}_ckpt.pt")
-    }
-    
     # Inpainting
     [[ -n $inpaint_seq_ch && -n $inpdb ]] && {
         local inpaint_seq=$(
@@ -578,6 +567,12 @@ rfd_chain () {
         local rfd_opts+=("inference.cyclic=True" "inference.cyc_chains='$cyclize_chain'")
     }
 
+    # Model Checkpoint
+    [[ -n $model_ckpt ]] && {
+        echo "Using ${model_ckpt}_ckpt.pt model for RFdiffusion"
+        local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/${model_ckpt}_ckpt.pt")
+    }
+    
     # Input check
     [[ -n $inpdb && ! -e $inpdb ]] && {
         echo "Input PDB does not exist..."
