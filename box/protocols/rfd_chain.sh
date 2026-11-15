@@ -138,7 +138,7 @@ LigandMPNN + PyRosetta options:
                             ligands
   --disallow_cys            Disallow cysteines during design
   --sc_context              Use side chain atoms as ligands during LigandMPNN
-  --idealize                Idealize bond lengths and bond angles
+  --skip_idealize           Skip idealizing bond lengths and bond angles
   --relax                   Use relax as a refinement
   --rosetta_lig_nbr         Use RosettaDesign on residues within --nbr_dist of
                             ligands. Cysteines are prohibited.
@@ -181,18 +181,18 @@ val_opts=(
 
 bool_opts=(
     dec_only            disallow_cys        fix_bb              fix_chi
-    help                idealize            ignore_metals
+    help                skip_idealize       ignore_metals
     inc_only            monomer_ROG         partial             persistent
     random_order        randsuffix          regap               relax
     rosetta_lig_nbr     sc_context          skip_mpnn           skip_refine
-    ss_to_contigs                                               
+    ss_to_contigs       skip_relax          no_ca_csts
 )
 
 addmets=""
 ap_stdev=""
 backrub=""
 biasjson=""
-ca_stdev=""
+ca_stdev="1"
 clash_cut=""
 cstfile=""
 cterm_add="0"
@@ -535,6 +535,11 @@ rfd_chain () {
         echo "Adding hotspot residues $ppi_hotspots"
         local ppi_hotspots=$(expand_res_range $ppi_hotspots)
         local rfd_opts+=("'ppi.hotspot_res=[${ppi_hotspots// /,}]'")
+
+        [[ -n $model_ckpt ]] && {
+            echo "The flag --ppi_hotspots was invoked without --model_ckpt. Assuming --model_ckpt Complex_base"
+            local model_ckpt="Complex_base"
+        }
     }
 
     # Model Checkpoint
@@ -676,9 +681,9 @@ rfd_chain () {
     local diffused=($step1/Diffused_*.pdb)
     [[ -s $diffused ]] || return
 
-    # If --idealize is used, then idealize diffused backbone
-    [[ $idealize == 1 ]] && {
-        echo "Idealizing scaffold with Rosetta..."
+    # If --skip_idealize is not used, then idealize diffused backbone
+    [[ $skip_idealize != 1 ]] && {
+        echo "Idealizing scaffold with Rosetta. Use --skip_idealize to turn this off."
         mpros $diffused --idealize --inplace --skip_mpnn --skip_mpnn_score >/dev/null
     }
 
@@ -793,6 +798,16 @@ EOF
         sed 's/--/\n--/g' <<< "${mpnn_opts[@]}" |
         grep -v -E "^(--idealize|--fix_stdev|--fix_ca_stdev|--lig_stdev|--ap_stdev|--cstfile)( |$)"
     ))
+
+    # Add flags if --skip_... was not used
+    [[ $skip_relax != 1 ]] && {
+        local mpnn_opts+=(--relax)
+        echo "Added --relax ; use the option --skip_relax to turn this off."
+    }
+    [[ $no_ca_csts != 1 && -n $ca_stdev ]] && {
+        local mpnn_opts+=(--ca_stdev $ca_stdev)
+        echo "Added --ca_stdev $ca_stdev ; use the option --no_ca_csts to turn this off."
+    }
 
     # Generate cstfile
     local tmpcst="$tmpdir/constraints.cst"
