@@ -684,9 +684,15 @@ rfd_chain () {
 
     # Align diffused output to original input PDB
     [[ -n $inpdb ]] && {
-        local restab=$(get_newres "$contigs" $fixedres)
+        if [[ -z $fixedres && -z $fixbbres ]] ; then
+            local pf_fixed=$(awk '$1=="ATOM" && !a[$5$6]++ {print $5$6}' $inpdb | paste -sd ' ')
+            local pf_contigs=$(gen_contigs $pf_fixed --inpdb $inpdb --ss_to_contigs)
+            local restab=$(get_newres "$pf_contigs" $pf_fixed)
+        else
+            local restab=$(get_newres "$contigs" $fixedres)
+        fi
         local orires_list=$(echo "$restab" | cut -d: -f1 | paste -sd ' ')
-    
+        
         # Write pair fit string
         local fit_str=$(echo "$restab" | awk -F ':' '
             {
@@ -710,13 +716,12 @@ rfd_chain () {
                 }
             }
         ' | sed "s/!/'/g" | paste -sd ',')
-        
+
         # Add ligand
         local ligstr=${ligname[*]}
         [[ -n $ligname ]] && local add_ligand="or (inpdb and resn ${ligstr// /+})"
 
         # Pair fit
-        echo "Attempting to pair fit with PyMOL with the following: ${fit_str}"
         sed -E 's/^ {12}//' << EOF | python
             import glob
             from pymol import cmd
@@ -731,6 +736,7 @@ rfd_chain () {
             with open(diffused, 'a') as f:
                 f.write(f'\npf_rmsd {pf:.4f}')
 EOF
+
         grep -h '^pf_rmsd ' $diffused || {
             echo "Pair fitting failed... Maybe due to input PDB format?"
             exit
@@ -805,12 +811,10 @@ EOF
     }
 
     # Generate cstfile
-    local tmpcst="$tmpdir/constraints.cst"
-    [[ -n $cstfile ]] && cp $cstfile $tmpcst
-    [[ -z $cstfile && -n $oldcsts ]] && {
-        echo "Using old constraints found in input PDB: $(wc -l <<< "$oldcsts") constraints"
-        echo "$oldcsts" > $tmpcst
-    }
+    local tmpcst="$tmpdir/constraints.cst" ; echo -n > $tmpcst
+
+    [[ -n $cstfile ]] && cat $cstfile >> $tmpcst
+
     if [[ -n $inpdb && -n $fixedres && -n $fix_stdev ]] ; then
         gen_coord_csts $inpdb --chri $fixedres --crd_stdev $fix_stdev >> $tmpcst
         echo "Generated coordinate constraints for $fixedres"
@@ -821,10 +825,12 @@ EOF
             --crd_stdev $fix_ca_stdev >> $tmpcst
         echo "Generated CA coordinate constraints for $fixedres"
     fi  
+
     [[ -n $inpdb && -n $ligname && -n $lig_stdev ]] && {
         gen_coord_csts $inpdb --resn ${ligname[*]} --crd_stdev $lig_stdev >> $tmpcst
         echo "Generated coordinate constraints for ${ligname[*]}"
     }
+
     [[ -n $inpdb && -n $fixedres && -n $ligname && -n $ap_stdev ]] && {
         local ligchri=$(
             awk -v ligname="${ligname[*]}" '
@@ -841,9 +847,28 @@ EOF
             --ap_stdev $ap_stdev >> $tmpcst
         echo "Generated atompair constraints between ${ligname[*]} and $fixedres"
     }
+
+    # Deprioritize old constraints
+    [[ -n $oldcsts ]] && {
+        echo "Adding old constraints found in input PDB: $(wc -l <<< "$oldcsts") constraints"
+        echo "$oldcsts" >> $tmpcst
+    }
     
     # Update cstfile with new residue numbering
     [[ -s $tmpcst ]] && {
+
+        # Remove additional constraints applied to the same atom or atompair
+        awk -i inplace '
+            $1=="CoordinateConstraint" && crd[$3][$2]++ { next }
+            $1=="AtomPair" && atm[$3][$2][$5][$4]++ {
+                atm[$5][$4][$3][$2]++ ; next
+            }
+            $1=="AtomPair" && atm[$5][$4][$3][$2]++ {
+                atm[$3][$2][$5][$4]++ ; next
+            }
+            { print }
+        ' $tmpcst
+
         echo "Updating cstfile with new residue numbering"
         local garr=$(get_newres "$contigs" $fixedres | awk -F ':' -v dq='"' '{
             ch1 = substr($1,1,1) ; ch2 = substr($2,1,1)
