@@ -614,7 +614,13 @@ rfd_chain () {
     
     # Rerun RFdiffusion if --backrub was enabled
     [[ -n $inpdb && -n $backrub ]] && {
-        echo "The option --backrub was enabled."
+        echo "The option --backrub $backrub was enabled."
+        local backrub=$(
+            a=($(awk -v t="$backrub" '
+                BEGIN {split(t, a, "-") ; a[2]=a[2]?a[2]:a[1] ; print a[1], a[2]}
+            '))
+            seq ${a[0]} ${a[1]} | shuf -n1
+        )
         echo "Running partial diffusion with $backrub timesteps..."
         if [[ -n $fixedres ]] ; then
             local newfixbb=$(get_newres "$contigs" $fixbbres | cut -d: -f2 | paste -sd ' ')
