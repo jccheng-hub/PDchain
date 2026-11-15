@@ -55,8 +55,6 @@ Contigs options:
   --ss_to_contigs           Converts secondary structure in input PDB to contigs
                             used for RFdiffusion. Secondary structure residues
                             are fixed, and loops are rediffused.
-  --fixed_seg_only          Preserve ss structures only on segments with fixed
-                            residues
   --ss_trim [int]           If --ss_to_contigs is used, allows the specified
                             number of ss residues neighboring loops to be
                             rediffused by RFdiffusion.
@@ -176,14 +174,14 @@ val_opts=(
     model_type          natbias             nbr_dist            nbr_resfile_cmd
     noise_scale         nterm_add           nterm_trim          numdes
     omitjson            outprefix           ppi_hotspots        redesres
-    relax_repeats       reset_perc          rog_cut             select_met
+    relax_repeats       rog_cut             select_met
     ss_trim             temperature         threads             timesteps
-    tot_range           vary_linkers                            
+    tot_range           vary_linkers        seg_rmv_chance
 )
 
 bool_opts=(
     dec_only            disallow_cys        fix_bb              fix_chi
-    fixed_seg_only      help                idealize            ignore_metals
+    help                idealize            ignore_metals
     inc_only            monomer_ROG         partial             persistent
     random_order        randsuffix          regap               relax
     rosetta_lig_nbr     sc_context          skip_mpnn           skip_refine
@@ -229,7 +227,6 @@ outprefix="outputs/rfd_des"
 ppi_hotspots=""
 redesres=""
 relax_repeats="1"
-reset_perc="0"
 rog_cut="9999"
 select_met=""
 ss_trim="2"

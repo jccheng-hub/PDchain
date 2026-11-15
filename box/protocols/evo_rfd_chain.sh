@@ -88,14 +88,14 @@ val_opts=(
     model_ckpt          model_type
     natbias             nbr_resfile_cmd     nterm_add           nterm_trim
     omitjson            outdir              poolperc            poolsize
-    redes_dist          relax_repeats       reset_perc          rog_cut
+    redes_dist          relax_repeats       rog_cut
     select_met          ss_trim             temperature         threads
-    timesteps           tlim                vary_linkers        
+    timesteps           tlim                vary_linkers        seg_rmv_chance
 )
 
 bool_opts=(
     auto_update         dec_only            disallow_cys        fix_bb
-    fix_chi             fixed_seg_only      help                idealize
+    fix_chi             help                idealize
     ignore_metals       inc_only            monomer_ROG
     partial             persistent          ppi_mode            relax
     rosetta_lig_nbr     sc_context          skip_diffusion      stop_at_capacity
@@ -127,7 +127,6 @@ poolperc="10"
 poolsize="200"
 redes_dist=""
 relax_repeats="1"
-reset_perc="0"
 rog_cut=""
 select_met=""
 ss_trim="2"

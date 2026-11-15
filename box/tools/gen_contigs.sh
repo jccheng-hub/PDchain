@@ -47,14 +47,19 @@ Options for ss usage:
                             Can specify with range (e.g. --cterm_trim 2-4)
   --helix_cap [int]         Maximum length of a helix before making it entirely
                             rediffusable
-  --reset_perc [float]      Percent chance for triggering --fixed_seg_only
-  --fixed_seg_only          Only ss segments that contain fixed residues will be
-                            preserved
   --regap                   Redetermine gaps based on default usage.
                             Preserves all fixed backbones after --ss_trim [int]
 
 General options:
   --vary_linkers [int]      Allow linkers to vary by specified INT
+  --vary_chance [float]     Percent chance of varying linker lengths
+                            Range: 0-100
+  --seg_rmv_chance [float]  Percent chance of removing each fixed segmement,
+                            making that segment diffusable
+                            Will not remove segment if it contains input
+                            residues
+                            Useful with --ss_to_contigs to remove stretches of
+                            secondary structure randomly for diversification
   --nterm_add [int]         Number of residues to add to N-terminus
                             Can specify with range (e.g. --nterm_add 4-8)
   --cterm_add [int]         Number of residues to add to C-terminus
@@ -78,25 +83,25 @@ optarg () {
 
 val_opts=(
     cterm_add           cterm_trim          gap_range           helix_cap
-    inpdb               nterm_add           nterm_trim          reset_perc
-    ss_trim             tot_range           vary_linkers        
+    inpdb               nterm_add           nterm_trim        
+    ss_trim             tot_range           vary_chance         vary_linkers
+    seg_rmv_chance
 )
 
 bool_opts=(
-    dec_only            fixed_seg_only      help                inc_only
+    dec_only            help                inc_only
     random_order        regap               ss_to_contigs       
 )
 
 cterm_add="0"
 cterm_trim="1"
 gap_range="20-100"
-helix_cap=""
-inpdb=""
 nterm_add="0"
 nterm_trim="1"
-reset_perc="0"
+seg_rmv_chance="0"
 ss_trim="2"
 tot_range="180-220"
+vary_chance="50"
 vary_linkers="0"
 
 default_vals () {
@@ -148,12 +153,6 @@ mintot=($(sed 's/-/ /' <<< $tot_range))
 addtot=$(echo "${mintot[1]}-$mintot" | bc)
 mingap=($(sed 's/-/ /' <<< $gap_range))
 addgap=$(echo "${mingap[1]}-$mingap" | bc)
-
-# If reset_perc is enabled, trigger fixed_seg_only at a specified chance
-[[ $(echo "$reset_perc > 0" | bc) == 1 ]] && {
-    rand=$(( (RANDOM % 100) + 1 ))
-    [[ $(echo "$rand <= $reset_perc" | bc) == 1 ]] && fixed_seg_only=1
-}
 
 # >>> dss_disicl_tab () >>> {{{
 dss_disicl_tab () {
@@ -587,8 +586,9 @@ gen_contigs_from_disicl () {
 edit_linkers () {
     local contigs="$@"
     echo $contigs | sed 's|/|\n|g' | sed 's/ /\n/g' |
-    awk -v dev=$vary_linkers -v inc=$inc_only -v dec=$dec_only '
-    BEGIN { srand() }
+    awk -v dev="$vary_linkers" -v chance="$vary_chance" \
+        -v inc="$inc_only" -v dec="$dec_only" '
+    BEGIN { srand() ; cutoff = (100 - chance) * 0.01 }
     $0~/[A-Z]/ || $0 == "0" {print $0; next} {
         delete a; split($0, a, "-")
         d = 0 + int(rand()*(dev-0+1)) ; coin = rand()
@@ -597,7 +597,7 @@ edit_linkers () {
         else if (coin < 0.5)  { n = a[1] + d }
         else if (coin >= 0.5) { n = a[1] - d }
         n = (n > 1) ? n : 1
-        if (rand() < 0.5) { print $0 } else { print n"-"n }
+        if (rand() < cutoff) { print $0 } else { print n"-"n }
     }' | paste -sd '/' | sed 's|/0/|/0 |'
 }
 
@@ -667,43 +667,84 @@ contigs=$(edit_linkers $contigs)
 }
 
 # Fixed segments only
-[[ $fixed_seg_only == 1 ]] && {
-    contigs=$(echo $contigs | sed 's|/|\n|g' | sed 's|-| |' | awk -v reslist="$reslist" '
+[[ $(echo "$seg_rmv_chance > 0" | bc) == 1 ]] && {
+    contigs=$(echo $contigs | sed -E 's|[/ ]|\n|g' | sed 's|-| |' |
+    awk -v reslist="$reslist" -v seg_rmv_chance="$seg_rmv_chance" '
         BEGIN {
+            # Store all fixed residues in res[ch ri]
             n = split(reslist, a, " ")
             for (i=1; i<=n; i++) {
-                ch_i = substr(a[i], 1, 1) ; sub(/^[A-Z]/, "", a[i])
-                split(a[i], b, "-") ; if (!b[2]) b[2] = b[1]
-                for (j=b[1]; j<=b[2]; j++) reskey[ch_i j] = 1
+                ch_i = substr(a[i], 1, 1)
+                a[i] = substr(a[i], 2)
+                split(a[i], b, "-")
+                b[2] = b[2] ? b[2] : b[1]
+                for (j=b[1]+0; j<=b[2]+0; j++) { res[ch_i j]++ }
             }
-            c_i = 1
+
+            # Calculate chance to keep fixed segment
+            chance = (100 - seg_rmv_chance) * 0.01
+
+            srand()      # Initialize seed
+            block_i = 1  # Initialize block id
         }
-        $1~/^[0-9]/ { con[c_i] += $1 ; next }
-        $1~/^[A-Z]/ {
-            ch = substr($1,1,1) ; ri1 = substr($1,2)+0 ; ri2 = $2 ? $2+0 : ri1
+
+        # --- awk snippet --- # {{{
+        $1 ~ /^[1-9]/ {
+            block[block_i] += $1 ; next  # Track residue count for linker block
+        }
+
+        $1 ~ /^[A-Z]/ {
+
+            # Extract chain and residue index
+            ch = substr($1, 1, 1)
+            ri1 = substr($1, 2) + 0
+            ri2 = $2 ? $2 + 0 : ri1
+
+            keep_fixed = 0  # Initialize checker for keeping fixed segment
+
+            # Roll dice
+            if (rand() < chance) { keep_fixed = 1 }
 
             # Check if fixedblock has fixed residues
-            keep = 0
-            for (i=ri1; i<=ri2; i++) if (ch i in reskey) { keep = 1 ; break }
+            for (i=ri1; i<=ri2; i++) {
+                if (ch i in res) { keep_fixed = 1 ; break }
+            }
 
-            # If fixedblock has fixed residues, then keep
-            if (keep == 1) {
-                con[++c_i] = $0 ; c_i++
+            # If keep_fixed is invoked, keep fixedblock
+            if (keep_fixed == 1) {
+                if (block[block_i] != "") block_i++
+                block[block_i++] = ch ri1 "-" ri2
             } else {
-                con[c_i] += ri2 - ri1 + 1
-            } 
+                block[block_i] += ri2 - ri1 + 1
+            }
+
+            next
         }
+
+        $1 == "0" {
+            if (block[block_i] != "") block_i++
+            block[block_i++] = "chainbreak"
+        }
+        # }}}
+
         END {
-            for (i=1; i<=c_i; i++) {
-                if (con[i] ~ /^[0-9]/) {
-                    print con[i] "-" con[i]
-                } else {
-                    sub(" ", "-", con[i])
-                    print con[i]
+            # Extract contigs
+            contigs = ""
+            for (i=1; i<=block_i; i++) {
+                if (block[i] ~ /^[1-9]/) {
+                    contigs = contigs "/" block[i] "-" block[i]
+                } else if (block[i] ~ /^[A-Z]/) {
+                    contigs = contigs "/" block[i]
+                } else if (block[i] == "chainbreak") {
+                    contigs = contigs "/0 "
                 }
             }
+            sub(/^\//, "", contigs)
+            gsub(/ \//, " ", contigs)
+            print contigs
         }
-    ' | paste -sd '/')
+        '
+    )
 }
 
 # Output
