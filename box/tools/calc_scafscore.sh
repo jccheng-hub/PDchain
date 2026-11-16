@@ -130,6 +130,12 @@ gawk_script='
     
     $1!~/^(ATOM|HETATM)$/ || $NF == "H" { next }
     
+    $3~/^(N|CA|C|O)$/ {
+        all[$5][$6][$3][1] = $7
+        all[$5][$6][$3][2] = $8
+        all[$5][$6][$3][3] = $9
+    }
+
     $5 $6 in foc_chri || $4 in foc_resn {
         # Format: obj[chain][resi][atom][1/2/3] = x/y/z coord
         foc[$5][$6][$3][1] = $7    # x coord
@@ -160,7 +166,7 @@ gawk_script='
         mp_dev = pdev(mp, nfc)  # Mean midpoint deviation
         print "mp_dev " mp_dev
     
-        rog_ala = calc_arog(nfc)  # Output ROG for poly-alanine
+        rog_ala = calc_arog(all)  # Output ROG for poly-alanine
         print "rog_ala " rog_ala
 
         # Chain-specific base metrics
