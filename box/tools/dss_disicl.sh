@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: dss_discl PDB [PDB...]
 Uses DISICL algorithm to assign secondary structure to each residue
@@ -42,7 +50,6 @@ bool_opts=(
 )
 
 fixedrange="3"
-fixedres=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

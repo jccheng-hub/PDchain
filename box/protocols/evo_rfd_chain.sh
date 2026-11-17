@@ -80,55 +80,36 @@ optarg () {
 }
 
 val_opts=(
-    addmets             backrub             biasjson            ca_stdev
-    clash_cut           cterm_add           cterm_trim          design_cycles
-    famiperc            gen0perc            helix_cap           indir
-    inpaint_seq         inpaint_seq_ch      inpaint_str         inpaint_str_ch
-    inpdb               loop_cut
-    model_ckpt          model_type
-    natbias             nbr_resfile_cmd     nterm_add           nterm_trim
-    omitjson            outdir              poolperc            poolsize
-    redes_dist          relax_repeats       rog_cut
-    select_met          ss_trim             temperature         threads
-    timesteps           tlim                vary_linkers        seg_rmv_chance
+    addmets             backrub             biasjson            ca_stdev            
+    clash_cut           cterm_add           cterm_trim          design_cycles       
+    famiperc            gen0perc            helix_cap           indir               
+    inpaint_seq         inpaint_seq_ch      inpaint_str         inpaint_str_ch      
+    inpdb               loop_cut            model_ckpt          model_type          
+    natbias             nbr_resfile_cmd     nterm_add           nterm_trim          
+    omitjson            outdir              poolperc            poolsize            
+    redes_dist          relax_repeats       rog_cut             seg_rmv_chance      
+    select_met          ss_trim             temperature         threads             
+    timesteps           tlim                vary_linkers                            
 )
 
 bool_opts=(
-    auto_update         dec_only            disallow_cys        fix_bb
-    fix_chi             help                idealize
-    ignore_metals       inc_only            monomer_ROG
-    partial             persistent          ppi_mode            relax
-    rosetta_lig_nbr     sc_context          skip_diffusion      stop_at_capacity
+    auto_update         dec_only            disallow_cys        fix_bb              
+    fix_chi             help                idealize            ignore_metals       
+    inc_only            monomer_ROG         partial             persistent          
+    ppi_mode            relax               rosetta_lig_nbr     sc_context          
+    skip_diffusion      stop_at_capacity                                            
 )
 
-addmets=""
-backrub=""
-biasjson=""
-ca_stdev=""
-clash_cut=""
 cterm_add="0"
 cterm_trim="1"
-design_cycles=""
 famiperc="100"
-gen0perc=""
-helix_cap=""
-indir=""
-inpdb=""
-loop_cut=""
-model_ckpt=""
 model_type="protein_mpnn"
-natbias=""
-nbr_resfile_cmd=""
 nterm_add="0"
 nterm_trim="1"
-omitjson=""
 outdir="./evolved"
 poolperc="10"
 poolsize="200"
-redes_dist=""
 relax_repeats="1"
-rog_cut=""
-select_met=""
 ss_trim="2"
 temperature="0.1"
 threads="1"

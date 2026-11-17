@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 pixiroot="$PIXI_PROJECT_ROOT"
-paramsdir="$pixiroot/box/params"
 pixitoml="$pixiroot/pixi.toml"
 pixirun="pixi run -m $pixitoml -e"
 [[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
 }
 
 usage () { cat << EOF
@@ -89,40 +88,29 @@ optarg () {
 }
 
 val_opts=(
-    batch_size          biasjson            ca_stdev            cstfile
-    cyclize_chain       fix_ca_stdev        fix_stdev           fixedres
-    lig_stdev
-    ligname             model_type          nbr_dist            nbr_resfile_cmd
-    omitjson            outdir              redesres            relax_repeats
-    resfile             suffix              temperature         threads
+    batch_size          biasjson            ca_stdev            cstfile             
+    cyclize_chain       fix_ca_stdev        fix_stdev           fixedres            
+    lig_stdev           ligname             model_type          nbr_dist            
+    nbr_resfile_cmd     omitjson            outdir              redesres            
+    relax_repeats       resfile             suffix              temperature         
+    threads                                                                         
 )
 
 bool_opts=(
-    design              disallow_cys        fix_bb              fix_chi
-    help                idealize            ignore_metals       inplace
-    keep_script         minimize            ncaa_pal            relax
-    renumber_chain      repack              rosetta_lig_nbr     sc_context
-    skip_mpnn           skip_mpnn_score     skip_refine         
+    design              disallow_cys        fix_bb              fix_chi             
+    help                idealize            ignore_metals       inplace             
+    keep_script         minimize            ncaa_pal            relax               
+    renumber_chain      repack              rosetta_lig_nbr     sc_context          
+    skip_mpnn           skip_mpnn_score     skip_refine                             
 )
 
 batch_size="1"
-biasjson=""
-ca_stdev=""
-cstfile=""
-cyclize_chain=""
-fix_stdev=""
-fixedres=""
-lig_stdev=""
-ligname=""
 model_type="protein_mpnn"
 nbr_dist="8"
 nbr_resfile_cmd="ALLAAxc"
-omitjson=""
 outdir="."
-redesres=""
+paramsdir="$pixiroot/box/params"
 relax_repeats="1"
-resfile=""
-suffix=""
 temperature="0.1"
 threads="1"
 

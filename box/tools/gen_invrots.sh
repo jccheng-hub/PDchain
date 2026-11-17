@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: gen_invrots PDB CHRI:SS...
 Generate inverse rotamers. Can scaffold AAs onto secondary structure.
@@ -67,11 +75,9 @@ batchsize="1000"
 clashcut="2.5"
 inter_ctol="0"
 intra_ctol="0"
-keepres=""
 numrots="1"
 outdir="./invrots"
 parallel="1"
-torsfile=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {

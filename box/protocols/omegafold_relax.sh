@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: omegafold_relax PDB/FASTA...
 Uses OmegaFold for structure prediction, then relax with PyRosetta.
@@ -46,10 +54,8 @@ bool_opts=(
 )
 
 ca_stdev="1"
-device=""
-foldrepo=""
+foldrepo="$pixiroot/foldrepo/omegafold"
 outdir="."
-subbatch_size=""
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -79,15 +85,6 @@ done
 [[ $((${#args[@]}-1)) -lt 1 ]] && help="1"
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # <<< Defaults <<< }}}
-
-# Check Pixi
-pixiroot="$PIXI_PROJECT_ROOT"
-pixitoml="$pixiroot/pixi.toml"
-pixirun="pixi run -m $pixitoml -e"
-[[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
-}
 
 # Functions
 pdb_to_fasta () {
@@ -126,11 +123,7 @@ else
     exit
 fi
 
-# If foldrepo is not given, then make it in $pixiroot
-[[ -z $foldrepo ]] && {
-    foldrepo="$pixiroot/foldrepo/omegafold"
-    echo "The option --foldrepo was not specified."
-}
+# Setting foldrepo
 mkdir -p $foldrepo
 echo "Setting foldrepo to $foldrepo."
 

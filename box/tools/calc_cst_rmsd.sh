@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: calc_cst_rmsd PDB...
 Calculates RMSD between input PDB and its constraints.

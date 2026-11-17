@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: gen_natbiasjson PDB
 Generate a biasjson for ligandmpnn that applies a global weight for native
@@ -42,9 +50,6 @@ bool_opts=(
     help                                
 )
 
-change_resn=""
-change_weight=""
-focus_set=""
 global_weight="1.0"
 
 default_vals () {

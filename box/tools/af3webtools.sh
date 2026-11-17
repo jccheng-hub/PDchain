@@ -3,8 +3,8 @@ pixiroot="$PIXI_PROJECT_ROOT"
 pixitoml="$pixiroot/pixi.toml"
 pixirun="pixi run -m $pixitoml -e"
 [[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
 }
 
 usage () { cat << EOF

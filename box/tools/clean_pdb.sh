@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: clean_pdb PDB [PDB...]
 Cleans PDB
@@ -35,8 +43,6 @@ bool_opts=(
     help                renumber                                
 )
 
-chains=""
-keep_resn=""
 outdir="."
 suffix="_clean"
 

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 pixiroot="$PIXI_PROJECT_ROOT"
-paramsdir="$pixiroot/box/params"
 pixitoml="$pixiroot/pixi.toml"
 pixirun="pixi run -m $pixitoml -e"
 [[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
 }
 
 usage () { cat << EOF
@@ -163,72 +162,45 @@ optarg () {
 }
 
 val_opts=(
-    addmets             ap_stdev            backrub             biasjson
-    ca_stdev            clash_cut           cstfile             cterm_add
-    cterm_trim          cyclize_chain       design_cycles
-    fix_ca_stdev        fix_stdev
-    fixbbres            fixedres            gap_range           helix_cap
-    indir               inpaint_seq         inpaint_seq_ch      inpaint_str
-    inpaint_str_ch      inpdb
-    lig_stdev           ligname             loop_cut            model_ckpt
-    model_type          natbias             nbr_dist            nbr_resfile_cmd
-    noise_scale         nterm_add           nterm_trim          numdes
-    omitjson            outprefix           ppi_hotspots        redesres
-    relax_repeats       rog_cut             select_met
-    ss_trim             temperature         threads             timesteps
-    tot_range           vary_linkers        seg_rmv_chance
+    addmets             ap_stdev            backrub             biasjson            
+    ca_stdev            clash_cut           cstfile             cterm_add           
+    cterm_trim          cyclize_chain       design_cycles       fix_ca_stdev        
+    fix_stdev           fixbbres            fixedres            gap_range           
+    helix_cap           indir               inpaint_seq         inpaint_seq_ch      
+    inpaint_str         inpaint_str_ch      inpdb               lig_stdev           
+    ligname             loop_cut            model_ckpt          model_type          
+    natbias             nbr_dist            nbr_resfile_cmd     noise_scale         
+    nterm_add           nterm_trim          numdes              omitjson            
+    outprefix           ppi_hotspots        redesres            relax_repeats       
+    rog_cut             seg_rmv_chance      select_met          ss_trim             
+    temperature         threads             timesteps           tot_range           
+    vary_linkers                                                                    
 )
 
 bool_opts=(
-    dec_only            disallow_cys        fix_bb              fix_chi
-    help                skip_idealize       ignore_metals
-    inc_only            monomer_ROG         partial             persistent
-    random_order        randsuffix          regap               relax
-    rosetta_lig_nbr     sc_context          skip_mpnn           skip_refine
-    ss_to_contigs       skip_relax          no_ca_csts
+    dec_only            disallow_cys        fix_bb              fix_chi             
+    help                ignore_metals       inc_only            monomer_ROG         
+    no_ca_csts          partial             persistent          random_order        
+    randsuffix          regap               relax               rosetta_lig_nbr     
+    sc_context          skip_idealize       skip_mpnn           skip_refine         
+    skip_relax          ss_to_contigs                                               
 )
 
-addmets=""
-ap_stdev=""
-backrub=""
-biasjson=""
 ca_stdev="1"
-clash_cut=""
-cstfile=""
 cterm_add="0"
 cterm_trim="1"
-cyclize_chain=""
 design_cycles="3"
-fix_stdev=""
-fixbbres=""
-fixedres=""
 gap_range="20-100"
-helix_cap=""
-indir=""
-inpaint_seq=""
-inpaint_seq_ch=""
-inpaint_str=""
-inpaint_str_ch=""
-inpdb=""
-lig_stdev=""
-ligname=""
 loop_cut="9999"
-model_ckpt=""
 model_type="protein_mpnn"
-natbias=""
-nbr_dist=""
-nbr_resfile_cmd=""
 noise_scale="0.5"
 nterm_add="0"
 nterm_trim="1"
 numdes="1"
-omitjson=""
 outprefix="outputs/rfd_des"
-ppi_hotspots=""
-redesres=""
+paramsdir="$pixiroot/box/params"
 relax_repeats="1"
 rog_cut="9999"
-select_met=""
 ss_trim="2"
 temperature="0.1"
 threads="1"

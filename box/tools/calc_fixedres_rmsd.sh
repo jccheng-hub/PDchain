@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: calc_fixedres_rmsd REF:INPDB [REF:INPDB...]
 Use PyMOL to calculate fixed residue RMSD between reference (REF) and input PDB.
@@ -41,8 +49,6 @@ bool_opts=(
     help
 )
 
-atom_names=""
-
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
         echo -e "\nDefaults:"
@@ -71,15 +77,6 @@ done
 [[ $((${#args[@]}-1)) -lt 1 ]] && help="1"
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # <<< Defaults <<< }}}
-
-# Check Pixi
-pixiroot="$PIXI_PROJECT_ROOT"
-pixitoml="$pixiroot/pixi.toml"
-pixirun="pixi run -m $pixitoml -e"
-[[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
-}
 
 # Initialize
 inpairs="${args[@]:1}"

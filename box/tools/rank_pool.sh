@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: rank_pool METRIC... --indir [str]
 Rank designs in pool using specified metrics.
@@ -56,10 +64,7 @@ bool_opts=(
 )
 
 indir="REQUIRED"
-num=""
-num_eval=""
 outdir="ranked"
-outfile=""
 perc="1"
 
 default_vals () {

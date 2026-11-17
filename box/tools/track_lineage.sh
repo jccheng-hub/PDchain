@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: track_lineage DESIGN
 Track the lineage for the specified design (from evo_rfd_chain)
@@ -62,15 +70,6 @@ done
 [[ $((${#args[@]}-1)) -lt 1 ]] && help="1"
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # <<< Defaults <<< }}}
-
-# Check Pixi
-pixiroot="$PIXI_PROJECT_ROOT"
-pixitoml="$pixiroot/pixi.toml"
-pixirun="pixi run -m $pixitoml -e"
-[[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
-}
 
 design=(${args[1]})
 pooldir=$(dirname $design)

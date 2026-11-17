@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: gen_contigs [RES...]
 Generate specific contigs for RFdiffusion
@@ -82,15 +90,14 @@ optarg () {
 }
 
 val_opts=(
-    cterm_add           cterm_trim          gap_range           helix_cap
-    inpdb               nterm_add           nterm_trim        
-    ss_trim             tot_range           vary_chance         vary_linkers
-    seg_rmv_chance
+    cterm_add           cterm_trim          gap_range           helix_cap           
+    inpdb               nterm_add           nterm_trim          seg_rmv_chance      
+    ss_trim             tot_range           vary_chance         vary_linkers        
 )
 
 bool_opts=(
-    dec_only            help                inc_only
-    random_order        regap               ss_to_contigs       
+    dec_only            help                inc_only            random_order        
+    regap               ss_to_contigs                                               
 )
 
 cterm_add="0"

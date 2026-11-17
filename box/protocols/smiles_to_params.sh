@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+pixiroot="$PIXI_PROJECT_ROOT"
+pixitoml="$pixiroot/pixi.toml"
+pixirun="pixi run -m $pixitoml -e"
+[[ -n $pixiroot ]] || {
+    echo 'Need $PIXI_PROJECT_ROOT to be defined.' >&2
+    exit 1
+}
+
 usage () { cat << EOF
 Usage: smiles_to_params SMILES TLC
 Convert SMILES string to Rosetta params using rdkit_to_params
@@ -65,15 +73,6 @@ done
 [[ $((${#args[@]}-1)) -lt 1 ]] && help="1"
 [[ $help == 1 ]] && { usage ; default_vals ; exit ;}
 # <<< Defaults <<< }}}
-
-# Check Pixi
-pixiroot="$PIXI_PROJECT_ROOT"
-pixitoml="$pixiroot/pixi.toml"
-pixirun="pixi run -m $pixitoml -e"
-[[ -n $pixiroot ]] || {
-    echo 'Need $PIXI_PROJECT_ROOT to be defined.'
-    exit
-}
 
 smiles=${args[1]}
 tlc=${args[2]}
