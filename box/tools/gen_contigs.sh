@@ -707,20 +707,32 @@ contigs=$(edit_linkers $contigs)
             ri1 = substr($1, 2) + 0
             ri2 = $2 ? $2 + 0 : ri1
 
-            keep_fixed = 0  # Initialize checker for keeping fixed segment
-
-            # Roll dice
-            if (rand() < chance) { keep_fixed = 1 }
-
             # Check if fixedblock has fixed residues
+            fixedres_in_block = 0
             for (i=ri1; i<=ri2; i++) {
-                if (ch i in res) { keep_fixed = 1 ; break }
+                if (ch i in res) { fixedres_in_block = 1 ; break }
             }
 
-            # If keep_fixed is invoked, keep fixedblock
-            if (keep_fixed == 1) {
-                if (block[block_i] != "") block_i++
+            # Keep fixedblock with dice roll
+            if (rand() < chance) {
+                if (block[block_i]!="") block_i++
                 block[block_i++] = ch ri1 "-" ri2
+            } else if (fixedres_in_block == 1) {
+
+                # Only keep stretch containing fixed residues
+                head = tail = 0
+                for (i=ri1; i<=ri2; i++) {
+                    if (ch i in res) {
+                        head = head ? head : i
+                        tail = i
+                    }
+                }
+
+                # Add to masked block, make fixed block, then start the next masked block
+                block[block_i] += head - ri1
+                if (block[block_i]!="") block_i++
+                block[block_i++] = ch head "-" tail
+                block[block_i] += ri2 - tail
             } else {
                 block[block_i] += ri2 - ri1 + 1
             }
