@@ -382,7 +382,8 @@ run_pyrosetta () {
         <SIMPLE_METRICS>
             <TotalEnergyMetric name="total_reu" scoretype="total_score" residue_selector="FullPose" scorefxn="r15"/>
              TotalEnergyMetric name="fixed_reu" scoretype="total_score" residue_selector="FixedRes" scorefxn="r15"/>
-             SasaMetric name="sasa_metric" residue_selector="FixedRes" sasa_metric_mode="all_sasa"/>
+             SasaMetric name="fix_sasa_metric" residue_selector="FixedRes" sasa_metric_mode="all_sasa"/>
+             SasaMetric name="lig_sasa_metric" residue_selector="Ligs" sasa_metric_mode="all_sasa"/>
              HbondMetric name="hbond_metric" output_as_pdb_nums="true" residue_selector="Ligs"/>
              RMSDMetric name="rmsd_metric" reference_name="pose2" residue_selector="FixedRes" rmsd_type="rmsd_all"/>
         </SIMPLE_METRICS>
@@ -424,7 +425,8 @@ run_pyrosetta () {
              Add mover_name="restore_pose1"/>
             <Add metrics="total_reu" labels="fin_reu"/>
              Add metrics="fixed_reu" labels="fixedres_reu"/>
-             Add metrics="sasa_metric" labels="fixedres_sasa"/>
+             Add metrics="fix_sasa_metric" labels="fixedres_sasa"/>
+             Add metrics="lig_sasa_metric" labels="lig_sasa"/>
              Add metrics="hbond_metric" labels="hbonds_to_lig"/>
             <Add filter_name="netcharge"/>
              Add filter_name="dsasa"/>
@@ -570,12 +572,14 @@ EOF
             ' $inpdb | sort -u | paste -sd ' '
         )
         echo "Including additional metrics for ligands."
-        echo 's| (Index name="Ligs")|<\1|'               >> $sed_script
-        echo 's| (HbondMetric name="hbond_metric")|<\1|' >> $sed_script
-        echo 's| (Add metrics="hbond_metric")|<\1|'      >> $sed_script
-        echo 's| (DSasa name="dsasa")|<\1|'              >> $sed_script
-        echo 's| (Add filter_name="dsasa")|<\1|'         >> $sed_script
-        echo "s|COMMA_LIST_LIGRES|${ligres// /,}|"       >> $sed_script
+        echo 's| (Index name="Ligs")|<\1|'                  >> $sed_script
+        echo 's| (HbondMetric name="hbond_metric")|<\1|'    >> $sed_script
+        echo 's| (Add metrics="hbond_metric")|<\1|'         >> $sed_script
+        echo 's| (DSasa name="dsasa")|<\1|'                 >> $sed_script
+        echo 's| (Add filter_name="dsasa")|<\1|'            >> $sed_script
+        echo 's| (SasaMetric name="lig_sasa_metric")|<\1|'  >> $sed_script
+        echo 's| (Add metrics="lig_sasa_metric")|<\1|'      >> $sed_script
+        echo "s|COMMA_LIST_LIGRES|${ligres// /,}|"          >> $sed_script
     }
 
     # Additional metric for ppi
@@ -601,9 +605,9 @@ EOF
             }' | paste -sd ','
         )
         echo 's| (Index name="FixedRes")|<\1|'              >> $sed_script
-        echo 's| (SasaMetric name="sasa_metric")|<\1|'      >> $sed_script
+        echo 's| (SasaMetric name="fix_sasa_metric")|<\1|'  >> $sed_script
         echo 's| (TotalEnergyMetric name="fixed_reu")|<\1|' >> $sed_script
-        echo 's| (Add metrics="sasa_metric")|<\1|'          >> $sed_script
+        echo 's| (Add metrics="fix_sasa_metric")|<\1|'      >> $sed_script
         echo 's| (Add metrics="fixed_reu")|<\1|'            >> $sed_script
         echo "s|COMMA_LIST_FIXEDRES|$invfixed|"             >> $sed_script
     }
