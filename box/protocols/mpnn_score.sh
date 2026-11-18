@@ -20,7 +20,7 @@ Parameters:
     PDB                     Input PDB
 
 Options:
-  --model_type [str]        The MPNN model used
+  --mpnn_model [str]        The MPNN model used
   --seed [int]              Use a specific seed for running MPNN
                             If not invoked, a random seed will be used instead.
   --help                    Display this help and exit
@@ -39,14 +39,14 @@ optarg () {
 }
 
 val_opts=(
-    model_type          seed                                    
+    mpnn_model          seed                                    
 )
 
 bool_opts=(
     help                                                        
 )
 
-model_type="protein_mpnn"
+mpnn_model="protein_mpnn"
 
 default_vals () {
     [[ ${#val_opts[@]} -ge 1 ]] && {
@@ -123,21 +123,12 @@ tmpdir=$(mktemp -d ${TMPDIR:-/tmp}/tmp_${USER}_XXXXXX) ; trap 'rm -r $tmpdir' EX
 gen_multi_injson $inpdbs > $tmpdir/inputs.json
 gen_multi_biasjson $inpdbs > $tmpdir/bias.json
 
-# # Report the model and seed used
-# echo -n "Running LigandMPNN with --model_type $model_type with "
-# if [[ -z $seed ]] ; then
-#     echo "a random seed for scoring."
-# else
-#     echo "--seed $seed for scoring."
-#     mpnn_opts+=("--seed $seed")
-# fi
-
 # Run MPNN
 eval "
     $pixirun ligandmpnn ligandmpnn \
         --pdb_path_multi '$tmpdir/inputs.json' \
         --bias_AA_per_residue_multi '$tmpdir/bias.json' \
-        --model_type '$model_type' \
+        --model_type '$mpnn_model' \
         --out_folder '$tmpdir' ${mpnn_opts[*]}
 " >/dev/null
 
@@ -151,12 +142,12 @@ for inpdb in $inpdbs ; do
             }
         }
     }' $tmpdir/seqs/${bn}.fa)
-    awk -i inplace -v mpnn_score="$mpnn_score" -v model_type="$model_type" '
-        $1 != model_type "_score" { print } ENDFILE {
-            printf "%s_score %s\n", model_type, mpnn_score
+    awk -i inplace -v mpnn_score="$mpnn_score" -v mpnn_model="$mpnn_model" '
+        $1 != mpnn_model "_score" { print } ENDFILE {
+            printf "%s_score %s\n", mpnn_model, mpnn_score
         }
     ' $inpdb
 done
 
 # Report
-grep -h "^${model_type}_score " $inpdbs
+grep -h "^${mpnn_model}_score " $inpdbs

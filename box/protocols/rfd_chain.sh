@@ -96,7 +96,7 @@ RFdiffusion options:
   --inpaint_str_ch [str]    Mask specified chain's structure from RFdiffusion.
   --noise_scale [float]     Noise scale (0-1) for RFdiffusion. Higher values
                             result in more diversity but lower quality.
-  --model_ckpt [str]        Specify model checkpoint for RFdiffusion.
+  --rfd_ckpt [str]          Specify model checkpoint for RFdiffusion.
                             Available checkpoints:
                               Base                    ActiveSite
                               Complex_base            Complex_Fold_base
@@ -119,7 +119,7 @@ LigandMPNN + PyRosetta options:
                             min:metric, max:metric, or val:metric=ideal_val
                             E.g. --select_met min:ddg
                             E.g. --select_met val:dsasa=0.75
-  --model_type [str]        MPNN model. Available models:
+  --mpnn_model [str]        MPNN model. Available models:
                               protein_mpnn    soluble_mpnn    ligand_mpnn
   --temperature [float]     MPNN temperature.
   --fixedres [str]          Residues to fix (exclusive with --redesres).
@@ -178,10 +178,10 @@ val_opts=(
     fix_stdev           fixbbres            fixedres            gap_range           
     helix_cap           indir               inpaint_seq         inpaint_seq_ch      
     inpaint_str         inpaint_str_ch      inpdb               lig_stdev           
-    ligname             loop_cut            model_ckpt          model_type          
-    natbias             nbr_dist            nbr_resfile_cmd     noise_scale         
-    nterm_add           nterm_trim          numdes              omitjson            
-    outprefix           ppi_hotspots        redesres            relax_repeats       
+    ligname             loop_cut            mpnn_model          natbias             
+    nbr_dist            nbr_resfile_cmd     noise_scale         nterm_add           
+    nterm_trim          numdes              omitjson            outprefix           
+    ppi_hotspots        redesres            relax_repeats       rfd_ckpt            
     rog_cut             seg_rmv_chance      select_met          ss_trim             
     temperature         threads             timesteps           tot_range           
     vary_linkers                                                                    
@@ -201,7 +201,7 @@ cterm_trim="1"
 design_cycles="3"
 gap_range="20-100"
 loop_cut="9999"
-model_type="protein_mpnn"
+mpnn_model="protein_mpnn"
 noise_scale="0.5"
 nterm_add="0"
 nterm_trim="1"
@@ -550,9 +550,9 @@ rfd_chain () {
     }
 
     # Model Checkpoint
-    [[ -n $model_ckpt ]] && {
-        echo "Using ${model_ckpt}_ckpt.pt model for RFdiffusion"
-        local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/${model_ckpt}_ckpt.pt")
+    [[ -n $rfd_ckpt ]] && {
+        echo "Using ${rfd_ckpt}_ckpt.pt model for RFdiffusion"
+        local rfd_opts+=("inference.ckpt_override_path=$pixiroot/models/${rfd_ckpt}_ckpt.pt")
     }
     
     # Input check

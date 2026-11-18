@@ -84,10 +84,10 @@ val_opts=(
     clash_cut           cterm_add           cterm_trim          design_cycles       
     famiperc            gen0perc            helix_cap           indir               
     inpaint_seq         inpaint_seq_ch      inpaint_str         inpaint_str_ch      
-    inpdb               loop_cut            model_ckpt          model_type          
-    natbias             nbr_resfile_cmd     nterm_add           nterm_trim          
-    omitjson            outdir              poolperc            poolsize            
-    redes_dist          relax_repeats       rog_cut             seg_rmv_chance      
+    inpdb               loop_cut            mpnn_model          natbias             
+    nbr_resfile_cmd     nterm_add           nterm_trim          omitjson            
+    outdir              poolperc            poolsize            redes_dist          
+    relax_repeats       rfd_ckpt            rog_cut             seg_rmv_chance      
     select_met          ss_trim             temperature         threads             
     timesteps           tlim                vary_linkers                            
 )
@@ -103,7 +103,7 @@ bool_opts=(
 cterm_add="0"
 cterm_trim="1"
 famiperc="100"
-model_type="protein_mpnn"
+mpnn_model="protein_mpnn"
 nterm_add="0"
 nterm_trim="1"
 outdir="./evolved"

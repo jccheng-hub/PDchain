@@ -26,7 +26,7 @@ General options:
   --help                    Display this help and exit
 
 LigandMPNN options:
-  --model_type [str]        Model to use. Choose from the following:
+  --mpnn_model [str]        Model to use. Choose from the following:
                             ligand_mpnn
                             protein_mpnn
                             soluble_mpnn
@@ -38,9 +38,9 @@ LigandMPNN options:
                             Equivalent to MPNN's "--omit_AA_per_residue"
   --nbr_dist [float]        Distance in angstroms for neighbor detection.
                             When specifying a ligand with --ligname but not
-                            using --model_type ligand_mpnn, residues within this
+                            using --mpnn_model ligand_mpnn, residues within this
                             distance of the ligand will be redesigned with
-                            --model_type ligand_mpnn.
+                            --mpnn_model ligand_mpnn.
   --repack                  Have MPNN repack every rotamer, including fixed ones
   --disallow_cys            Disallow cysteines during design
   --sc_context              Use side chain atoms as context
@@ -90,7 +90,7 @@ optarg () {
 val_opts=(
     batch_size          biasjson            ca_stdev            cstfile             
     cyclize_chain       fix_ca_stdev        fix_stdev           fixedres            
-    lig_stdev           ligname             model_type          nbr_dist            
+    lig_stdev           ligname             mpnn_model          nbr_dist            
     nbr_resfile_cmd     omitjson            outdir              redesres            
     relax_repeats       resfile             suffix              temperature         
     threads                                                                         
@@ -105,7 +105,7 @@ bool_opts=(
 )
 
 batch_size="1"
-model_type="protein_mpnn"
+mpnn_model="protein_mpnn"
 nbr_dist="8"
 nbr_resfile_cmd="ALLAAxc"
 outdir="."
@@ -269,14 +269,14 @@ run_mpnn () {
         $pixirun ligandmpnn ligandmpnn \
             --pdb_path_multi $injson \
             --out_folder $outdir \
-            --model_type $model_type \
+            --model_type $mpnn_model \
             --batch_size $batch_size \
             ${mpnn_opts[@]}
     "
 
     # If ligname is provided, then use LigandMPNN on residues within contact distance of ligand
-    [[ -n $ligname && $model_type != "ligand_mpnn" ]] && {
-        echo "Ligands are specified, but the --model_type is NOT ligand_mpnn."
+    [[ -n $ligname && $mpnn_model != "ligand_mpnn" ]] && {
+        echo "Ligands are specified, but the --mpnn_model is NOT ligand_mpnn."
         echo "Will now run LigandMPNN on residues within ${nbr_dist} angstroms of ligands."
 
         [[ $(echo $inpdbs | wc -w) -gt 1 ]] && {
@@ -746,7 +746,7 @@ ls $step2/*.pdb &>/dev/null || {
 
 # Score outputs with LigandMPNN
 [[ $skip_mpnn_score == 0 ]] &&
-mpnn_score $step2/*.pdb --model_type $model_type
+mpnn_score $step2/*.pdb --mpnn_model $mpnn_model
 
 # Output
 for i_pdb in ${inpdb[@]} ; do
