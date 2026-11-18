@@ -17,36 +17,40 @@ Parameters:
                             E.g. 20-30/A5-76/20-30
                             If CONTIGS is not provided, then one will be
                             generated using the contigs options.
-                            To skip RFdiffusion, input SKIP as your contigs
+                            To skip RFdiffusion, input SKIP as your contigs.
 
 General options:
-  --inpdb [str]             Input PDB path
+  --inpdb [str]             Input PDB path.
   --indir [str]             Input directory with PDBs. A random PDB will be
                             pulled from this directory if specified.
-  --ligname [str]           Ligand name (3-letter code)
-                            Can specify multiple ligands, but only the first is
-                            considered for RFdiffusion's auxiliary potential.
-                            All ligands are considered for MPNN and Rosetta.
-  --outprefix [str]         Output prefix
-                            E.g. --outprefix ./outputs/rfd_des
-  --randsuffix              Generate a random string for the suffix
+  --ligname [str]           Ligand name (3-letter code).
+                            Can specify multiple ligands.
+                            If using custom ligand, make sure to make a params
+                            file with smiles_to_params.
+  --outprefix [str]         Output prefix, including output path and basename
+                            prefix.
+  --randsuffix              Generate a random string for the suffix.
   --persistent              If a design fails to generate, keep trying.
-  --cyclize_chain [str]     Specify chain for cyclization (e.g. cyclic peptides)
-                            Affects RFdiffusion and Rosetta
+  --cyclize_chain [str]     Specify chain for cyclization.
+                            Affects RFdiffusion and Rosetta.
                             Note that the RFdiffusion in PDchain will always put
                             chain A as the de novo backbone.
-  --help                    Display this help and exit
+  --help                    Display this help and exit.
 
 Contigs options:
   --fixbbres [str]          Residues that will have their backbones fixed during
                             diffusion (chain+residue format).
                             E.g. --fixbbres A7-10 A39 A72
-                            If --fixedres is used but --fixbbres is not, then
-                            --fixbbres will take --fixedres as input.
   --random_order            If --fixbbres (or --fixedres) is provided, then the
                             order of the fixed residues are shuffled during
                             contigs generation.
-  --vary_linkers [int]      Allow diffusable regions to vary by this number
+  --gap_range [str]         If generating contigs, keep linker length within
+                            this specified range.
+                            E.g. --gap_range 20-100
+  --tot_range [str]         If generating contigs, keep total residue length
+                            within this specified range.
+                            E.g. --tot_range 180-220
+  --vary_linkers [int]      Allow diffusable regions to vary by this number.
   --inc_only                If --vary_linkers is provided, then the diffusable
                             regions cannot decrease in length.
   --dec_only                If --vary_linkers is provided, then the diffusable
@@ -60,17 +64,18 @@ Contigs options:
                             E.g. If DSSP string is LLHHHHHLL with --ss_trim 2,
                             then it would be treated as LLLLHLLLL for
                             RFdiffusion.
-  --nterm_add [int]         Number of residues to add to N-terminus
-  --cterm_add [int]         Number of residues to add to C-terminus
-  --nterm_trim [int]        Trim specified number of residues from N terminus
-  --cterm_trim [int]        Trim specified number of residues from C terminus
-  --regap                   If --ss_to_contigs is used, then the fixed regions
-                            will be treated as --fixbbres during contigs
-                            generation.
+  --nterm_add [int]         Number of residues to add to N-terminus.
+  --cterm_add [int]         Number of residues to add to C-terminus.
+  --nterm_trim [int]        Trim specified number of residues from N terminus.
+  --cterm_trim [int]        Trim specified number of residues from C terminus.
+  --helix_cap [int]         If an alpha helix length exceeds this value, mask
+                            the entire helix from RFdiffusion.
+  --seg_rmv_chance [float]  Percent chance of removing ss segment when invoking
+                            --ss_to_contigs.
 
 RFdiffusion options:
-  --timesteps [int]         Number of timesteps for RFdiffusion
-                            Can specify range (e.g. --timesteps 1-3)
+  --timesteps [int]         Number of timesteps for RFdiffusion.
+                            Can specify range (e.g. --timesteps 1-3).
   --rog_cut [float]         Cutoff for poly-ala ROG metric. Lower values are
                             more compact and globular. For a 200-residue
                             protein, --rog_cut 16 is a good start. Adjust value
@@ -83,29 +88,29 @@ RFdiffusion options:
   --backrub [int]           After running RFdiffusion, rerun RFdiffusion again
                             with partial diffusion. This specifies the number
                             of timesteps for this partial diffusion rerun.
-  --partial                 Use partial diffusion
-  --monomer_ROG             Apply monomer radius of gyration potential
-  --inpaint_seq [str]       Hide the specified residue identity from RFdiffusion
-  --inpaint_str [str]       Hide the specified structure from RFdiffusion
+  --partial                 Use partial diffusion.
+  --monomer_ROG             Apply monomer radius of gyration potential.
+  --inpaint_seq [str]       Mask the specified sequence from RFdiffusion.
+  --inpaint_str [str]       Mask the specified structure from RFdiffusion.
+  --inpaint_seq_ch [str]    Mask specified chain's sequence from RFdiffusion.
+  --inpaint_str_ch [str]    Mask specified chain's structure from RFdiffusion.
   --noise_scale [float]     Noise scale (0-1) for RFdiffusion. Higher values
                             result in more diversity but lower quality.
   --model_ckpt [str]        Specify model checkpoint for RFdiffusion.
                             Available checkpoints:
-                                Base                    ActiveSite
-                                Complex_base            Complex_Fold_base
-                                InpaintSeq              InpaintSeq_Fold
-                                Complex_beta
+                              Base                    ActiveSite
+                              Complex_base            Complex_Fold_base
+                              InpaintSeq              InpaintSeq_Fold
+                              Complex_beta
                             See RFdiffusion documentation for more details on
                             model checkpoints.
+  --ppi_hotspots [str]      Hotspots for protein-protein interactions.
 
 LigandMPNN + PyRosetta options:
-  --design_cycles [int]     Number of MPNN-FastRelax cycles.
-                            Every cycle, the new design is accepted or rejected
-                            depending on whether they improve the Rosetta score
-                            and/or MPNN score.
-                            Recommendations:
-                            --design_cycles 2 for ok/cheap run
-                            --design_cycles 5 for rigorous/expensive run
+  --design_cycles [int]     Number of MPNN-FastRelax cycles. Acceptance of new
+                            design depends on --select_met.
+  --addmets [str]           List of additional scripts (in box/addmets) to
+                            calculate metrics for selection.
   --select_met [str]        Selection metric. The specified metric is used to
                             accept/reject new designs in between design cycles.
                             If not specified, then will default to Rosetta and
@@ -114,39 +119,44 @@ LigandMPNN + PyRosetta options:
                             min:metric, max:metric, or val:metric=ideal_val
                             E.g. --select_met min:ddg
                             E.g. --select_met val:dsasa=0.75
-  --model_type [str]        MPNN model
-                            E.g. ligand_mpnn, protein_mpnn, soluble_mpnn, etc.
-  --temperature [float]     MPNN temperature
-  --fixedres [str]          Residues to fix (exclusive with --redesres)
+  --model_type [str]        MPNN model. Available models:
+                              protein_mpnn    soluble_mpnn    ligand_mpnn
+  --temperature [float]     MPNN temperature.
+  --fixedres [str]          Residues to fix (exclusive with --redesres).
   --redesres [str]          Residues to redesign (exclusive with --fixedres)
   --natbias [float]         Bias design towards each residue at each position
                             found in the input PDB. A value of 1.0 is a good
                             start. Values 3.0 and above tend to just fix the
                             residues entirely.
-  --relax_repeats [int]     Number of relax repeats to use
-  --cstfile [str]           Path to cst file
-  --fix_stdev [float]       Strength of constraints for fixed residues
-  --ca_stdev [float]        Strength of constraints for CA atoms
-  --lig_stdev [float]       Strength of constraints for ligand atoms
+  --biasjson [str]          MPNN json for biasing residues.
+  --omitjson [str]          MPNN json for omitting residues.
+  --relax_repeats [int]     Number of relax repeats to use.
+  --cstfile [str]           Path to cst file.
+  --fix_stdev [float]       Strength of constraints for fixed residues.
+  --ca_stdev [float]        Strength of constraints for CA atoms.
+  --fix_ca_stdev [float]    Strength of constraints for CA toms of fixed
+                            residues.
+  --no_ca_csts              Do not add CA constraints.
+  --lig_stdev [float]       Strength of constraints for ligand atoms.
                             Need to invoke --ligname
   --ap_stdev [float]        Strength of constraints between fixed residue atoms
-                            and ligand atoms (using AtomPair)
-                            Need both --ligname and --fixedres
-  --threads [int]           Number of threads to use for PyRosetta
+                            and ligand atoms (using AtomPair).
+                            Need both --ligname and --fixedres.
+  --threads [int]           Number of threads to use for PyRosetta.
   --nbr_dist [float]        Neighbor distance for LigandMPNN redesign around
-                            ligands
-  --disallow_cys            Disallow cysteines during design
-  --sc_context              Use side chain atoms as ligands during LigandMPNN
-  --skip_idealize           Skip idealizing bond lengths and bond angles
-  --relax                   Use relax as a refinement
+                            ligands.
+  --disallow_cys            Disallow cysteines during design.
+  --sc_context              Use side chain atoms as ligands during LigandMPNN.
   --rosetta_lig_nbr         Use RosettaDesign on residues within --nbr_dist of
                             ligands. Cysteines are prohibited.
   --nbr_resfile_cmd [str]   Resfile command for ligand neighbors when invoking
-                            --rosetta_lig_nbr
-  --fix_bb                  Fix backbones
-  --fix_chi                 Fix chi angles
-  --skip_mpnn               Skip MPNN
-  --skip_refine             Skip refinement with PyRosetta
+                            --rosetta_lig_nbr.
+  --ignore_metals           Do not set up covalent connections with metals
+  --fix_bb                  Fix backbones.
+  --fix_chi                 Fix chi angles.
+  --skip_idealize           Skip idealizing bond lengths and bond angles.
+  --skip_relax              Skip FastRelax.
+  --skip_mpnn               Skip MPNN.
 EOF
 }
 
@@ -181,9 +191,8 @@ bool_opts=(
     dec_only            disallow_cys        fix_bb              fix_chi             
     help                ignore_metals       inc_only            monomer_ROG         
     no_ca_csts          partial             persistent          random_order        
-    randsuffix          regap               relax               rosetta_lig_nbr     
-    sc_context          skip_idealize       skip_mpnn           skip_refine         
-    skip_relax          ss_to_contigs                                               
+    randsuffix          relax               rosetta_lig_nbr     sc_context          
+    skip_idealize       skip_mpnn           skip_relax          ss_to_contigs
 )
 
 ca_stdev="1"
@@ -201,6 +210,7 @@ outprefix="outputs/rfd_des"
 paramsdir="$pixiroot/box/params"
 relax_repeats="1"
 rog_cut="9999"
+select_met="min:fin_reu"
 ss_trim="2"
 temperature="0.1"
 threads="1"
@@ -921,8 +931,6 @@ EOF
     
     # Run MPNN-FastRelax
     local step2="$tmpdir/step2" ; mkdir -p $step2
-    local topreu="1000"
-    local topconf="0"
     local i
     for i in $(seq 1 $design_cycles) ; do
 
@@ -975,35 +983,32 @@ EOF
 
         # Check for selection metric
         local metpass="0"
-        unset metarr
-        [[ -n $select_met ]] && {
-            echo "Processing the option: --select_met $select_met"
-            local metarr=($(sed 's/[:|=]/ /g' <<< $select_met))  # (min/max/val metname ideal_val)
-            if [[ ! ${metarr[0]} =~ ^(min|max|val)$ ]] ; then
-                echo "WARNING: Could not parse selection logic! Refer to format in --help."
-            elif [[ ${metarr[0]} == val && -z ${metarr[2]} ]] ; then
-                echo "WARNING: Selection logic 'val' was invoked without an ideal value. Refer to format in --help."
-            elif [[ -z ${metarr[1]} ]] ; then
-                echo "WARNING: No metric detected! Refer to format in --help."
-            elif ! grep "^${metarr[1]} " $design &>/dev/null ; then
-                echo "WARNING: Could not find the metric ${metarr[1]} in $design"
-                echo "List of available metrics:"
-                awk '$1~/^[a-z]/ && $2==$2+0 {print$1}' $design
-            else
-                echo "Found the metric ${metarr[1]}" in $design.
-                local metpass="1"
-            fi
+        echo "Processing the option: --select_met $select_met"
+        local metarr=($(sed 's/[:|=]/ /g' <<< $select_met))  # (min/max/val metname ideal_val)
+        if [[ ! ${metarr[0]} =~ ^(min|max|val)$ ]] ; then
+            echo "WARNING: Could not parse selection logic! Refer to format in --help."
+        elif [[ ${metarr[0]} == val && -z ${metarr[2]} ]] ; then
+            echo "WARNING: Selection logic 'val' was invoked without an ideal value. Refer to format in --help."
+        elif [[ -z ${metarr[1]} ]] ; then
+            echo "WARNING: No metric detected! Refer to format in --help."
+        elif ! grep "^${metarr[1]} " $design &>/dev/null ; then
+            echo "WARNING: Could not find the metric ${metarr[1]} in $design"
+            echo "List of available metrics:"
+            awk '$1~/^[a-z]/ && $2==$2+0 {print$1}' $design
+        else
+            echo "Found the metric ${metarr[1]}" in $design.
+            local metpass="1"
+        fi
+        [[ $metpass == 0 ]] && {
+            echo "Defaulting to --select_met min:fin_reu"
+            local select_met="min:fin_reu"
         }
 
         # Store best design
-        local reu=$(awk '$1 == "fin_reu" {print$2}' $design)
-        local conf=$(awk -v model="$model_type" '$1 == model "_score" {print$2}' $design)
-        echo "fin_reu $topreu => $reu"
-        echo "${model_type}_score $topconf => $conf"
         if [[ $i == 1 ]] ; then
-            local topdes=$(cat $design) topreu="$reu" topconf="$conf"
+            local topdes=$(cat $design)
             mv $design $diffused
-        elif [[ $metpass == 1 ]] ; then
+        else
             echo "Accepting/rejecting designs using --select_met ${select_met}"
             local orimet=$(echo "$topdes" | awk -v met=${metarr[1]} '$1==met{print$2}')
             local finmet=$(awk -v met=${metarr[1]} '$1==met{print$2}' $design)
@@ -1012,7 +1017,7 @@ EOF
                 echo "Selecting for lower values of ${metarr[1]}"
                 if [[ $(echo "$finmet < $orimet" | bc) == 1 ]] ; then
                     echo "Score improved. Accepting new design."
-                    local topdes=$(cat $design) topreu="$reu" topconf="$conf"
+                    local topdes=$(cat $design)
                     mv $design $diffused
                 else
                     echo "Score worsened. Rejecting new design."
@@ -1021,7 +1026,7 @@ EOF
                 echo "Selecting for higher values of ${metarr[1]}"
                 if [[ $(echo "$finmet > $orimet" | bc) == 1 ]] ; then
                     echo "Score improved. Accepting new design."
-                    local topdes=$(cat $design) topreu="$reu" topconf="$conf"
+                    local topdes=$(cat $design)
                     mv $design $diffused
                 else
                     echo "Score worsened. Rejecting new design."
@@ -1033,7 +1038,7 @@ EOF
                 echo "diff ${metarr[1]} $oridiff => $findiff"
                 if [[ $(echo "$findiff < $oridiff" | bc) == 1 ]] ; then
                     echo "Score improved. Accepting new design."
-                    local topdes=$(cat $design) topreu="$reu" topconf="$conf"
+                    local topdes=$(cat $design)
                     mv $design $diffused
                 else
                     echo "Score worsened. Rejecting new design."
@@ -1041,23 +1046,6 @@ EOF
             else
                 echo "Something went wrong... Because John sucks at coding. Rejecting new design."
             fi
-        elif [[ $(echo "$reu < $topreu" | bc) == 1 && $(echo "$conf > $topconf" | bc) == 1 ]] ; then
-            echo "Both scores improved. Accepting new design."
-            local topdes=$(cat $design) topreu="$reu" topconf="$conf"
-            mv $design $diffused
-        elif [[ $(echo "$reu < $topreu" | bc) == 1 || $(echo "$conf > $topconf" | bc) == 1 ]] ; then
-            echo "Only one of the scores improved. Flipping coin to accept/reject."
-            if [[ $(shuf -e -n1 1 2) == 1 ]] ; then
-                echo "Accepting new design."
-                local topdes=$(cat $design) topreu="$reu" topconf="$conf"
-                mv $design $diffused
-            else
-                echo "Rejecting new design."
-                rm $design
-            fi
-        else
-            echo "Both scores worsened. Rejecting new design."
-            rm $design
         fi
     done
     echo "$topdes" > $design
