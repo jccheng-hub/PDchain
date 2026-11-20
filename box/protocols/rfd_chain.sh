@@ -457,6 +457,11 @@ rfd_chain () {
         [[ $contigs == FAILED ]] && {
             sleep 1 ; echo "Failed to find contigs" ; return
         }
+        [[ -z $fixbbres ]] && {
+            local fixbbres=$(
+                echo $contigs | sed -E 's;(/| );\n;g' | sed -n '/^[A-Z]/p' | paste -sd ' '
+            )
+        }
     }
     echo "Using the following contigs for RFdiffusion: $contigs"
     
